@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <writeOnCfgFolder>yes</writeOnCfgFolder> 
+  <ClassPlugin>org.clever.ClusterManager.BigDataPlugin.Mongo.DBMongo</ClassPlugin>
+  <moduleName>BigDataAgent</moduleName>
+  <pluginParams>
+    <dbName>[DBNAME]</dbName>
+    <user>[USERNAME]</user>
+    <password>[PASSWORD]</password>
+    <serversList>
+	<server>
+           <serverUrl>[SERVERNAME1]</serverUrl>
+           <port>27017</port>
+	</server>
+	<server>
+           <serverUrl>[SERVERNAME2]</serverUrl>
+           <port>27017</port>
+	</server>	
+	<server>
+           <serverUrl>[SERVERNAME3]</serverUrl>
+           <port>27017</port>
+	</server>
+	<server>
+           <serverUrl>[SERVERNAME4]</serverUrl>
+           <port>27017</port>
+	</server>
+    </serversList>
+  </pluginParams>
+</root>
