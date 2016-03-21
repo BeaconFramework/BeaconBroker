@@ -1,0 +1,19 @@
+outputs:
+  B:
+    description: IP address of B server in private network
+    value:
+      get_attr: [B, first_address]
+heat_template_version: 'null'
+description: 'null'
+resources:
+  B:
+    type: OS::Nova::Server
+    properties:
+      key_name: {get_param: key_name}
+      flavor: m1.tiny
+      image: {get_param: cirros}
+      name: test
+parameters:
+  key_name: {default: UME_Admin_P, description: Name of keypair to assign to servers,
+    type: string}
+  cirros: {default: cm-B-latest, description: description, type: string}
