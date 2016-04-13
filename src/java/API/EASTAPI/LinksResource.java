@@ -15,6 +15,7 @@
 
 package API.EASTAPI;
 
+import API.EASTAPI.utils_containers.LinkInfoContainers;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -23,6 +24,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -45,24 +47,47 @@ public class LinksResource {
     }
 
     /**
-     * Retrieves representation of an instance of WSTAPI.LinksResource
+     * Retrieves representation of an instance of EASTTAPI.LinksResource
      * @return an instance of java.lang.String
      */
     @PUT
     @Consumes("application/json")
     @Produces("application/json")
-    public String LinkFuncitons(String content) {
+    public String LinkFunctions(String content) {
         JSONObject reply=new JSONObject();
         JSONParser parser= new JSONParser();
         JSONObject input=null;
         try 
         {
             input=(JSONObject) parser.parse(content);
+            LinkInfoContainers lic=new LinkInfoContainers();
+            lic.setType((String)input.get("type"));
+            lic.setToken((String)input.get("token"));
+            lic.setCommand((String)input.get("Command"));
+            lic.setFa_endpoints(((JSONArray)input.get("fa_endpoints")));
+            lic.setNetwork_tables(((JSONArray)input.get("network_table")));
         }
         catch(ParseException pe)
         {
             reply.put("returncode", 1); 
             reply.put("errormesg", "INPUT_JSON_UNPARSABLE: OPERATION ABORTED");
+            return reply.toJSONString();
+        }
+        
+        try{
+            //operation needed to complete link requests!
+            ////ritrovare la lista di tutte le cloud in federazione per il tenant
+            ////Per ogni Cloud:
+            //////>>richiamare funzione che richiede network table da neutron
+            //////[questo perchè il flow prevede che sia inviata la network table al FEDSDN attraverso una chiamata PUT /fednet/ID_FEDNET con action=link
+            //////(probabilemente queste informazioni verranno poi restituite in formato non corretto per
+            ////// il FA quindi dovranno essere rielaborate prima di rimandarle al FA
+            //////)]
+            //////>>a questo punto il FEDSDN invoca questo WebService
+        }
+        catch(Exception eg){
+            reply.put("returncode", 1); 
+            reply.put("errormesg", "Generic Exception: OPERATION ABORTED");
             return reply.toJSONString();
         }
         reply.put("returncode", 0);

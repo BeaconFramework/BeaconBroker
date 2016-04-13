@@ -78,8 +78,6 @@ public class UsersResource {
         }
         
         
-        
-        
         String token=null;
         String tenant_id=null;
         // TODO invocare funzione che ottiene token da keystone per username del tenant all'indirizzo cmp_endpoint

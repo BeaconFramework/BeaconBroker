@@ -39,9 +39,9 @@ import org.jdom2.Element;
 import utils.*;
 
 /**
- *
  * @author agalletta
- */
+ * @author gtricomi
+*/
 public class DBMongo {
 
     private String serverURL;
@@ -162,13 +162,87 @@ public class DBMongo {
         }
         return null;
     }
+    /**
+     * This use only token. 
+     * It will be 
+     * @param dbName
+     * @param token, this is an UUID generated from simple_IDM when a new Federation user is added. 
+     * @param cloudID
+     * @return
+     * @author gtricomi
+     */
+    public String getFederatedCredential(String dbName, String token, String cloudID) {
+        DB dataBase = this.getDB(dbName);
+        DBCollection collezione = this.getCollection(dataBase, "credentials");
+        DBObject federationUser = null;
+        BasicDBObject query = new BasicDBObject("token", token);
+        BasicDBList credList;
+        Iterator it;
+        BasicDBObject obj;
 
+        federationUser = collezione.findOne(query);
+
+        if (federationUser == null) {
+            return null;
+        }
+        credList = (BasicDBList) federationUser.get("crediantialList");
+
+        it = credList.iterator();
+        while (it.hasNext()) {
+            obj = (BasicDBObject) it.next();
+            if (obj.containsValue(cloudID)) {
+                return obj.toString();
+            }
+        }
+        return null;
+    }
+    /**
+     * Returns generic federation infoes.
+     * @param dbName
+     * @param token
+     * @return 
+     * @author gtricomi
+     */
+    public String getFederationCredential(String dbName, String token) {
+        DB dataBase = this.getDB(dbName);
+        DBCollection collezione = this.getCollection(dataBase, "credentials");
+        DBObject federationUser = null;
+        BasicDBObject query = new BasicDBObject("token", token);
+        BasicDBList credList;
+        Iterator it;
+        BasicDBObject obj;
+        String result="{";
+        federationUser = collezione.findOne(query);
+
+        if (federationUser == null) {
+            return null;
+        }
+        String fu=(String)federationUser.get("federationUser");
+        result+="\"federationUser\",\""+fu+"\"";
+        String fp=(String)federationUser.get("federationPassword");
+        result+=",\"federationPassword\",\""+fp+"\"";
+        result+="}";
+        return result;
+    }
     
     public void connectLocale() {
 
         try {
             mongoClient= new MongoClient("172.17.3.142");
-            //System.out.println("connesso a Mongo");
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+    }
+    
+    /**
+     * Function used for testing/prototype. 
+     * @author gtricomi
+     */
+    public void connectLocale(String ip) {
+
+        try {
+            mongoClient= new MongoClient(ip);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -299,7 +373,7 @@ public class DBMongo {
         collezione.save(obj);
     }
     
-public String getFederateCloud(String dbName, String collectionName, String cloudId) {
+    public String getFederateCloud(String dbName, String collectionName, String cloudId) {
 
         DB dataBase = this.getDB(dbName);
         DBCollection collezione = this.getCollection(dataBase, collectionName);
@@ -375,13 +449,32 @@ public String getFederateCloud(String dbName, String collectionName, String clou
         BasicDBObject first = new BasicDBObject();
         first.put("cloudId", idCloud);
 
-        
         DBObject obj = null;
 
         obj = collection.findOne(first);
-
-       
         return obj.toString();
+
+    }
+    
+    
+    /**
+     * Function used to retrieve cloudId from cmp_endpoint
+     * @param federationUser
+     * @param cmp_endpoint
+     * @return 
+     * @author gtricomi
+     */
+    public String getDatacenterIDfrom_cmpEndpoint(String federationUser,String cmp_endpoint ){
+        DB database=this.getDB(federationUser);
+        DBCollection collection=database.getCollection("datacenters");
+        
+        BasicDBObject first = new BasicDBObject();
+        first.put("idmEndpoint", cmp_endpoint);
+
+        DBObject obj = null;
+
+        obj = collection.findOne(first);
+        return ((String)obj.get("cloudId"));
 
     }
     
@@ -490,6 +583,42 @@ public String getFederateCloud(String dbName, String collectionName, String clou
         }
         return hashed;
     }
+//////////////////////////////////////////////////////////////////////////////////////7
+    //funzioni da eliminare
+    
+    
+    
+    /**
+     * Returns ArrayList with all federatedUser registrated for the federationUser
+     * @param dbName
+     * @param collectionName
+     * @param federationUserName
+     * @return 
+     * @author gtricomi
+     */
+    public ArrayList<String> listFederatedUser(String dbName, String collectionName,String federationUserName) {
+
+        DBCursor cursore;
+        DB dataBase;
+        DBCollection collezione;
+        BasicDBObject campi;
+        Iterator<DBObject> it;
+        dataBase = this.getDB(dbName);
+        collezione = this.getCollection(dataBase, collectionName);
+        campi = new BasicDBObject();
+        //campi.put("_id", 0);
+        //campi.put("crediantialList", 0);
+        campi.put("federationUser", federationUserName);
+        cursore = collezione.find(new BasicDBObject(), campi);
+        it = cursore.iterator();
+        ArrayList<String> als=new ArrayList();
+        while (it.hasNext()) {
+            als.add(it.next().get("crediantialList").toString());
+        }
+        return als;
+    }
+    
+
 }
 
 

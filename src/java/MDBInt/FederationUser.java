@@ -24,11 +24,14 @@ import org.json.simple.parser.ParseException;
 /**
  *
  * @author agalletta
+ * @author gtricomi
  */
 public class FederationUser {
+//<editor-fold defaultstate="collapsed" desc="Variable definitions"> 
+    private String token; //added for better information management
     private String user, password;
     private ArrayList <JSONObject> credentials;
-
+//</editor-fold>
     public FederationUser(String user, String password) {
         this.user = user;
         this.password = password;
@@ -54,30 +57,6 @@ public class FederationUser {
         this.credentials = new ArrayList<JSONObject>(array.subList(0, array.size()));
     }
 
-    public String getUser() {
-        return user;
-    }
-
-    public void setUser(String user) {
-        this.user = user;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public ArrayList<JSONObject> getCredentials() {
-        return credentials;
-    }
-
-    public void setCredentials(ArrayList<JSONObject> credentials) {
-        this.credentials = credentials;
-    }
-    
     public void addCredentials(FederatedUser credential){
         this.credentials.add(credential.toJSON());    
     }
@@ -152,4 +131,41 @@ public class FederationUser {
         return null;
     }
 
+    
+    
+    
+ //<editor-fold defaultstate="collapsed" desc="Variable&Setter/Getter">    
+    
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public ArrayList<JSONObject> getCredentials() {
+        return credentials;
+    }
+
+    public void setCredentials(ArrayList<JSONObject> credentials) {
+        this.credentials = credentials;
+    }
+    //</editor-fold>
 }

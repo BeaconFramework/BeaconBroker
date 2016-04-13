@@ -28,8 +28,7 @@ public class OpenstackInfoContainer {
         this.password = password;
         this.region = region;
     }
-    
-    
+       
 //<editor-fold defaultstate="collapsed" desc="Variable">
     
     private String endpoint;

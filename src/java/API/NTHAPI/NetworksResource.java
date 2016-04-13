@@ -42,7 +42,6 @@ public class NetworksResource {
 
     @Context
     private UriInfo context;
-
     private ParserXML parserXML;
     private String fedSDNTarget; //it will be used to make request to web service with Client4WS class
     /**

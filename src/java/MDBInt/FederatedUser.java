@@ -24,7 +24,15 @@ import org.json.simple.parser.ParseException;
  */
 public class FederatedUser {
 
-    private String user, cloud, password;
+    private String user, cloud, password,region="RegionOne";
+
+    public String getRegion() {
+        return region;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
+    }
 
     public FederatedUser(String user, String cloud, String password) {
         this.user = user;

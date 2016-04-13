@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
   <writeOnCfgFolder>yes</writeOnCfgFolder> 
-  <ClassPlugin>org.clever.ClusterManager.BigDataPlugin.Mongo.DBMongo</ClassPlugin>
   <moduleName>BigDataAgent</moduleName>
   <pluginParams>
     <dbName>[DBNAME]</dbName>
@@ -26,4 +25,9 @@
 	</server>
     </serversList>
   </pluginParams>
+  <SimpleIDMParams>
+      <serverip>[SERVERIP]</serverip>
+      <dbname>[NAME]</dbname> 
+      <collname>[NAME]</collname>  
+  </SimpleIDMParams>
 </root>

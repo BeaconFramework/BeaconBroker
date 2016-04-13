@@ -16,21 +16,25 @@
 package API.NTHAPI;
 
 //import API.NTHAPI.SiteResource;
+import OSFFMIDM.SimpleIDM;
 import java.io.File;
+import javax.servlet.ServletContext;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
+import org.apache.log4j.Logger;
 import org.jdom2.Element;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+
 import utils.ParserXML;
 /**
  * REST Web Service
@@ -45,11 +49,16 @@ public class SitesResource {
     
     private ParserXML parser;
     private String fedSDNTarget; //it will be used to make request to web service with Client4WS class
+    static final Logger LOGGER = Logger.getLogger(SitesResource.class);
+        
     /**
      * Creates a new instance of SitesResource
      */
     public SitesResource() {
-        this.init("cfg/Configuration_NTHBR_WS.xml");
+        LOGGER.error("test");
+        this.init("../webapps/OSFFM/WEB-INF/Configuration_NTHBR_WS.xml");
+        
+        
     }
          
     public void init(String file) {
@@ -97,7 +106,14 @@ public class SitesResource {
     public String getSiteInfo(@PathParam("site_id") String siteid) {
         JSONObject reply=new JSONObject();
         //TODO return proper representation object
-        
+        LOGGER.error("This is a logging statement from log4j");
+        try{
+        SimpleIDM si=new SimpleIDM();
+        }
+        catch(Exception ec){
+            LOGGER.error(ec.getMessage());
+            ec.printStackTrace();
+        }
         reply.put("uuid", "Value1_"+siteid);
         reply.put("name", "Value2");
         reply.put("location", "Value3");

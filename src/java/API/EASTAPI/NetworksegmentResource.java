@@ -15,6 +15,11 @@
 
 package API.EASTAPI;
 
+import JClouds_Adapter.NeutronTest;
+import JClouds_Adapter.OpenstackInfoContainer;
+import MDBInt.FederatedUser;
+import MDBInt.FederationUser;
+import OSFFMIDM.SimpleIDM;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -23,10 +28,10 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
+import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-
 /**
  * REST Web Service
  *
@@ -37,11 +42,13 @@ public class NetworksegmentResource {
 
     @Context
     private UriInfo context;
-
+    private SimpleIDM sidm;
+    static final Logger LOGGER = Logger.getLogger(NetworksegmentResource.class);
     /**
      * Creates a new instance of NetworksegmentResource
      */
     public NetworksegmentResource() {
+        sidm=new SimpleIDM();
     }
 
     /**
@@ -57,35 +64,62 @@ public class NetworksegmentResource {
         JSONObject reply=new JSONObject();
         JSONParser parser= new JSONParser();
         JSONObject input=null;
-        String network_segment_id=null;
-        String cmp_endpoint=null;
-        String token=null;
+        String OSF_network_segment_id=null;
+        String OSF_cmp_endpoint=null;
+        String OSF_token=null;
+        String OSF_tenant=null;
+        String OSF_user=null;
+        String OSF_region=null;
         try 
         {
+            //retrieve JSON value from REST request
             input=(JSONObject) parser.parse(content);
-            token=(String)input.get("token");
-            network_segment_id=(String)input.get("network_segment_id");
-            cmp_endpoint=(String)input.get("cmp_endpoint");
+            OSF_tenant=(String)input.get("tenant");
+            OSF_user=(String)input.get("user");
+            OSF_token=(String)input.get("token");
+            OSF_network_segment_id=(String)input.get("network_segment_id");
+            OSF_cmp_endpoint=(String)input.get("cmp_endpoint");
+            //ricavare dal simple IDM gli elementi che mi mancano ovvero:
+            //String endpoint, String tenant, String user, String password, String region
+            FederationUser fu=sidm.getFederationU(OSF_token, OSF_cmp_endpoint);
+            FederatedUser tmp=sidm.retr_infoes_fromfedsdn(OSF_token, OSF_cmp_endpoint);
+            OpenstackInfoContainer credential=null;
+            NeutronTest neutron=null;
+            if(tmp!=null && fu!=null)
+            {
+                credential=new OpenstackInfoContainer(OSF_cmp_endpoint,fu.getUser(),tmp.getUser(),tmp.getPassword(),tmp.getRegion());
+                neutron=new NeutronTest(credential.getEndpoint(),credential.getTenant(), credential.getUser(),credential.getPassword(),credential.getRegion());
+            }
+            else
+            {
+                reply.put("returncode", 1); 
+                reply.put("errormesg", "USER_AUTHENTICATION_EXCEPTION: OPERATION ABORTED");
+                reply.put("network_info", null);
+                LOGGER.error("USER_AUTHENTICATION_EXCEPTION: OPERATION ABORTED >>>[Token:"+OSF_token+",cmp_endpoint:"+OSF_cmp_endpoint+"]; No federated credential has found for selected parameters.");
+                return reply.toJSONString();
+            }
+            neutron.listNetworks();
+        
+            
         }
         catch(ParseException pe)
         {
             reply.put("returncode", 1); 
-            reply.put("errormesg", "INPUT_JSON_UNPARSABLE: OPERATION ABORTED");
+            reply.put("errormesg", "JSON_INPUT_UNPARSABLE: OPERATION ABORTED");
             reply.put("network_info", null);
             return reply.toJSONString();
         }
-        
-        
-        
         JSONObject network_info=null;
-        // TODO invocare funzione che ottiene token da keystone per username del tenant all'indirizzo cmp_endpoint
-        
-               
-        
+        // TODO invocare funzione che ottiene token da keystone per username 
+        // del tenant all'indirizzo cmp_endpoint
         reply.put("returncode", 0); // or reply.put("returncode", 1);
         reply.put("errormesg", "None"); //or reply.put("errormesg", "Mesg");
         reply.put("network_info", network_info);
         return reply.toJSONString();
+      /*  
+        neutron.
+        
+        */
     }
 
     /**

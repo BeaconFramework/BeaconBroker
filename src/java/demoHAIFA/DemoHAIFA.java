@@ -135,7 +135,7 @@ public class DemoHAIFA {
                         
                         region=dh.consoleRequest("Insert region name:[Deafult: RegionOne]","RegionOne");//this element it will be analized in second 
                         ((OpenstackInfoContainer)tmpArCrob).setRegion(region);
-                        HashMap<String,ArrayList<Port>> map_res_port=om.sendShutSignalStack4DeployAction(stackName,(OpenstackInfoContainer)tmpArCrob,first,m);
+                          HashMap<String,ArrayList<Port>> map_res_port=om.sendShutSignalStack4DeployAction(stackName,(OpenstackInfoContainer)tmpArCrob,first,m);
                         if(result)
                             first=false;//if first stack creation is successfully completed, the other stacks instantiated are not the First
                         //and need different treatment.
