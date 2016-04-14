@@ -30,6 +30,7 @@ import OSFFMIDM.SimpleIDM;
 import MDBInt.FederatedCloud;
 import MDBInt.FederatedUser;
 import MDBInt.FederationUser;
+import JClouds_Adapter.OpenstackInfoContainer;
 import org.apache.log4j.Logger;
 /**
  * REST Web Service
@@ -74,7 +75,7 @@ public class UsersResource {
             tenant=((String)input.get("username")).split("@")[1];
             cloud=((String)input.get("username")).split("@")[2];
             pass=(String)input.get("password");
-            cmp_endpoint=(String)input.get("cmp_endpoint");
+          //  OSFFM_cmp_endpoint=(String)input.get("cmp_endpoint");
         }
         catch(ParseException pe)
         {
@@ -87,7 +88,8 @@ public class UsersResource {
             return reply.toJSONString();
         }
         //procedura per il recupero delle informazioni da Mongo
-        
+        //cmp_endpoint=sidm.
+       // OpenstackInfoContainer oic=new OpenstackInfoContainer();
         //costruzione oggetto Openstackinfocontainer, e verifica delle credenziali attraverso il modulo di keystone 
         //fornito da jclouds
         

@@ -38,6 +38,9 @@ import org.openstack4j.model.heat.Stack;
 
 import org.yaml.snakeyaml.Yaml;
 import JClouds_Adapter.OpenstackInfoContainer;
+import MDBInt.MDBIException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 //</editor-fold>
 
 /**
@@ -316,7 +319,11 @@ public class OrchestrationManager {
             ////recupero le credenziali passando da quelle di federazione
             cred=m.getFederatedCredential(tenant, userFederation, pswFederation,idClo);
             credJobj=new JSONObject(cred);
-            endpoint=(new JSONObject(m.getDatacenter(tenant, idClo))).getString("idmEndpoint");
+            try {
+                endpoint=(new JSONObject(m.getDatacenter(tenant, idClo))).getString("idmEndpoint");
+            } catch (MDBIException ex) {
+                Logger.getLogger(OrchestrationManager.class.getName()).log(Level.SEVERE, null, ex);
+            }
             credential=new OpenstackInfoContainer(endpoint,tenant,credJobj.getString("federatedUser"),credJobj.getString("federatedPassword"),region);
         }
         catch(JSONException je){
@@ -338,7 +345,11 @@ public class OrchestrationManager {
             ////recupero le credenziali passando da quelle di federazione
             cred=m.getFederatedCredential(tenant, userFederation, pswFederation,idClo);
             credJobj=new JSONObject(cred);
-            endpoint=(new JSONObject(m.getDatacenter(tenant, idClo))).getString("idmEndpoint");
+            try {
+                endpoint=(new JSONObject(m.getDatacenter(tenant, idClo))).getString("idmEndpoint");
+            } catch (MDBIException ex) {
+                Logger.getLogger(OrchestrationManager.class.getName()).log(Level.SEVERE, null, ex);
+            }
             credential2=new OpenstackInfoContainer(endpoint,tenant,credJobj.getString("federatedUser"),credJobj.getString("federatedPassword"),region);
         }
         catch(JSONException je){
