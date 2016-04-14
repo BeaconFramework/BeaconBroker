@@ -23,7 +23,7 @@ import javax.ws.rs.core.Application;
  *
  * @author Giuseppe Tricomi
  */
-@javax.ws.rs.ApplicationPath("fednet")
+@javax.ws.rs.ApplicationPath("")
 public class ApplicationConfig extends Application {
 
     

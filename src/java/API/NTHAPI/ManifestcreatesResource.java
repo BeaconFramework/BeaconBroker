@@ -27,7 +27,7 @@ import javax.ws.rs.Produces;
  *
  * @author giusimone
  */
-@Path("/northBr/manifest")
+@Path("/fednet/northBr/manifest")
 public class ManifestcreatesResource {
 
     @Context

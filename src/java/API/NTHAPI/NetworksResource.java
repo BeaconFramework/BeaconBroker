@@ -37,7 +37,7 @@ import utils.ParserXML;
  *
  * @author Giuseppe Tricomi
  */
-@Path("/northBr/network")
+@Path("/fednet/northBr/network")
 public class NetworksResource {
 
     @Context

@@ -41,7 +41,7 @@ import utils.ParserXML;
  *
  * @author Giuseppe Tricomi
  */
-@Path("/northBr/site")
+@Path("/fednet/northBr/site")
 public class SitesResource {
 
     @Context

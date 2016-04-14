@@ -38,7 +38,7 @@ import utils.ParserXML;
  *
  * @author Giuseppe Tricomi
  */
-@Path("/northBr/site/{sitename}/{tenantname}/users")
+@Path("/fednet/northBr/site/{sitename}/{tenantname}/users")
 public class UserssResource {
 
     @Context

@@ -37,7 +37,7 @@ import org.json.simple.parser.ParseException;
  *
  * @author giusimone
  */
-@Path("/eastBr/network")
+@Path("/fednet/eastBr/network")
 public class NetworksegmentResource {
 
     @Context

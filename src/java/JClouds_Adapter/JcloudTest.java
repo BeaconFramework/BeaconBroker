@@ -45,7 +45,7 @@ public class JcloudTest {
    //   key.listRole();
    //     key.listTenant();
    
-                GlanceTest glance=new GlanceTest();
+             //   GlanceTest glance=new GlanceTest();
 
        //    GlanceTest glance=new GlanceTest(mongo);
         
@@ -76,10 +76,10 @@ public class JcloudTest {
         
        
         
-     //  NeutronTest neutron = new NeutronTest();
+      NeutronTest neutron = new NeutronTest("http://172.17.1.217:35357/v2.0","admin","admin","password","RegionOne");
 //      neutron.listNetworks();
 //neutron.listRegions();
-//neutron.createRouter();
+neutron.createRouter("prova","RegionOne","a4b63b48-cc88-4c6d-a0e4-5e871cad7ed6","55b24c84-b96a-45ab-b007-9eee9c487c31");
        // neutron.deleteNetworks();
       // neutron.createNetwork();
       // neutron.updateNetwork();

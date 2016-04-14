@@ -26,21 +26,28 @@ import javax.ws.rs.core.UriInfo;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import OSFFMIDM.SimpleIDM;
+import MDBInt.FederatedCloud;
+import MDBInt.FederatedUser;
+import MDBInt.FederationUser;
+import org.apache.log4j.Logger;
 /**
  * REST Web Service
  *
  * @author giusimone
  */
-@Path("/eastBr/user")
+@Path("/fednet/eastBr/user")
 public class UsersResource {
 
     @Context
     private UriInfo context;
-
+    private SimpleIDM sidm;
+    static final Logger LOGGER = Logger.getLogger(UsersResource.class);
     /**
      * Creates a new instance of UsersResource
      */
     public UsersResource() {
+        sidm=new SimpleIDM();
     }
 
     /**
@@ -57,6 +64,7 @@ public class UsersResource {
         JSONObject input=null;
         String username=null;
         String tenant=null;
+        String cloud=null;
         String pass=null;
         String cmp_endpoint=null;
         try 
@@ -64,18 +72,24 @@ public class UsersResource {
             input=(JSONObject) parser.parse(content);
             username=((String)input.get("username")).split("@")[0];
             tenant=((String)input.get("username")).split("@")[1];
+            cloud=((String)input.get("username")).split("@")[2];
             pass=(String)input.get("password");
             cmp_endpoint=(String)input.get("cmp_endpoint");
         }
         catch(ParseException pe)
         {
             //something TODO
+            LOGGER.error("INPUT_JSON_UNPARSABLE: OPERATION ABORTED");
             reply.put("returncode", 1); 
             reply.put("errormesg", "INPUT_JSON_UNPARSABLE: OPERATION ABORTED");
             reply.put("token",null);
             reply.put("tenant_id", null);
             return reply.toJSONString();
         }
+        //procedura per il recupero delle informazioni da Mongo
+        
+        //costruzione oggetto Openstackinfocontainer, e verifica delle credenziali attraverso il modulo di keystone 
+        //fornito da jclouds
         
         
         String token=null;

@@ -14,6 +14,7 @@
 */
 package JClouds_Adapter;
 
+import JClouds_Adapter.FunctionResponseContainer;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -25,11 +26,14 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import org.apache.log4j.Logger;
 import org.jclouds.ContextBuilder;
+import org.jclouds.collect.PagedIterable;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.openstack.neutron.v2.NeutronApi;
 import org.jclouds.openstack.neutron.v2.NeutronApiMetadata;
 import org.jclouds.openstack.neutron.v2.domain.AllocationPool;
+import org.jclouds.openstack.neutron.v2.domain.ExternalGatewayInfo;
 import org.jclouds.openstack.neutron.v2.domain.ExtraDhcpOption;
 import org.jclouds.openstack.neutron.v2.domain.FloatingIP;
 import org.jclouds.openstack.neutron.v2.domain.FloatingIP.CreateFloatingIP;
@@ -43,6 +47,8 @@ import org.jclouds.openstack.neutron.v2.domain.NetworkStatus;
 import org.jclouds.openstack.neutron.v2.domain.Networks;
 import org.jclouds.openstack.neutron.v2.domain.Port;
 import org.jclouds.openstack.neutron.v2.domain.Ports;
+import org.jclouds.openstack.neutron.v2.domain.Router;
+import org.jclouds.openstack.neutron.v2.domain.Router.CreateRouter;
 import org.jclouds.openstack.neutron.v2.domain.Subnet;
 import org.jclouds.openstack.neutron.v2.domain.Subnet.CreateSubnet;
 import org.jclouds.openstack.neutron.v2.domain.Subnets;
@@ -53,12 +59,9 @@ import org.jclouds.openstack.neutron.v2.features.PortApi;
 import org.jclouds.openstack.neutron.v2.features.SubnetApi;
 import org.jclouds.openstack.v2_0.features.ExtensionApi;
 import org.jclouds.openstack.v2_0.options.PaginationOptions;
-
-
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.apache.log4j.Logger;
-import JClouds_Adapter.FunctionResponseContainer;
+import static org.openstack4j.api.Builders.router;
 
 /**
  * This class need to be reviewed.
@@ -488,11 +491,60 @@ public class NeutronTest {
      * cloud.
      * @author Gtricomi
      */
-    public boolean createCompleteNetw(){
+    public FunctionResponseContainer createCompleteNetw(
+            String region,
+            String networkId,
+            String cidr,
+            String all_pool_start,
+            String all_pool_end,
+            String subnet_name,
+            String gateway_IP,
+            boolean dhcpEnable,
+            String tenantId,
+            boolean shared,
+            boolean external,
+            boolean adminStateUp,
+            String net_name
+    ){
         boolean result=true;
-        
-        
-        return result;
+        FunctionResponseContainer frc= new FunctionResponseContainer();
+        //preliminary checks
+        if(((cidr==null)||(cidr==""))||((all_pool_start==null)||(all_pool_start==""))||((all_pool_end==null)||(all_pool_end=="")))
+        {
+            LOGGER.error("An exception is generated in subnet creation function.Cannot create a subnet with an empty cidr/starting or ending IP for allocation pool");
+            frc.setResponseCode(false);
+            frc.setResponseMessage("An exception is generated in subnet creation function.Cannot create a subnet with an empty cidr/starting or ending IP for allocation pool");
+            frc.setResponseObject(null, "org.jclouds.openstack.neutron.v2.domain.Subnet");
+            return frc;
+        }
+        else if((networkId==null)||(networkId==""))
+        {
+            LOGGER.error("An exception is generated in subnet creation function.Cannot create a subnet with an empty networkId");
+            frc.setResponseCode(false);
+            frc.setResponseMessage("An exception is generated in subnet creation function.Cannot create a subnet with an empty networkId");
+            frc.setResponseObject(null, "org.jclouds.openstack.neutron.v2.domain.Subnet");
+            return frc;
+        }
+        if((subnet_name==null)||(subnet_name==""))
+            subnet_name=java.util.UUID.randomUUID().toString();
+        if((gateway_IP==null)||(gateway_IP==""))
+            gateway_IP=(cidr.substring(0, cidr.lastIndexOf("/")-1))+1;
+        if((tenantId==null)||(tenantId==""))
+        {
+            LOGGER.error("An exception is generated in subnet creation function.Cannot create a net tenantId is not specified");
+            frc.setResponseCode(false);
+            frc.setResponseMessage("An exception is generated in subnet creation function.Cannot create a net tenantId is not specified");
+            frc.setResponseObject(null, "org.jclouds.openstack.neutron.v2.domain.Network");
+            return frc;
+        }
+        if((net_name==null)||(net_name==""))
+            net_name=java.util.UUID.randomUUID().toString();
+        if((region==null)||(region==""))
+            region=this.regionName;
+        //end check
+        FunctionResponseContainer tmp=this.createNetwork(region, tenantId, shared, external, adminStateUp, net_name);
+        Network t=(Network)tmp.responseObject;
+        return null;
     }
     
     /**
@@ -508,7 +560,7 @@ public class NeutronTest {
      * @return True or false if somethings going wrong.
      * @author gtricomi
      */
-    public boolean createSubnet(
+    public FunctionResponseContainer createSubnet(
             String region,
             String networkId,
             String cidr,
@@ -518,16 +570,23 @@ public class NeutronTest {
             String gateway_IP,
             boolean dhcpEnable
     ){
+        FunctionResponseContainer frc= new FunctionResponseContainer();
         //preliminary checks
         if(((cidr==null)||(cidr==""))||((all_pool_start==null)||(all_pool_start==""))||((all_pool_end==null)||(all_pool_end=="")))
         {
             LOGGER.error("An exception is generated in subnet creation function.Cannot create a subnet with an empty cidr/starting or ending IP for allocation pool");
-            return false;
+            frc.setResponseCode(false);
+            frc.setResponseMessage("An exception is generated in subnet creation function.Cannot create a subnet with an empty cidr/starting or ending IP for allocation pool");
+            frc.setResponseObject(null, "org.jclouds.openstack.neutron.v2.domain.Subnet");
+            return frc;
         }
         else if((networkId==null)||(networkId==""))
         {
             LOGGER.error("An exception is generated in subnet creation function.Cannot create a subnet with an empty networkId");
-            return false;
+            frc.setResponseCode(false);
+            frc.setResponseMessage("An exception is generated in subnet creation function.Cannot create a subnet with an empty networkId");
+            frc.setResponseObject(null, "org.jclouds.openstack.neutron.v2.domain.Subnet");
+            return frc;
         }
         if((subnet_name==null)||(subnet_name==""))
             subnet_name=java.util.UUID.randomUUID().toString();
@@ -536,6 +595,8 @@ public class NeutronTest {
         if((region==null)||(region==""))
             region=this.regionName;
         //end check
+        
+        
         SubnetApi subnetApi=neutronApi.getSubnetApi(region);
         CreateSubnet cs;
         AllocationPool ap;
@@ -561,16 +622,24 @@ public class NeutronTest {
         cs=cb.build();
         try{
             Subnet s= subnetApi.create(cs);
-            s.
+            frc.setResponseCode(true);
+            frc.setResponseMessage("OK");
+            frc.setResponseObject(s, "org.jclouds.openstack.neutron.v2.domain.Subnet");
+            return frc;
         }
         catch(Exception e){
             LOGGER.error("An exception is generated in subnet creation phase. [region,:" +region+",networkId:"+networkId+
                     ",cidr:" +cidr+",all_pool_start:" +all_pool_start+", all_pool_end: " +all_pool_end+",subnet_name: " +subnet_name+
                     "gateway_IP:" +gateway_IP+",dhcpEnable: "+dhcpEnable+"]");
             LOGGER.error(e.getMessage());
-            return false;
+            frc.setResponseCode(false);
+            frc.setResponseMessage("An exception is generated in subnet creation phase. [region,:" +region+",networkId:"+networkId+
+                    ",cidr:" +cidr+",all_pool_start:" +all_pool_start+", all_pool_end: " +all_pool_end+",subnet_name: " +subnet_name+
+                    "gateway_IP:" +gateway_IP+",dhcpEnable: "+dhcpEnable+"]");
+            frc.setResponseObject(null, "org.jclouds.openstack.neutron.v2.domain.Subnet");
+            return frc;
         }
-        return true;
+        
     }
     
     
@@ -586,7 +655,7 @@ public class NeutronTest {
      * @return True or false if somethings going wrong.
      * @author gtricomi
      */
-    public boolean createNetwork(
+    public FunctionResponseContainer createNetwork(
             String region,
             String tenantId,
             boolean shared,
@@ -594,11 +663,15 @@ public class NeutronTest {
             boolean adminStateUp,
             String net_name
     ){
+        FunctionResponseContainer frc= new FunctionResponseContainer();
         //preliminary checks
         if((tenantId==null)||(tenantId==""))
         {
             LOGGER.error("An exception is generated in subnet creation function.Cannot create a net tenantId is not specified");
-            return false;
+            frc.setResponseCode(false);
+            frc.setResponseMessage("An exception is generated in subnet creation function.Cannot create a net tenantId is not specified");
+            frc.setResponseObject(null, "org.jclouds.openstack.neutron.v2.domain.Network");
+            return frc;
         }
         if((net_name==null)||(net_name==""))
             net_name=java.util.UUID.randomUUID().toString();
@@ -618,30 +691,72 @@ public class NeutronTest {
         cn = cb.build();
         try{
             net = networkApi.create(cn);
+            frc.setResponseCode(true);
+            frc.setResponseMessage("OK");
+            frc.setResponseObject(net, "org.jclouds.openstack.neutron.v2.domain.Network");
+            return frc;
         }
         catch(Exception e){
             LOGGER.error("An exception is generated in subnet creation phase. [region,:" +region+",tenantId:"+tenantId+
                     ",shared:" +shared+",external:" +external+", adminStateUp: " +adminStateUp+",net_name: " +net_name+"]");
             LOGGER.error(e.getMessage());
-            return false;
+            frc.setResponseCode(false);
+            frc.setResponseMessage("An exception is generated in subnet creation phase. [region,:" +region+",tenantId:"+tenantId+
+                    ",shared:" +shared+",external:" +external+", adminStateUp: " +adminStateUp+",net_name: " +net_name+"]");
+            frc.setResponseObject(null, "org.jclouds.openstack.neutron.v2.domain.Network");
+            return frc;
         }
-        return true;
     }
     
     
-     public boolean createRouter(String region,) {//what is needed here?
+     public boolean createRouter(
+             String nomeRouter,
+             String region,
+             String subnetId,
+             String networkID) {//what is needed here?
 
         //  Optional<RouterApi> router=neutronApi.getRouterApi("RegionOne");
+        RouterApi routerApi=null;
+        NetworkApi networkApi=null;
+        SubnetApi subnetApi=null;
+        String routerId="";
+        //
         for (String regionel : neutronApi.getConfiguredRegions()) {
-            RouterApi routerApi = neutronApi.getRouterApi(region).get();
-            NetworkApi networkApi = neutronApi.getNetworkApi(region);
-            SubnetApi subnetApi = neutronApi.getSubnetApi(region);
+            
+                System.out.println(regionel);
+                Optional<RouterApi> t = neutronApi.getRouterApi(region);
+               routerApi =t.get(); 
+        }
+        /*for (String regionel : neutronApi.getConfiguredRegions()) {
+            routerApi = neutronApi.getRouterApi(region).get();
+            networkApi = neutronApi.getNetworkApi(region);
+            subnetApi = neutronApi.getSubnetApi(region);
             //verificare se il tenant possiede già un router
             ////se non presente crearne uno
             ////se presente ottenere il router marcato come external
             //aggiungere al router l'interfaccia per la subnet in question
-            routerApi.addInterfaceForSubnet(routerId, subnetId);
-        }
+            routerId=null;
+            Iterator pi=routerApi.list().iterator();   */
+          /*  while(pi.hasNext()){
+                Router r=(Router)pi.next();
+                
+            }*/
+            Router.CreateBuilder cb =Router.createBuilder();
+            cb.adminStateUp(Boolean.TRUE);
+            //
+            ExternalGatewayInfo egi;
+            ExternalGatewayInfo.Builder cbe=ExternalGatewayInfo.builder();
+            cbe.enableSnat(Boolean.FALSE);
+            cbe.networkId(networkID);
+            egi=cbe.build();
+            //
+            cb.externalGatewayInfo(egi);
+            CreateRouter r=cb.build();
+            
+            routerApi.create(r);
+      //  }
+       // routerApi.addInterfaceForSubnet(routerId, subnetId);
+        
         return true;
     }
     

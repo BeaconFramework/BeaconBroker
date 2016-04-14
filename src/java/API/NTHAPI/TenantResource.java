@@ -28,7 +28,7 @@ import javax.ws.rs.core.UriInfo;
  *
  * @author giusimone
  */
-@Path("/northBr/tenant")
+@Path("/fednet/northBr/tenant")
 public class TenantResource {
 
     @Context

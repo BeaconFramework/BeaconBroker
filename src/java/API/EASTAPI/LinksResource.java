@@ -34,7 +34,7 @@ import org.json.simple.parser.ParseException;
  *
  * @author giusimone
  */
-@Path("/eastBr/FA_Management/")
+@Path("/fednet/eastBr/FA_Management/")
 public class LinksResource {
 
     @Context
