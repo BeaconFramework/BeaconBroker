@@ -23,6 +23,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
+import org.apache.log4j.Logger;
 /**
  * REST Web Service
  *
@@ -33,7 +34,7 @@ public class TenantResource {
 
     @Context
     private UriInfo context;
-    
+    static final Logger LOGGER = Logger.getLogger(TenantResource.class);
     //private DBMongo db_co;
     /**
      * Creates a new instance of TenantResource

@@ -225,7 +225,7 @@ public class SimpleIDM {
         return cloudid;
     }
     
-    private String getcmp_endpointFederated(
+    public String getcmp_endpointFederated(
             String tenant,
             String cloudid)
     {

@@ -33,11 +33,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.jdom2.Element;
 import utils.*;
 import MDBInt.MDBIException;
+import org.apache.log4j.Logger;
 /**
  * @author agalletta
  * @author gtricomi
@@ -55,7 +54,7 @@ public class DBMongo {
     private Element serverList;
     private ParserXML parser;
     private MessageDigest messageDigest;
-
+    static final Logger LOGGER = Logger.getLogger(DBMongo.class);
     public DBMongo() {
 
         map = new HashMap();
@@ -218,9 +217,9 @@ public class DBMongo {
             return null;
         }
         String fu=(String)federationUser.get("federationUser");
-        result+="\"federationUser\",\""+fu+"\"";
+        result+="\"federationUser\":\""+fu+"\",";
         String fp=(String)federationUser.get("federationPassword");
-        result+=",\"federationPassword\",\""+fp+"\"";
+        result+=",\"federationPassword\":\""+fp+"\"";
         result+="}";
         return result;
     }
@@ -339,7 +338,11 @@ public class DBMongo {
 
         collezione.save(obj);
     }
-
+    /**
+     * function that returns all element in collection without _id,credentialList, federationPassword
+     * @param dbName
+     * @param collectionName 
+     */
     public void listFederatedUser(String dbName, String collectionName) {
 
         DBCursor cursore;
@@ -389,7 +392,7 @@ public class DBMongo {
         return null;
     }
 
-    public String getObj(String dbName,String collName, String query){
+    public String getObj(String dbName,String collName, String query)throws MDBIException{
     
         BasicDBObject constrains= null, results=null;
         DBCursor cursore;
@@ -403,8 +406,8 @@ public class DBMongo {
         results= (BasicDBObject) cursore.next();
         }
         catch(NoSuchElementException e){
-            System.out.println("manifest non trovato!");
-            return null;
+            LOGGER.error("manifest non trovato!");
+            throw new MDBIException("Manifest required is not found inside DB.");
         }
         return results.toString(); 
     }
@@ -614,10 +617,8 @@ public class DBMongo {
         dataBase = this.getDB(dbName);
         collezione = this.getCollection(dataBase, collectionName);
         campi = new BasicDBObject();
-        //campi.put("_id", 0);
-        //campi.put("crediantialList", 0);
         campi.put("federationUser", federationUserName);
-        cursore = collezione.find(new BasicDBObject(), campi);
+        cursore = collezione.find(campi);
         it = cursore.iterator();
         ArrayList<String> als=new ArrayList();
         while (it.hasNext()) {
@@ -628,6 +629,7 @@ public class DBMongo {
        
     public void insertTemplateInfo(String db, String id, String templateName, float version, String user, String templateRef, String date){
     
+
         BasicDBObject obj;
         
         obj = new BasicDBObject();
@@ -660,6 +662,36 @@ public class DBMongo {
         return templatesInfo;
     }
 
+    //BEACON>>> Function added for preliminaryDEMO. HAVE TO BE REMOVED
+    /**
+     * Returns generic federation infoes.
+     * @param dbName
+     * @param token
+     * @return 
+     * @author gtricomi
+     */
+    public String getFederationCredential(String dbName, String value,String type) {
+        DB dataBase = this.getDB(dbName);
+        DBCollection collezione = this.getCollection(dataBase, "credentials");
+        DBObject federationUser = null;
+        BasicDBObject query = new BasicDBObject(type, value);
+        BasicDBList credList;
+        Iterator it;
+        BasicDBObject obj;
+        String result="{";
+        federationUser = collezione.findOne(query);
+
+
+        if (federationUser == null) {
+            return null;
+        }
+        String fu=(String)federationUser.get("federationUser");
+        result+="\"federationUser\":\""+fu+"\",";
+        String fp=(String)federationUser.get("federationPassword");
+        result+=",\"federationPassword\":\""+fp+"\"";
+        result+="}";
+        return result;
+    }
 }
 
 

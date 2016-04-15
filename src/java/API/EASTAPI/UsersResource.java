@@ -54,6 +54,7 @@ public class UsersResource {
     /**
      * Retrieves representation of an instance of EASTAPI.UsersResource
      * @return an instance of java.lang.String
+     * 
      */
     @PUT
     @Path("/validate_user")
@@ -68,6 +69,7 @@ public class UsersResource {
         String cloud=null;
         String pass=null;
         String cmp_endpoint=null;
+        String region=null;
         try 
         {
             input=(JSONObject) parser.parse(content);
@@ -75,7 +77,7 @@ public class UsersResource {
             tenant=((String)input.get("username")).split("@")[1];
             cloud=((String)input.get("username")).split("@")[2];
             pass=(String)input.get("password");
-          //  OSFFM_cmp_endpoint=(String)input.get("cmp_endpoint");
+            region=(String)input.get("region");
         }
         catch(ParseException pe)
         {
@@ -87,9 +89,8 @@ public class UsersResource {
             reply.put("tenant_id", null);
             return reply.toJSONString();
         }
-        //procedura per il recupero delle informazioni da Mongo
-        //cmp_endpoint=sidm.
-       // OpenstackInfoContainer oic=new OpenstackInfoContainer();
+        cmp_endpoint=sidm.getcmp_endpointFederated(tenant, cloud);
+        OpenstackInfoContainer oic=new OpenstackInfoContainer(cmp_endpoint,tenant,username,pass,region);
         //costruzione oggetto Openstackinfocontainer, e verifica delle credenziali attraverso il modulo di keystone 
         //fornito da jclouds
         

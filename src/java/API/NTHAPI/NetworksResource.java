@@ -31,7 +31,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import utils.ParserXML;
-
+import org.apache.log4j.Logger;
 /**
  * REST Web Service
  *
@@ -42,6 +42,7 @@ public class NetworksResource {
 
     @Context
     private UriInfo context;
+    static final Logger LOGGER = Logger.getLogger(NetworksResource.class);
     private ParserXML parserXML;
     private String fedSDNTarget; //it will be used to make request to web service with Client4WS class
     /**

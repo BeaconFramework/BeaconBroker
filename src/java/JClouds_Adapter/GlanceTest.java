@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Spliterator;
+import org.apache.log4j.Logger;
 import static org.jclouds.Constants.PROPERTY_LOGGER_WIRE_LOG_SENSITIVE_INFO;
 import org.jclouds.ContextBuilder;
 import org.jclouds.collect.IterableWithMarker;
@@ -58,7 +59,7 @@ public class GlanceTest {
     private  Set<String> regions;
     private DBMongo mongo;
     Properties overrides;
-    
+    static final Logger LOGGER = Logger.getLogger(GlanceTest.class);
  
     
 public GlanceTest(DBMongo mongo) {

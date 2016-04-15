@@ -50,7 +50,7 @@ import java.util.logging.Logger;
 public class OrchestrationManager {
     static HashMap<String,ManifestManager> mapManifestThr=new HashMap<String,ManifestManager>();//mappa che mantiene riferimenti manifest- manifest manager
     HashMap<String,ArrayList> globalTOfragmentsManif;//BEACON>>> this variable need to be used in splitting alghoritm
-    
+     static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(OrchestrationManager.class);
     public OrchestrationManager() {
         this.globalTOfragmentsManif=new HashMap<String,ArrayList>();
     }
@@ -121,6 +121,8 @@ public class OrchestrationManager {
      * @param manName uuid manifest passed from dashboard
      */
     public void manifestinstatiation(String manName,String tenant){
+        //for the moment this function is incomplete. To use it, programmer have to retrieve from mongoDb the right manifest.
+
         //retrieve Manifest from MongoDB, it is JSONObject.
         JSONObject manifest=null;
         //verifica della versione del manifest rimandata al futuro, per adesso lo rielaboro
