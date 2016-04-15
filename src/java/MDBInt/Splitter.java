@@ -159,7 +159,7 @@ public class Splitter {
             if(templateRef.equals("null"))
                 version=new Float(0.1);
             else{
-                Float tmpfloat=new Float(0)   ;//BEACON>>>BEACON>>> Add here method to retrieve Float from MongoDB 
+                Float tmpfloat=mongoAdapter.getVersion("beacon", "templateInfo", templateRef);
                 version=new Float(tmpfloat.floatValue()+0.1);
             }
             mongoAdapter.insertTemplateInfo(tenant, masterKey.toString(), templatename, version, username, templateRef);
