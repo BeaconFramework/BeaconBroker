@@ -121,6 +121,8 @@ public class OrchestrationManager {
      * @param manName uuid manifest passed from dashboard
      */
     public void manifestinstatiation(String manName,String tenant){
+        //for the moment this function is incomplete. To use it, programmer have to retrieve from mongoDb the right manifest.
+
         //retrieve Manifest from MongoDB, it is JSONObject.
         JSONObject manifest=null;
         //verifica della versione del manifest rimandata al futuro, per adesso lo rielaboro

@@ -55,6 +55,7 @@ public class ApplicationConfig extends Application {
         resources.add(API.NTHAPI.ManifestcreatesResource.class);
         resources.add(API.NTHAPI.NetworkResource.class);
         resources.add(API.NTHAPI.NetworksResource.class);
+        resources.add(API.NTHAPI.Orchestrator.IstantiateManifest.class);
         resources.add(API.NTHAPI.SiteResource.class);
         resources.add(API.NTHAPI.SitesResource.class);
         resources.add(API.NTHAPI.Tenant.class);

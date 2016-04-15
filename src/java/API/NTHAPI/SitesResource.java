@@ -37,7 +37,7 @@ import org.json.simple.parser.JSONParser;
 
 import utils.ParserXML;
 /**
- * REST Web Service
+ * REST Web Service for Site information management
  *
  * @author Giuseppe Tricomi
  */
@@ -55,12 +55,16 @@ public class SitesResource {
      * Creates a new instance of SitesResource
      */
     public SitesResource() {
-        LOGGER.error("test");
+        //LOGGER.error("test");
         this.init("../webapps/OSFFM/WEB-INF/Configuration_NTHBR_WS.xml");
         
         
     }
-         
+    /**
+     * 
+     * @param file File that contains the FEDSDN URI.
+     * @author gtricomi
+     */
     public void init(String file) {
         Element params;
         try {
@@ -76,6 +80,7 @@ public class SitesResource {
     /**
      * Retrieves list of site OS federated
      * @return an instance of java.lang.String
+     * @author gtricomi
      */
     @GET
     @Produces("application/json")
@@ -99,6 +104,7 @@ public class SitesResource {
      * 
      * @param siteid
      * @return 
+     * @author gtricomi
      */
     @GET
     @Path("/{site_id}")
@@ -127,6 +133,7 @@ public class SitesResource {
     /**
      * PUT method to insert a new site on Federation data space
      * @return 
+     * @author gtricomi
      */
     @PUT
     @Produces("application/json")
@@ -147,6 +154,7 @@ public class SitesResource {
      * DELETE method for resource Users
      * @param userid
      * @return 
+     * @author gtricomi
      */
     @DELETE
     @Path("/{site_id}")

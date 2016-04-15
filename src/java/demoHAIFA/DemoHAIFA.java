@@ -34,6 +34,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.yaml.snakeyaml.Yaml;
 import JClouds_Adapter.OpenstackInfoContainer;
+import MDBInt.MDBIException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -91,7 +94,12 @@ public class DemoHAIFA {
         {
             String uuid=dh.consoleRequest("Insert Manifest UUID that will be elaborated to deploy resources","");
             if(!uuid.equals("")){
-                String tmpStr=s.ricomponiYamlManifest(uuid,tenant);
+                String tmpStr="";
+                try {
+                    tmpStr = s.ricomponiYamlManifest(uuid,tenant);
+                } catch (MDBIException ex) {
+                    Logger.getLogger(DemoHAIFA.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 //System.out.println(tmp);
                 Yaml yaml = new Yaml();
                 LinkedHashMap<String, Object> list = (LinkedHashMap<String, Object>) yaml.load(tmpStr);

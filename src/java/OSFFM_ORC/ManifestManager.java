@@ -148,6 +148,7 @@ public class ManifestManager implements Runnable{
         } 
     }
 //</editor-fold>
+    
 //<editor-fold defaultstate="collapsed" desc="Service Group management Functions">    
     /**
      * This function is called to analyze the manifest in order to identify and pass the resource/parameter/output 
