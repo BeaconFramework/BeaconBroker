@@ -27,7 +27,7 @@ import org.apache.log4j.Logger;
 /**
  * REST Web Service
  *
- * @author giusimone
+ * @author gtricomi
  */
 @Path("/fednet/northBr/tenant")
 public class TenantResource {

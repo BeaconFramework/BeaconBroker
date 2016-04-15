@@ -38,6 +38,12 @@ public class Splitter {
 
     DBMongo mongoAdapter;
     static final Logger LOGGER = Logger.getLogger(Splitter.class);
+   
+    
+    /**
+     * 
+     * @param mongoAdapter 
+     */
     public Splitter(DBMongo mongoAdapter) {
         this.mongoAdapter = mongoAdapter;
     }
@@ -118,7 +124,7 @@ public class Splitter {
      * @param yamlString
      * @param tenant
      */
-    public void loadFromYAMLString(String yamlString, String tenant) {
+    public boolean loadFromYAMLString(String yamlString, String tenant,String username,String templatename,String templateRef) {
         Yaml yamlManifest;
         Map<String, Object> map;
         JSONObject jsonManifest, outputs, parameters, resources;
@@ -149,11 +155,21 @@ public class Splitter {
 
             //    System.out.println(jsonManifest);
             mongoAdapter.insert(tenant, "master", jsonManifest.toString());
+            Float version=null;
+            if(templateRef.equals("null"))
+                version=new Float(0.1);
+            else{
+                Float tmpfloat=new Float(0)   ;//BEACON>>>BEACON>>> Add here method to retrieve Float from MongoDB 
+                version=new Float(tmpfloat.floatValue()+0.1);
+            }
+            mongoAdapter.insertTemplateInfo(tenant, masterKey.toString(), templatename, version, username, templateRef);
             //BEACON>>> inserire tutti i metadati all'interno di una nuova collezione , 
             //per poi restituirli alla dashboard per il management ed il retrieving delle informazioni
         } catch (JSONException ex) {
             ex.printStackTrace();
+            return false;
         }
+        return true;
     }
 
     /**

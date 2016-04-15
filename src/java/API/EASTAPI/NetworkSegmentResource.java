@@ -24,7 +24,7 @@ import javax.ws.rs.DELETE;
 /**
  * REST Web Service
  *
- * @author giusimone
+ * @author gtricomi
  */
 public class NetworkSegmentResource {
 

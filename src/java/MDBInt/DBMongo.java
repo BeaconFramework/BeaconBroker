@@ -627,7 +627,7 @@ public class DBMongo {
         return als;
     }
        
-    public void insertTemplateInfo(String db, String id, String templateName, float version, String user, String templateRef, String date){
+    public void insertTemplateInfo(String db, String id, String templateName, Float version, String user, String templateRef){
     
 
         BasicDBObject obj;
@@ -639,9 +639,8 @@ public class DBMongo {
         obj.append("version", version);
         obj.append("user", user);
         obj.append("templateRef", templateRef);
-        obj.append("date", date);
         
-        this.insert("beacon", "templateInfo", obj.toString());
+        this.insert(db, "templateInfo", obj.toString());
     }
     
     

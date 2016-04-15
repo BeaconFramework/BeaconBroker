@@ -21,7 +21,7 @@ import org.apache.log4j.PropertyConfigurator;
 /**
  * Web application lifecycle listener.
  *
- * @author giusimone
+ * @author gtricomi
  */
 public class LoggerServletListener implements ServletContextListener {
 

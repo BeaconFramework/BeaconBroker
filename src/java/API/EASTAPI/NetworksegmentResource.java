@@ -35,7 +35,7 @@ import org.json.simple.parser.ParseException;
 /**
  * REST Web Service
  *
- * @author giusimone
+ * @author gtricomi
  */
 @Path("/fednet/eastBr/network")
 public class NetworksegmentResource {

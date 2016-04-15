@@ -16,37 +16,41 @@
 package API.NTHAPI;
 
 import static API.NTHAPI.SitesResource.LOGGER;
+import MDBInt.DBMongo;
+import MDBInt.Splitter;
 import OSFFMIDM.SimpleIDM;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Path;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.UriInfo;
+import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-
-
-import org.apache.log4j.Logger;
 
 /**
  * REST Web Service
  *
  * @author gtricomi
  */
-@Path("/fednet/northBr/manifest")
+@Path("/os2os/notrhBr/manifest")
 public class ManifestcreatesResource {
 
     @Context
     private UriInfo context;
     static final Logger LOGGER = Logger.getLogger(ManifestcreatesResource.class);
+    DBMongo m;
+    Splitter s;
     /**
      * Creates a new instance of ManifestcreatesResource
      */
     public ManifestcreatesResource() {
+       this.m=new DBMongo(); 
+       this.s=new Splitter(m);
     }
 
     /**
@@ -68,10 +72,11 @@ public class ManifestcreatesResource {
         return Manifestcreate.getInstance(name);
     }
     
-       /**
+    /**
      * 
      * @param siteid
      * @return 
+     * @author gtricomi
      */
     @GET
     @Path("/{site_id}")
@@ -96,25 +101,48 @@ public class ManifestcreatesResource {
         reply.put("errormesg", "None"); //or reply.put("errormesg", "Mesg");
         return reply.toJSONString();
     }
+    
+    /**
+     * Web Service called to insert inside MongoDB 
+     * @param msg
+     * @param tenant
+     * @return 
+     * @author gtricomi
+     */
     @POST
-    @Path("/aaaa")
+    @Path("/{tenant}/templates/")
     @Produces("application/json")
-    public String testPost( String msg) {
+    @Consumes("application/json")
+    public String insertManifestonMongoDB( 
+            String msg,
+            @PathParam("tenant") String tenant
+    ) {
+        String username="",templateName="",templateRef="",templates="";
         JSONObject reply=new JSONObject();
-        try {
+        //retrieve input from JSONObject
+        try{
             JSONParser parser=new JSONParser();
-            JSONObject in=(JSONObject) parser.parse(msg);
-            //TODO return proper representation object
-            
-            reply.put("location", in.get("ciao"));
-            reply.put("Available4Tenant",true); // or false
-            
-            reply.put("returncode", 0);     //or reply.put("returncode", 1);
-            reply.put("errormesg", "None"); //or reply.put("errormesg", "Mesg");
-        } catch (ParseException ex) {
-            LOGGER.error(ex);
+            JSONObject input=(JSONObject)parser.parse(msg);
+            username=(String)input.get("username");
+            templateName=(String)input.get("templateName");
+            templateRef=(String)input.get("templateRef");
+            templates=(String)input.get("templates");
         }
-         return reply.toJSONString();
-
+        catch(Exception e){
+            LOGGER.error("JSON  input received for web service startTemplates is not parsable.\n"+e.getMessage());
+            reply.put("returncode", 1); 
+            reply.put("errormesg", "INPUT_JSON_UNPARSABLE: OPERATION ABORTED "+e.getMessage());
+            return reply.toJSONString();
+        }
+        if(!s.loadFromYAMLString(templates, tenant,username, templateName,templateRef))
+        {
+            LOGGER.error("Something going wrong in saving Manifest on MONGODB operation");
+            reply.put("returncode", 1); 
+            reply.put("errormesg", "Something going wrong in saving Manifest on MONGODB operation");
+            return reply.toJSONString();
+        }
+        reply.put("returncode", 0);     //or reply.put("returncode", 1);
+        reply.put("errormesg", "None"); //or reply.put("errormesg", "Mesg");
+        return reply.toJSONString();
     }
 }
