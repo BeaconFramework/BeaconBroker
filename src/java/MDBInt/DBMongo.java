@@ -625,7 +625,40 @@ public class DBMongo {
         }
         return als;
     }
+       
+    public void insertTemplateInfo(String db, String id, String templateName, float version, String user, String templateRef, String date){
     
+        BasicDBObject obj;
+        
+        obj = new BasicDBObject();
+        
+        obj.append("id", id);
+        obj.append("templateName", templateName);
+        obj.append("version", version);
+        obj.append("user", user);
+        obj.append("templateRef", templateRef);
+        obj.append("date", date);
+        
+        this.insert("beacon", "templateInfo", obj.toString());
+    }
+    
+    
+     public ArrayList<String> listTemplates(String dbName) {
+
+        DBCursor cursore;
+        DB dataBase;
+        DBCollection collezione;
+        Iterator<DBObject> it;
+        dataBase = this.getDB(dbName);
+        collezione = dataBase.getCollection("templateInfo");
+        cursore = collezione.find();
+        it = cursore.iterator();
+        ArrayList<String> templatesInfo=new ArrayList();
+        while (it.hasNext()) {
+            templatesInfo.add(it.next().toString());
+        }
+        return templatesInfo;
+    }
 
 }
 
