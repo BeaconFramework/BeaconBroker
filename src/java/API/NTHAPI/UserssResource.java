@@ -32,7 +32,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.json.simple.JSONArray;
 import utils.ParserXML;
-
+import org.apache.log4j.Logger;
 /**
  * REST Web Service
  *
@@ -44,6 +44,7 @@ public class UserssResource {
     @Context
     private UriInfo context;
     private String Config_file="cfg/Configuration_NTHBR_WS.xml";
+    static final Logger LOGGER = Logger.getLogger(UserssResource.class);
     private ParserXML parser;
     private String fedSDNTarget; //it will be used to make request to web service with Client4WS class
     /**

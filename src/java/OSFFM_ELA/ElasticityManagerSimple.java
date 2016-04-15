@@ -17,13 +17,14 @@ package OSFFM_ELA;
 
 import MDBInt.DBMongo;
 import OSFFM_ORC.OrchestrationManager;
+import org.apache.log4j.Logger;
 /**
  * Simple elasticity module, It provides a function that simulate Vm suffer.
  * As answer for this event the VM it will be shutdown and start on another cloud.
  * @author Giuseppe Tricomi
  */
 public class ElasticityManagerSimple {
-
+     static final Logger LOGGER = Logger.getLogger(ElasticityManagerSimple.class);
     public ElasticityManagerSimple() {
         
     }

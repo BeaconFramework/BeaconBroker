@@ -24,6 +24,7 @@ import com.google.inject.Module;
 import com.google.inject.TypeLiteral;
 import java.util.Iterator;
 import java.util.Set;
+import org.apache.log4j.Logger;
 import org.jclouds.ContextBuilder;
 import org.jclouds.collect.IterableWithMarker;
 import org.jclouds.collect.PagedIterable;
@@ -68,7 +69,7 @@ public class KeystoneTest {
     private final KeystoneApi keystoneApi;
     private String provider ="openstack-keystone";
     private String endpoint,identity,credential;
-    
+    static final Logger LOGGER = Logger.getLogger(KeystoneTest.class);
      public KeystoneTest(DBMongo mongo) {
         Iterable<Module> modules = ImmutableSet.<Module>of( new SLF4JLoggingModule());
         //Iterable<Module> modules = ImmutableSet.<Module>of( );

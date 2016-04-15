@@ -50,7 +50,7 @@ import java.util.logging.Logger;
 public class OrchestrationManager {
     static HashMap<String,ManifestManager> mapManifestThr=new HashMap<String,ManifestManager>();//mappa che mantiene riferimenti manifest- manifest manager
     HashMap<String,ArrayList> globalTOfragmentsManif;//BEACON>>> this variable need to be used in splitting alghoritm
-    
+     static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(OrchestrationManager.class);
     public OrchestrationManager() {
         this.globalTOfragmentsManif=new HashMap<String,ArrayList>();
     }

@@ -15,6 +15,7 @@
 
 package OSFFM_ORC;
 //<editor-fold defaultstate="collapsed" desc="Import Section">
+import MDBInt.Splitter;
 import OSFFM_ORC.SerGrManager;
 import OSFFM_ORC.Utils.Exception.NotFoundGeoRefException;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -42,7 +44,7 @@ public class ManifestManager implements Runnable{
     GeoManager geo_man;
     HashMap<String,Object> georef_table,serGr_table;
     String tempVers,description;
-
+    static final Logger LOGGER = Logger.getLogger(ManifestManager.class);
     //</editor-fold>
  //<editor-fold defaultstate="collapsed" desc="Getter&Setter">   
     public String getTempVers() {

@@ -14,6 +14,7 @@
 */
 package JClouds_Adapter;
 
+import MDBInt.DBMongo;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
@@ -25,6 +26,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import org.apache.log4j.Logger;
 import org.jclouds.ContextBuilder;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.openstack.neutron.v2.NeutronApi;
@@ -39,7 +41,6 @@ import org.jclouds.openstack.nova.v2_0.domain.ServerExtendedStatus;
 import org.jclouds.openstack.nova.v2_0.extensions.FloatingIPApi;
 import org.jclouds.openstack.nova.v2_0.extensions.QuotaApi;
 import org.jclouds.openstack.nova.v2_0.features.FlavorApi;
-//import org.jclouds.openstack.nova.v2_0.features.FlavorApi;
 import org.jclouds.openstack.nova.v2_0.features.ServerApi;
 import org.jclouds.openstack.nova.v2_0.options.CreateServerOptions;
 import org.jclouds.openstack.v2_0.domain.Extension;
@@ -50,7 +51,6 @@ import org.jclouds.openstack.v2_0.features.ExtensionApi;
 import org.jclouds.openstack.v2_0.options.PaginationOptions;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import MDBInt.DBMongo;
 /**
  * This class need to be reviewed.
  * @author agalletta
@@ -63,7 +63,7 @@ public class NovaTest {
     private final String regionName;
     private DBMongo mongo;
    // private final ComputeService computeService;
-
+    static final Logger LOGGER = Logger.getLogger(NovaTest.class);
     public NovaTest(DBMongo mongo, String keyEndpoint) {
         Iterable<Module> modules = ImmutableSet.<Module>of(new SLF4JLoggingModule());
      //    Iterable<Module> modules = ImmutableSet.<Module>of( );

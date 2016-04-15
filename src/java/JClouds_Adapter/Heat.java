@@ -19,6 +19,7 @@ package JClouds_Adapter;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -40,7 +41,7 @@ public class Heat {
     String endpoint, user, tenant, password;
     OSClient os;
     HeatService heat;
-
+    static final Logger LOGGER = Logger.getLogger(Heat.class);
     public Heat(String endpoint, String user, String tenant, String password) {
         this.endpoint = endpoint;
         this.user = user;

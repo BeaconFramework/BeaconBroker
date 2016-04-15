@@ -21,18 +21,18 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.GET;
 import javax.ws.rs.Produces;
-
+import org.apache.log4j.Logger;
 /**
  * REST Web Service
  *
- * @author giusimone
+ * @author gtricomi
  */
 @Path("/fednet/northBr/manifest")
 public class ManifestcreatesResource {
 
     @Context
     private UriInfo context;
-
+    static final Logger LOGGER = Logger.getLogger(ManifestcreatesResource.class);
     /**
      * Creates a new instance of ManifestcreatesResource
      */

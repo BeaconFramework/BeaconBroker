@@ -338,7 +338,11 @@ public class DBMongo {
 
         collezione.save(obj);
     }
-
+    /**
+     * function that returns all element in collection without _id,credentialList, federationPassword
+     * @param dbName
+     * @param collectionName 
+     */
     public void listFederatedUser(String dbName, String collectionName) {
 
         DBCursor cursore;
@@ -613,10 +617,8 @@ public class DBMongo {
         dataBase = this.getDB(dbName);
         collezione = this.getCollection(dataBase, collectionName);
         campi = new BasicDBObject();
-        //campi.put("_id", 0);
-        //campi.put("crediantialList", 0);
         campi.put("federationUser", federationUserName);
-        cursore = collezione.find(new BasicDBObject(), campi);
+        cursore = collezione.find(campi);
         it = cursore.iterator();
         ArrayList<String> als=new ArrayList();
         while (it.hasNext()) {
