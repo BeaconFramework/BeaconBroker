@@ -36,6 +36,9 @@ import java.util.NoSuchElementException;
 import org.jdom2.Element;
 import utils.*;
 import MDBInt.MDBIException;
+import com.mongodb.AggregationOutput;
+import java.util.HashSet;
+import java.util.Set;
 import org.apache.log4j.Logger;
 /**
  * @author agalletta
@@ -558,6 +561,7 @@ public class DBMongo {
             query.put("stackName", obj.get("stackName"));
             query.put("resourceName", obj.get("resourceName"));
             query.put("type", obj.get("type"));
+            query.put("state", false);
             query.put("idCloud", new BasicDBObject("$ne", obj.get("idCloud")));
 
             System.out.println(query);
@@ -691,6 +695,210 @@ public class DBMongo {
         result+="}";
         return result;
     }
+    
+    private Iterable<DBObject> operate(String dbName, String collectionName, String campoMatch, String valoreMatch, String campoOperazione, String nomeOperazione, String operation) {
+
+        DB database = this.getDB(dbName);
+        DBCollection collezione;
+        DBObject match, fields, project, groupFields, group, sort;
+        AggregationOutput output;
+        Iterable<DBObject> cursor;
+        List<DBObject> pipeline;
+
+        collezione = database.getCollection(collectionName);
+        match = new BasicDBObject("$match", new BasicDBObject(campoMatch, valoreMatch));
+        fields = new BasicDBObject(campoOperazione, 1);
+        fields.put("_id", 0);
+
+        project = new BasicDBObject("$project", fields);
+
+        groupFields = new BasicDBObject("_id", campoOperazione);
+        groupFields.put(nomeOperazione, new BasicDBObject(operation, "$" + campoOperazione));
+
+        group = new BasicDBObject("$group", groupFields);
+        sort = new BasicDBObject("$sort", new BasicDBObject(campoOperazione, -1));
+        pipeline = Arrays.asList(match, project, group, sort);
+        output = collezione.aggregate(pipeline);
+        cursor = output.results();
+        return cursor;
+
+    }
+     
+public float getVersion(String dbName,String collectionName, String templateRef){
+    
+    String v="version";
+     Iterable<DBObject> cursor=this.operate(dbName, collectionName, "templateRef", templateRef, v, v, "$max");
+     Iterator <DBObject> it;
+     DBObject result, query;
+     DBObject risultato;
+     float versione=0;
+     
+     it=cursor.iterator();
+     
+     if(it.hasNext()){
+         result=it.next();
+         versione=(float) ((double)result.get(v));
+     }
+     else{
+         query=new BasicDBObject("id",templateRef);
+         risultato=this.find(dbName, collectionName, query);
+         if(risultato!=null){
+             versione = 0.1F;
+             }
+         }
+     return versione;
+//controlla che il cursore nn sia vuoto, se vuoto controlla se è presente come versione 0.1
+    //altrimenti restituisci 0.1
+
+}
+
+    public DBObject find(String dbName, String collName, DBObject obj) {
+        DB dataBase = this.getDB(dbName);
+        DBCollection collezione = dataBase.getCollection(collName);
+       // BasicDBObject obj = (BasicDBObject) JSON.parse(query);
+        DBObject risultato = collezione.findOne(obj);
+        
+        return risultato;
+        
+
+    }
+    
+          public DBObject getDatacenterFromId(String dbName, String id){
+          DB dataBase = this.getDB(dbName);
+        DBCollection collezione = dataBase.getCollection("datacenters");
+        BasicDBObject obj = new BasicDBObject("cloudId",id);
+          DBObject risultato = collezione.findOne(obj);
+          
+          return risultato;
+      }
+    
+     public String getMapInfo(String dbName, String uuidTemplate){
+               
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("runTimeInfo");
+        DBObject obj = null, datacenter, punto, country,geoShape;
+        BasicDBObject query = new BasicDBObject();
+        DBCursor cursore = null;
+        Set<String> attivi =  new HashSet<String>(); 
+        ArrayList<String> listCloud = new ArrayList();
+        Iterator<DBObject> it;
+        String idCloud,idmEndpoint,idRisorsa,nameRisorsa;
+        boolean isPresent;
+        MapInfo map;
+        Shape s;
+        boolean state;
+        Risorse r;
+        int i,j;
+        Collegamenti link;
+        Object array[];
+        
+        query.put("uuidTemplate", uuidTemplate);
+        cursore = collection.find(query);
+        map=new MapInfo();
+        
+        if (cursore != null) {
+            it = cursore.iterator();
+            while (it.hasNext()) {
+                //oggetto map info
+                obj=it.next();
+                idCloud=(String) obj.get("idCloud");
+                isPresent=listCloud.contains(idCloud);
+                if(!isPresent){
+                   
+                    datacenter=this.getDatacenterFromId(dbName, idCloud);
+                    idmEndpoint= (String) datacenter.get("idmEndpoint");
+                    state=(boolean) obj.get("state");
+                  
+                    punto=(DBObject) datacenter.get("geometry");
+                    country=this.getFirstCountry(dbName, punto);
+                    geoShape= (DBObject) country.get("geometry");
+                    System.out.println("geogeo"+geoShape);
+                    s=new Shape(idCloud, idmEndpoint,geoShape.toString(),state);
+                      if (state){
+                        attivi.add(idCloud);
+                         idRisorsa =(String) obj.get("phisicalResourceId");
+                    nameRisorsa = (String) obj.get("resourceName");
+                    r=new Risorse(idRisorsa,nameRisorsa);                    
+                    s.addResource(r);
+                    }
+                   
+                    listCloud.add(idCloud);
+                    map.addShape(s);
+                 
+                }
+                else{
+                    s=map.getShape(idCloud);
+                    state=(boolean) obj.get("state");
+                    if(state){
+                        s.setState(state);
+                        attivi.add(idCloud);
+                    
+                    idRisorsa =(String) obj.get("phisicalResourceId");
+                    nameRisorsa = (String) obj.get("resourceName");
+                    r=new Risorse(idRisorsa,nameRisorsa);                    
+                    s.addResource(r);
+                } 
+                }
+            }
+            array= attivi.toArray();
+            for(i=0;i<array.length;i++)
+                for(j=i+1;j<array.length;j++){
+                    link=new Collegamenti((String)array[i],(String)array[j]);
+                    map.addCollegamento(link);
+                }
+        }
+        return map.toString();
+      }
+      
+      
+       public DBObject getFirstCountry(String tenant,DBObject shape){
+        
+        //{"geometry": {$geoIntersects: {$geometry: { "coordinates" : [  15.434675, 38.193164  ], "type" : "Point" }}}}
+        
+        DB database=this.getDB(tenant);
+        DBCollection collection=database.getCollection("Countries");
+        DBObject result;
+        BasicDBObject geometry=new BasicDBObject("$geometry",shape);
+        BasicDBObject geoSpazialOperator=new BasicDBObject("$geoIntersects",geometry);
+        BasicDBObject query=new BasicDBObject("geometry",geoSpazialOperator);
+        BasicDBObject constrains=new BasicDBObject("_id",0);
+        Iterator <DBObject> it;
+         result=collection.findOne(query,constrains);
+    return result;
+    }
+         
+    public ArrayList getCountry(String tenant,DBObject shape){
+        
+        //{"geometry": {$geoIntersects: {$geometry: { "coordinates" : [  15.434675, 38.193164  ], "type" : "Point" }}}}
+        
+        DB database=this.getDB(tenant);
+        DBCollection collection=database.getCollection("Countries");
+        ArrayList<String> datacenters=new ArrayList();
+        
+        BasicDBObject geometry=new BasicDBObject("$geometry",shape);
+        BasicDBObject geoSpazialOperator=new BasicDBObject("$geoIntersects",geometry);
+        BasicDBObject query=new BasicDBObject("geometry",geoSpazialOperator);
+        BasicDBObject constrains=new BasicDBObject("_id",0);
+        Iterator <DBObject> it;
+        DBCursor cursore;
+       
+    
+         cursore=collection.find(query,constrains);
+       
+         it=cursore.iterator();
+        while(it.hasNext()){
+        datacenters.add(it.next().toString());
+        
+        }
+        
+        
+    return datacenters;
+    
+    
+    }
+  
+    
+    
 }
 
 

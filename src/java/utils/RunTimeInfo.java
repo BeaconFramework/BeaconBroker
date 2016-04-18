@@ -19,19 +19,26 @@ package utils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 /**
  *
  * @author agalletta
  */
 public class RunTimeInfo {
 
-    private String idCloud, stackName, phisicalResourceId, resourceName, localResourceName, type, stackUuid,region ;
-
+    private String idCloud, stackName, phisicalResourceId, resourceName, localResourceName, type, stackUuid,region,uuidTemplate ;
+    private boolean state;
+    
     public RunTimeInfo() {
         
     }
 
-    public RunTimeInfo(String idCloud, String stackName, String phisicalResourceId, String resourceName, String localResourceName, String type, String stackUuid,String region) {
+    public RunTimeInfo(String idCloud, String stackName, String phisicalResourceId, String resourceName, String localResourceName, String type, String stackUuid,String region, boolean state, String uuidTemplate) {
         this.idCloud = idCloud;
         this.stackName = stackName;
         this.phisicalResourceId = phisicalResourceId;
@@ -40,6 +47,8 @@ public class RunTimeInfo {
         this.type = type;
         this.stackUuid=stackUuid;
         this.region=region;
+        this.state=state;
+        this.uuidTemplate=uuidTemplate;
     }
     
     public RunTimeInfo(String fromJsonString) {
@@ -54,7 +63,9 @@ public class RunTimeInfo {
             this.localResourceName = json.getString("localResourceName");
             this.type = json.getString("type");
             this.stackUuid = json.getString("stackUuid");
-            this.region=json.getString("region");;
+            this.region=json.getString("region");
+            this.state=json.getBoolean("state");
+            this.uuidTemplate=json.getString("uuidTemplate");
         } catch (JSONException ex) {
             ex.printStackTrace();
         }
@@ -123,6 +134,24 @@ public class RunTimeInfo {
     public void setRegion(String region) {
         this.region = region;
     }
+
+    public boolean getState() {
+        return state;
+    }
+
+    public void setState(boolean state) {
+        this.state = state;
+    }
+
+    public String getUuidTemplate() {
+        return uuidTemplate;
+    }
+
+    public void setUuidTemplate(String uuidTemplate) {
+        this.uuidTemplate = uuidTemplate;
+    }
+    
+    
     
     public JSONObject toJson() {
         JSONObject json = new JSONObject();
@@ -136,6 +165,8 @@ public class RunTimeInfo {
             json.put("localResourceName", localResourceName);
             json.put("type", type);
             json.put("region", region);
+            json.put("state", state);
+            json.put("uuidTemplate", uuidTemplate);
 
 
         } catch (JSONException ex) {
