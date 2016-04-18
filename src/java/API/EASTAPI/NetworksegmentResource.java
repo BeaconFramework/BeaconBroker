@@ -87,7 +87,7 @@ public class NetworksegmentResource {
             NeutronTest neutron=null;
             if(tmp!=null && fu!=null)
             {
-                credential=new OpenstackInfoContainer(OSF_cmp_endpoint,fu.getUser(),tmp.getUser(),tmp.getPassword(),tmp.getRegion());
+                credential=new OpenstackInfoContainer(tmp.getCloud(),OSF_cmp_endpoint,fu.getUser(),tmp.getUser(),tmp.getPassword(),tmp.getRegion());
                 neutron=new NeutronTest(credential.getEndpoint(),credential.getTenant(), credential.getUser(),credential.getPassword(),credential.getRegion());
             }
             else

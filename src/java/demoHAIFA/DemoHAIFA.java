@@ -64,6 +64,7 @@ public class DemoHAIFA {
         String psw="";
         String region="";
         DBMongo m=null;
+        String templateUUID="";
         do{
             path=dh.consoleRequest("Insert absolute path of file where template are stored, or leave blank to use default value(./templateTOupload/templateYAML.yaml)",defPath);
             if(path.equals(""))
@@ -82,6 +83,7 @@ public class DemoHAIFA {
             }
             else{
                 System.out.println("Manifest is stored with UUID = "+result);
+                templateUUID=(String)result;
                 if((dh.consoleRequest("Insert another Manifest?(default:no)[yes or no]","no")).equals("yes")){
                     cont=true;
                     table_UUID_ten.put((String)result, tenant);
@@ -138,7 +140,7 @@ public class DemoHAIFA {
                         psw = ((OpenstackInfoContainer) tmpArDC1).getPassword(); //new JSONObject((String)tmpArCr.get(index)).getString("federatedPassword");
                         */
                         
-                        boolean result=om.stackInstantiate(template,(OpenstackInfoContainer) tmpArCrob);//BEACON>>> in final version of OSFFM 
+                        boolean result=om.stackInstantiate(template,(OpenstackInfoContainer) tmpArCrob,m,templateUUID);//BEACON>>> in final version of OSFFM 
                         //we will use variable result to understand if the stack is deployed inside the federated cloud
                         
                         region=dh.consoleRequest("Insert region name:[Deafult: RegionOne]","RegionOne");//this element it will be analized in second 

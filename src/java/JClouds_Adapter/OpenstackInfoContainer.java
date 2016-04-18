@@ -21,16 +21,17 @@ package JClouds_Adapter;
  */
 public class OpenstackInfoContainer {
 
-    public OpenstackInfoContainer(String endpoint, String tenant, String user, String password, String region) {
+    public OpenstackInfoContainer(String idCloud,String endpoint, String tenant, String user, String password, String region) {
         this.endpoint = endpoint;
         this.tenant = tenant;
         this.user = user;
         this.password = password;
         this.region = region;
+        this.idCloud=idCloud;
     }
        
 //<editor-fold defaultstate="collapsed" desc="Variable">
-    
+    private String idCloud;
     private String endpoint;
     private String tenant;
     private String user;
@@ -41,6 +42,14 @@ public class OpenstackInfoContainer {
 //<editor-fold defaultstate="collapsed" desc="Getter&Setter">
     public String getEndpoint() {
         return endpoint;
+    }
+
+    public String getIdCloud() {
+        return idCloud;
+    }
+
+    public void setIdCloud(String idCloud) {
+        this.idCloud = idCloud;
     }
 
     public void setEndpoint(String endpoint) {

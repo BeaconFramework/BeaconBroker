@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package yamltest;
+package MDBInt;
 
 import java.util.ArrayList;
 import org.json.JSONArray;

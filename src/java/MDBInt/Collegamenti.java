@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package yamltest;
+package MDBInt;
 
 import org.json.JSONException;
 import org.json.JSONObject;

@@ -90,7 +90,7 @@ public class UsersResource {
             return reply.toJSONString();
         }
         cmp_endpoint=sidm.getcmp_endpointFederated(tenant, cloud);
-        OpenstackInfoContainer oic=new OpenstackInfoContainer(cmp_endpoint,tenant,username,pass,region);
+        OpenstackInfoContainer oic=new OpenstackInfoContainer(cloud,cmp_endpoint,tenant,username,pass,region);
         //costruzione oggetto Openstackinfocontainer, e verifica delle credenziali attraverso il modulo di keystone 
         //fornito da jclouds
         

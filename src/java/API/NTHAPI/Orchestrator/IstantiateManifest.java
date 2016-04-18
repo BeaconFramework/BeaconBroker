@@ -47,6 +47,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.yaml.snakeyaml.Yaml;
 import utils.FileFunction;
+
 /**
  *
  * @author Giuseppe Tricomi
@@ -132,6 +133,13 @@ public class IstantiateManifest {
         om.manifestinstatiation(manifestName,jo,tenant);
         HashMap<String,ArrayList<ArrayList<String>>> tmpMap=om.managementgeoPolygon(manifestName, this.m, tenant);
         //retrieve from MongoDb federation password for federation user
+        if(tmpMap==null)
+        {
+            LOGGER.info("Any Datacenters are found to istantiate the manifest.\n");
+            reply.put("returncode", 1); 
+            reply.put("errormesg", "Any Datacenters are found to istantiate the manifest");
+            return reply.toJSONString();
+        }
         String tmp=this.m.getFederationCredential("beacon", tenant,"federationUser");
         try {
             org.json.JSONObject tj=new org.json.JSONObject(tmp);
@@ -155,7 +163,7 @@ public class IstantiateManifest {
             ArrayList tmpArCr = (ArrayList<OpenstackInfoContainer>) arCr.get(arindex);
             ArrayList<HashMap<String, ArrayList<Port>>> arRes = new ArrayList<HashMap<String, ArrayList<Port>>>();
             for (Object tmpArCrob : tmpArCr) {
-                boolean result = om.stackInstantiate(template, (OpenstackInfoContainer) tmpArCrob);//BEACON>>> in final version of OSFFM 
+                boolean result = om.stackInstantiate(template, (OpenstackInfoContainer) tmpArCrob,this.m,templatename);//BEACON>>> in final version of OSFFM 
                 //we will use variable result to understand if the stack is deployed inside the federated cloud
 
                 String region = "RegionOne";

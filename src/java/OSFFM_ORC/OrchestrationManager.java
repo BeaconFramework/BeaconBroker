@@ -18,7 +18,9 @@ package OSFFM_ORC;
 import JClouds_Adapter.Heat;
 import JClouds_Adapter.NeutronTest;
 import JClouds_Adapter.NovaTest;
+import JClouds_Adapter.OpenstackInfoContainer;
 import MDBInt.DBMongo;
+import MDBInt.MDBIException;
 import OSFFM_ORC.Utils.Exception.NotFoundGeoRefException;
 import OSFFM_ORC.Utils.MultiPolygon;
 import java.io.BufferedWriter;
@@ -29,18 +31,16 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jclouds.openstack.neutron.v2.domain.Port;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import org.openstack4j.model.heat.Resource;
 import org.openstack4j.model.heat.Stack;
 
 import org.yaml.snakeyaml.Yaml;
-import JClouds_Adapter.OpenstackInfoContainer;
-import MDBInt.MDBIException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import utils.RunTimeInfo;
 //</editor-fold>
 
 /**
@@ -187,7 +187,12 @@ public class OrchestrationManager {
             for(int index=0;index<ar.size();index++){
                 try{
                     ArrayList<String> dcInfo=db.getDatacenters(tenant,ar.get(index).toJSONString());
-                    dcInfoes.add(dcInfo);
+                    if(dcInfo.size()==0){
+                        tmp=null;
+                        return null;
+                    }
+                    else
+                        dcInfoes.add(dcInfo);
                 }
                 catch(org.json.JSONException je){
                     System.err.println("An error is occourred in MultiPolygon JSON creation.");
@@ -228,7 +233,7 @@ public class OrchestrationManager {
                     try{
                         j=new JSONObject((String)tmp3.get(ind_int));
                         jj=new JSONObject(db.getFederatedCredential(tenant, username, password,j.getString("cloudId") ));
-                        credential=new OpenstackInfoContainer(j.getString("idmEndpoint"),tenant,jj.getString("federatedUser"),jj.getString("federatedPassword"),region);
+                        credential=new OpenstackInfoContainer(j.getString("cloudId") ,j.getString("idmEndpoint"),tenant,jj.getString("federatedUser"),jj.getString("federatedPassword"),region);
                     }
                     catch(org.json.JSONException je){
                         System.err.println("An error is occourred in MultiPolygon JSON creation.");
@@ -251,20 +256,35 @@ public class OrchestrationManager {
      * @param psw
      * @return 
      */
-    public boolean stackInstantiate(String template,OpenstackInfoContainer credential){
+    public boolean stackInstantiate(String template,OpenstackInfoContainer credential,DBMongo m,String templateId){
         Heat h=new Heat(credential.getEndpoint(), credential.getUser(),credential.getTenant(),credential.getPassword());
         try{
             Stack s=h.createStack(credential.getTenant(), template);//restituirà un oggetto di tipo stack che all'interno possiede
                     // lo stato ottenuto , verificare se lo status (getStatus) è di tipo "CREATE_COMPLETE" o "CREATE_FAILED"
+            List lr=h.getResource(s.getId());
+            for(Object r : lr){
+               RunTimeInfo rti=new RunTimeInfo();
+               rti.setStackName(s.getName());
+               rti.setStackUuid(s.getId());
+               rti.setRegion(credential.getRegion());
+               rti.setIdCloud(credential.getIdCloud()); 
+               rti.setLocalResourceName(((Resource)r).getLocalReourceId());
+               rti.setPhisicalResourceId(((Resource)r).getPhysicalResourceId());
+               rti.setType(((Resource)r).getType());
+               rti.setResourceName(((Resource)r).getResourceName());
+               rti.setState(true);
+               rti.setUuidTemplate(templateId);
+               m.insertRuntimeInfo(credential.getTenant(), rti.toString());
+            }
             if(s.getStatus().equals("CREATE_FAILED")){
-                System.err.println("An error is occurred in stack creation phase.Verify Federated Openstack state.\n"
+                LOGGER.error("An error is occurred in stack creation phase.Verify Federated Openstack state.\n"
                         + " Stack creation Operation har returned CREATE_FAILED");
                 return false;
             }
                 
         }
         catch(Exception e){
-            System.err.println("An error is occurred in stack creation phase.");
+            LOGGER.error("An error is occurred in stack creation phase.");
             return false;
         }
         return true;
@@ -285,6 +305,7 @@ public class OrchestrationManager {
     public HashMap<String,ArrayList<Port>> sendShutSignalStack4DeployAction(String stackName,OpenstackInfoContainer credential,
             boolean first,DBMongo m)
     {
+        try{
         NovaTest nova=new NovaTest(credential.getEndpoint(),credential.getTenant(), credential.getUser(),credential.getPassword(),credential.getRegion());
         NeutronTest neutron=new NeutronTest(credential.getEndpoint(),credential.getTenant(), credential.getUser(),credential.getPassword(),credential.getRegion());
         Heat heat=new Heat(credential.getEndpoint(), credential.getUser(),credential.getTenant(),credential.getPassword());
@@ -306,6 +327,14 @@ public class OrchestrationManager {
         }
         return mapResNet;
     }
+        catch(Exception e){
+    
+            
+            LOGGER.error("An error is occurred in stack creation phase.");
+            e.printStackTrace();
+            return null;
+        }
+    }
     
     public void sufferingProcedure(String vm,String tenant,String userFederation,String pswFederation,DBMongo m,int element,String region){
         //spegnimento vm
@@ -326,7 +355,7 @@ public class OrchestrationManager {
             } catch (MDBIException ex) {
                 Logger.getLogger(OrchestrationManager.class.getName()).log(Level.SEVERE, null, ex);
             }
-            credential=new OpenstackInfoContainer(endpoint,tenant,credJobj.getString("federatedUser"),credJobj.getString("federatedPassword"),region);
+            credential=new OpenstackInfoContainer(idClo,endpoint,tenant,credJobj.getString("federatedUser"),credJobj.getString("federatedPassword"),region);
         }
         catch(JSONException je){
              System.err.println("An error is occourred in JSON crederntial manipulation.");
@@ -352,7 +381,7 @@ public class OrchestrationManager {
             } catch (MDBIException ex) {
                 Logger.getLogger(OrchestrationManager.class.getName()).log(Level.SEVERE, null, ex);
             }
-            credential2=new OpenstackInfoContainer(endpoint,tenant,credJobj.getString("federatedUser"),credJobj.getString("federatedPassword"),region);
+            credential2=new OpenstackInfoContainer(idClo,endpoint,tenant,credJobj.getString("federatedUser"),credJobj.getString("federatedPassword"),region);
         }
         catch(JSONException je){
              System.err.println("An error is occourred in JSON crederntial manipulation.");
