@@ -146,8 +146,9 @@ public class DBMongo {
         BasicDBList credList;
         Iterator it;
         BasicDBObject obj;
-
         query.append("federationPassword", this.toMd5(password));
+           // System.out.println("password: "+this.toMd5(password));
+        
         federationUser = collezione.findOne(query);
 
         if (federationUser == null) {
@@ -219,12 +220,15 @@ public class DBMongo {
         if (federationUser == null) {
             return null;
         }
-        String fu=(String)federationUser.get("federationUser");
+        BasicDBObject bo=new BasicDBObject();
+        bo.append("federationUser", (String)federationUser.get("federationUser"));
+        bo.append("federationPassword", (String)federationUser.get("federationPassword"));
+        /*String fu=(String)federationUser.get("federationUser");
         result+="\"federationUser\":\""+fu+"\",";
         String fp=(String)federationUser.get("federationPassword");
-        result+=",\"federationPassword\":\""+fp+"\"";
-        result+="}";
-        return result;
+        result+="\"federationPassword\":\""+fp+"\"";
+        result+="}";*/
+        return bo.toString();//result;
     }
     
     public void connectLocale() {
@@ -579,6 +583,21 @@ public class DBMongo {
 
     }
     
+    public boolean updateStateRunTimeInfo(String dbName,String phisicalResourceId,boolean newState){
+        boolean result=true;
+        BasicDBObject first = new BasicDBObject();
+        first.put("phisicalResourceId", phisicalResourceId);
+
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("runTimeInfo");
+        BasicDBObject obj = null;
+
+        obj = (BasicDBObject)collection.findOne(first);
+        obj.append("state", newState);
+        collection.save(obj);
+        return result;
+    }
+    
     private String toMd5(String original) {
         MessageDigest md;
         byte[] digest;
@@ -648,7 +667,7 @@ public class DBMongo {
     }
     
     
-     public ArrayList<String> listTemplates(String dbName) {
+    public ArrayList<String> listTemplates(String dbName) {
 
         DBCursor cursore;
         DB dataBase;
@@ -665,6 +684,26 @@ public class DBMongo {
         return templatesInfo;
     }
 
+    /**
+     * Returns a specific template istance.
+     * @param dbName
+     * @return
+     * @author gtricomi
+     */
+    public String getTemplate(String dbName,String uuidManifest) {
+
+        DB dataBase;
+        DBCollection collezione;
+        dataBase = this.getDB(dbName);
+        collezione = dataBase.getCollection("templateInfo");
+        
+        BasicDBObject first = new BasicDBObject();
+        first.put("id", uuidManifest);
+        DBObject j=collezione.findOne(first);
+        return j.toString();
+    }
+    
+    
     //BEACON>>> Function added for preliminaryDEMO. HAVE TO BE REMOVED
     /**
      * Returns generic federation infoes.
@@ -688,12 +727,15 @@ public class DBMongo {
         if (federationUser == null) {
             return null;
         }
-        String fu=(String)federationUser.get("federationUser");
+         BasicDBObject bo=new BasicDBObject();
+        bo.append("federationUser", (String)federationUser.get("federationUser"));
+        bo.append("federationPassword", (String)federationUser.get("federationPassword"));
+        /*String fu=(String)federationUser.get("federationUser");
         result+="\"federationUser\":\""+fu+"\",";
         String fp=(String)federationUser.get("federationPassword");
-        result+=",\"federationPassword\":\""+fp+"\"";
-        result+="}";
-        return result;
+        result+="\"federationPassword\":\""+fp+"\"";
+        result+="}";*/
+        return bo.toString();//result;
     }
     
     private Iterable<DBObject> operate(String dbName, String collectionName, String campoMatch, String valoreMatch, String campoOperazione, String nomeOperazione, String operation) {
@@ -746,6 +788,7 @@ public float getVersion(String dbName,String collectionName, String templateRef)
              versione = 0.1F;
              }
          }
+     System.out.println("VERSIONE:"+versione);
      return versione;
 //controlla che il cursore nn sia vuoto, se vuoto controlla se è presente come versione 0.1
     //altrimenti restituisci 0.1

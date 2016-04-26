@@ -61,7 +61,7 @@ import org.jclouds.openstack.v2_0.features.ExtensionApi;
 import org.jclouds.openstack.v2_0.options.PaginationOptions;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import static org.openstack4j.api.Builders.router;
+//import static org.openstack4j.api.Builders.router;
 
 /**
  * This class need to be reviewed.
@@ -97,8 +97,8 @@ public class NeutronTest {
     }
 
     public NeutronTest(String endpoint, String tenant, String user, String password, String regionName) {
-        // Iterable<Module> modules = ImmutableSet.<Module>of( new SLF4JLoggingModule());
-        Iterable<Module> modules = ImmutableSet.<Module>of();
+        Iterable<Module> modules = ImmutableSet.<Module>of( new SLF4JLoggingModule());
+        //Iterable<Module> modules = ImmutableSet.<Module>of();
 
         String provider = "openstack-neutron";
         String identity = tenant + ":" + user; // tenantName:userName
@@ -307,7 +307,7 @@ public class NeutronTest {
         AllocationPool ap;
         AllocationPool.Builder apb;
         org.jclouds.openstack.neutron.v2.domain.Subnet.CreateBuilder cb;
-        cb=Subnet.createBuilder("927918d7-d470-40fd-aa12-ebe32bfd90f9", "192.168.0.0/24");
+        cb=Subnet.createBuilder("a0dd047a-4f42-4251-b154-3eb7b39116d4", "192.168.0.0/24");
 
         List<AllocationPool> pool = new ArrayList<>();
 

@@ -58,10 +58,12 @@ public class ApplicationConfig extends Application {
         resources.add(API.NTHAPI.Orchestrator.IstantiateManifest.class);
         resources.add(API.NTHAPI.SiteResource.class);
         resources.add(API.NTHAPI.SitesResource.class);
+        resources.add(API.NTHAPI.Templates.class);
         resources.add(API.NTHAPI.Tenant.class);
         resources.add(API.NTHAPI.TenantResource.class);
         resources.add(API.NTHAPI.Users.class);
         resources.add(API.NTHAPI.UserssResource.class);
+        resources.add(API.NTHAPI.elasticity.SufferingProc.class);
     }
     
 }

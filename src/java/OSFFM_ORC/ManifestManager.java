@@ -43,7 +43,7 @@ public class ManifestManager implements Runnable{
     LinkedHashMap<String,LinkedHashMap> table_resourceset;
     GeoManager geo_man;
     HashMap<String,Object> georef_table,serGr_table;
-    String tempVers,description;
+     String tempVers="2014-10-16",description="empty_descr";
     static final Logger LOGGER = Logger.getLogger(ManifestManager.class);
     //</editor-fold>
  //<editor-fold defaultstate="collapsed" desc="Getter&Setter">   
@@ -208,7 +208,7 @@ public class ManifestManager implements Runnable{
             tmp=tmp.getJSONObject("value");
             JSONArray attr=tmp.getJSONArray("get_attr");
             String resName=attr.getString(0);
-            sgObj.verifycorrelation(resName, this.outputs.getJSONObject(key));
+            sgObj.verifycorrelation(resName, this.outputs.getJSONObject(key),key);
         }
     }
     

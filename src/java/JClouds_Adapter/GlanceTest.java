@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.Spliterator;
+//import java.util.Spliterator;
 import org.apache.log4j.Logger;
 import static org.jclouds.Constants.PROPERTY_LOGGER_WIRE_LOG_SENSITIVE_INFO;
 import org.jclouds.ContextBuilder;

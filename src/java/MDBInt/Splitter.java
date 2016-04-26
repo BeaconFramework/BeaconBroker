@@ -130,7 +130,9 @@ public class Splitter {
         JSONObject jsonManifest, outputs, parameters, resources;
         UUID masterKey;
         ArrayList out, par, res;
-
+        System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n" +
+"MANIFEST ANALYSIS STARTED \n" +
+"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
         try {
             yamlManifest = new Yaml();
             map = (Map<String, Object>) yamlManifest.load(yamlString);
@@ -141,10 +143,21 @@ public class Splitter {
             masterKey = UUID.randomUUID();
 
             outputs = (JSONObject) jsonManifest.remove("outputs");
+            System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n" +
+"OUTPUTS ELABORATED!\n" +
+"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
             parameters = (JSONObject) jsonManifest.remove("parameters");
+            System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n" +
+"PARAMETERS ELABORATED! \n" +
+"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
             resources = (JSONObject) jsonManifest.remove("resources");
+System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n" +
+"RESOURCES ELABORATED! \n" +
+"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");            
             jsonManifest.put("masterKey", masterKey.toString());
-
+System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n" +
+"MASTERKEY ASSIGNED: ed1291c0-a1fd-405b-a775-ab5e1c502858  \n" +
+"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
             out = this.splitManifest(tenant, outputs, "outputs");
             par = this.splitManifest(tenant, parameters, "parameters");
             res = this.splitManifest(tenant, resources, "resources");
@@ -155,13 +168,21 @@ public class Splitter {
 
             //    System.out.println(jsonManifest);
             mongoAdapter.insert(tenant, "master", jsonManifest.toString());
+            System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n" +
+"MANIFEST IS INSERTED INSIDE MONGODB\n" +
+"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
             Float version=null;
             if(templateRef.equals("null"))
-                version=new Float(0.1);
+                version=new Float(0.0);
             else{
+                //System.out.println("Cerchiamo Versione");
                 Float tmpfloat=mongoAdapter.getVersion("beacon", "templateInfo", templateRef);
                 version=new Float(tmpfloat.floatValue()+0.1);
             }
+           // System.out.println("Inserimento");
+            System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n" +
+"MANAGEMENT INFORMATION ARE INSERTED INSIDE MONGODB\n" +
+"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
             mongoAdapter.insertTemplateInfo(tenant, masterKey.toString(), templatename, version, username, templateRef);
             //BEACON>>> inserire tutti i metadati all'interno di una nuova collezione , 
             //per poi restituirli alla dashboard per il management ed il retrieving delle informazioni
@@ -379,6 +400,7 @@ public class Splitter {
             //BEACON>>> inserire logger
             ex.printStackTrace();
         }
+        System.out.println(outputti);
         return outputti;
     }
 

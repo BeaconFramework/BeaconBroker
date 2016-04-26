@@ -97,7 +97,7 @@ public class NovaTest {
         // Iterable<Module> modules = ImmutableSet.<Module>of( new SLF4JLoggingModule());
         Iterable<Module> modules = ImmutableSet.<Module>of();
 
-        String provider = "openstack-neutron";
+        String provider = "openstack-nova";
         String identity = tenant + ":" + user; // tenantName:userName
         this.regionName = regionName;
 

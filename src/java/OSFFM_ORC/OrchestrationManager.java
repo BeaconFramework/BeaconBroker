@@ -15,7 +15,7 @@
 package OSFFM_ORC;
 
 //<editor-fold defaultstate="collapsed" desc="Import Section">
-import JClouds_Adapter.Heat;
+//import JClouds_Adapter.Heat;
 import JClouds_Adapter.NeutronTest;
 import JClouds_Adapter.NovaTest;
 import JClouds_Adapter.OpenstackInfoContainer;
@@ -25,11 +25,17 @@ import OSFFM_ORC.Utils.Exception.NotFoundGeoRefException;
 import OSFFM_ORC.Utils.MultiPolygon;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -48,6 +54,8 @@ import utils.RunTimeInfo;
  * @author Giuseppe Tricomi
  */
 public class OrchestrationManager {
+    private String ip="172.17.3.142";
+    private int port=33334;
     static HashMap<String,ManifestManager> mapManifestThr=new HashMap<String,ManifestManager>();//mappa che mantiene riferimenti manifest- manifest manager
     HashMap<String,ArrayList> globalTOfragmentsManif;//BEACON>>> this variable need to be used in splitting alghoritm
      static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(OrchestrationManager.class);
@@ -79,6 +87,7 @@ public class OrchestrationManager {
      */
     private void writeManifestonFile(String nameMan,String jobj){
         ManifestManager mm=OrchestrationManager.mapManifestThr.get(nameMan);
+        System.out.println(">>>>>>>>>>"+nameMan);
         FileWriter w;
         try{
             w=new FileWriter(nameMan);//scegliere oppoortunamente il nome del file per il salvataggio
@@ -109,6 +118,7 @@ public class OrchestrationManager {
             catch(Exception e){
                 System.err.println("A generic Exception is occurred"+e.getMessage());
             }
+            //System.out.println("QUI arrivo: "+"./subrepoTemplate/"+tenant+rootName+"_"+(String)obj[index]);
             this.writeManifestonFile("./subrepoTemplate/"+tenant+rootName+"_"+(String)obj[index], val);
             //ArrayList<String> tmp=this.globalTOfragmentsManif.get(rootName);
             //tmp.add(rootName+"_"+(String)obj[index]);
@@ -139,9 +149,13 @@ public class OrchestrationManager {
      * @param tenant 
      */
     public void manifestinstatiation(String manName,JSONObject manifest,String tenant){
+        //System.out.println("MI 1");
         this.addManifestToWorkf(manName, manifest);
+        //System.out.println("MI 2");
         ManifestManager mm=(ManifestManager)OrchestrationManager.mapManifestThr.get(manName);
+        //System.out.println("MI 3");
         this.manageYAMLcreation(mm, manName,tenant);
+        //System.out.println("MI 4");
         //lancio su heat i comandi per l'istanziazione degli stack.
     }
     
@@ -173,6 +187,7 @@ public class OrchestrationManager {
         ManifestManager mm=(ManifestManager)OrchestrationManager.mapManifestThr.get(manName);
         Set s=mm.table_resourceset.get("OS::Beacon::ServiceGroupManagement").keySet();
         Iterator it=s.iterator();
+        boolean foundone =false;
         while(it.hasNext()){
             String serName=(String)it.next();
             SerGrManager sgm=(SerGrManager)mm.serGr_table.get(serName);
@@ -187,18 +202,18 @@ public class OrchestrationManager {
             for(int index=0;index<ar.size();index++){
                 try{
                     ArrayList<String> dcInfo=db.getDatacenters(tenant,ar.get(index).toJSONString());
-                    if(dcInfo.size()==0){
-                        tmp=null;
-                        return null;
-                    }
-                    else
+                    if(dcInfo.size()!=0){
                         dcInfoes.add(dcInfo);
+                        foundone=true;
+                    }
                 }
                 catch(org.json.JSONException je){
                     System.err.println("An error is occourred in MultiPolygon JSON creation.");
                 }
             }
             tmp.put(serName, dcInfoes);
+            if(!foundone)
+                return null;
         }
         return tmp;
     }
@@ -232,7 +247,8 @@ public class OrchestrationManager {
                     OpenstackInfoContainer credential=null;
                     try{
                         j=new JSONObject((String)tmp3.get(ind_int));
-                        jj=new JSONObject(db.getFederatedCredential(tenant, username, password,j.getString("cloudId") ));
+                        jj=new JSONObject(db.getFederatedCredential(tenant, username, password,j.getString("cloudId")));
+                        //System.out.println(">>>>>>>>managementRetrieveCredential"+jj.toString());
                         credential=new OpenstackInfoContainer(j.getString("cloudId") ,j.getString("idmEndpoint"),tenant,jj.getString("federatedUser"),jj.getString("federatedPassword"),region);
                     }
                     catch(org.json.JSONException je){
@@ -256,10 +272,10 @@ public class OrchestrationManager {
      * @param psw
      * @return 
      */
-    public boolean stackInstantiate(String template,OpenstackInfoContainer credential,DBMongo m,String templateId){
+   /* public boolean OLDstackInstantiate(String template,OpenstackInfoContainer credential,DBMongo m,String templateId){
         Heat h=new Heat(credential.getEndpoint(), credential.getUser(),credential.getTenant(),credential.getPassword());
         try{
-            Stack s=h.createStack(credential.getTenant(), template);//restituirà un oggetto di tipo stack che all'interno possiede
+            Stack s=h.createStack(templateId, template);//restituirà un oggetto di tipo stack che all'interno possiede
                     // lo stato ottenuto , verificare se lo status (getStatus) è di tipo "CREATE_COMPLETE" o "CREATE_FAILED"
             List lr=h.getResource(s.getId());
             for(Object r : lr){
@@ -285,11 +301,12 @@ public class OrchestrationManager {
         }
         catch(Exception e){
             LOGGER.error("An error is occurred in stack creation phase.");
+            e.printStackTrace();
             return false;
         }
         return true;
     }
-    
+    */
     /**
      * 
      * @param stackName
@@ -302,40 +319,40 @@ public class OrchestrationManager {
      * @param m
      * @return 
      */
-    public HashMap<String,ArrayList<Port>> sendShutSignalStack4DeployAction(String stackName,OpenstackInfoContainer credential,
+   /* public HashMap<String,ArrayList<Port>> OLDsendShutSignalStack4DeployAction(String stackName,OpenstackInfoContainer credential,
             boolean first,DBMongo m)
     {
-        try{
-        NovaTest nova=new NovaTest(credential.getEndpoint(),credential.getTenant(), credential.getUser(),credential.getPassword(),credential.getRegion());
-        NeutronTest neutron=new NeutronTest(credential.getEndpoint(),credential.getTenant(), credential.getUser(),credential.getPassword(),credential.getRegion());
-        Heat heat=new Heat(credential.getEndpoint(), credential.getUser(),credential.getTenant(),credential.getPassword());
-        HashMap<String,ArrayList<Port>> mapResNet=new HashMap<String,ArrayList<Port>>();
-        List<? extends Resource> l = heat.getResource(stackName);
-        Iterator it_res=l.iterator();
-        while(it_res.hasNext()){
-            Resource r = (Resource)it_res.next();
-            String id_res=r.getPhysicalResourceId();
-            if(!first)
-                nova.stopVm(id_res);
-            ArrayList<Port> arPort=neutron.getPortFromDeviceId(id_res);
-            //inserire in quest'array la lista delle porte di quella VM
-            mapResNet.put(id_res,arPort);
-            Iterator it_po=arPort.iterator();
-            while(it_po.hasNext()){
-                m.insertPortInfo(credential.getTenant(), neutron.portToString((Port)it_po.next()));
+        try {
+            NovaTest nova = new NovaTest(credential.getEndpoint(), credential.getTenant(), credential.getUser(), credential.getPassword(), credential.getRegion());
+            NeutronTest neutron = new NeutronTest(credential.getEndpoint(), credential.getTenant(), credential.getUser(), credential.getPassword(), credential.getRegion());
+            Heat heat = new Heat(credential.getEndpoint(), credential.getUser(), credential.getTenant(), credential.getPassword());
+            HashMap<String, ArrayList<Port>> mapResNet = new HashMap<String, ArrayList<Port>>();
+            List<? extends Resource> l = heat.getResource(stackName);
+            Iterator it_res = l.iterator();
+            while (it_res.hasNext()) {
+                Resource r = (Resource) it_res.next();
+                String id_res = r.getPhysicalResourceId();
+                if (!first) {
+                    nova.stopVm(id_res);
+                    m.updateStateRunTimeInfo(credential.getTenant(), id_res, first);
+                }
+                ArrayList<Port> arPort = neutron.getPortFromDeviceId(id_res);
+                //inserire in quest'array la lista delle porte di quella VM
+                mapResNet.put(id_res, arPort);
+                Iterator it_po = arPort.iterator();
+                while (it_po.hasNext()) {
+                    m.insertPortInfo(credential.getTenant(), neutron.portToString((Port) it_po.next()));
+                }
             }
-        }
-        return mapResNet;
-    }
-        catch(Exception e){
-    
-            
+            return mapResNet;
+        } catch (Exception e) {
+
             LOGGER.error("An error is occurred in stack creation phase.");
             e.printStackTrace();
             return null;
         }
     }
-    
+    */
     public void sufferingProcedure(String vm,String tenant,String userFederation,String pswFederation,DBMongo m,int element,String region){
         //spegnimento vm
         ////recupero runtimeinfo
@@ -412,4 +429,127 @@ public class OrchestrationManager {
         this.manageYAMLcreation(mm, root);
     }
     */
+    
+        /**
+     * 
+     * @param tenant
+     * @param template
+     * @param endpoint
+     * @param user
+     * @param psw
+     * @return 
+     */
+    public boolean stackInstantiate(String template, OpenstackInfoContainer credential, DBMongo m, String templateId) {
+        try {
+            /*Socket socket = new Socket(ip, port);
+            boolean risposta;
+
+            InputStream socketInput = socket.getInputStream();
+            Scanner socketInputScanner = new Scanner(socketInput);
+            //creazione stream di scrittura
+            OutputStream socketOutput = socket.getOutputStream();
+            PrintWriter socketOutputWriter = new PrintWriter(socketOutput, true);
+            String a="Afantoculu\nstronzo\nciao ";
+            byte[] b = a.getBytes();//template.getBytes();
+           // System.out.println("lenght Template:"+a.length());
+            socketOutputWriter.println(1);
+            socketOutputWriter.println(credential.getEndpoint());
+            socketOutputWriter.println(credential.getUser());
+            socketOutputWriter.println(credential.getTenant());
+            socketOutputWriter.println(credential.getPassword());
+            socketOutputWriter.println(a.length());
+            socketOutputWriter.write(a, 0, a.length());
+            socketOutputWriter.flush();
+           // System.out.println("ouuuuuuuuuuuuuuuuuuuuuuuuuu");
+           // System.out.println(new String (b));
+            socketOutputWriter.println("");
+            socketOutputWriter.println(templateId);
+            socketOutputWriter.println(credential.getRegion());
+            socketOutputWriter.println(credential.getIdCloud());
+            risposta = Boolean.valueOf(socketInputScanner.nextLine());
+            socket.close();*/
+            
+            return true;
+
+        } catch (Exception e) {
+            LOGGER.error("An error is occurred in stack creation phase.");
+            e.printStackTrace();
+            return false;
+        }
+
+       
+    }
+    
+    /**
+     * 
+     * @param stackName
+     * @param endpoint
+     * @param tenant
+     * @param user
+     * @param password
+     * @param region
+     * @param first
+     * @param m
+     * @return 
+     */
+    public HashMap<String, ArrayList<Port>> sendShutSignalStack4DeployAction(String stackName, OpenstackInfoContainer credential,
+            boolean first, DBMongo m) {
+        try {
+            
+            Socket socket = new Socket(ip, port);
+            boolean continua=true;
+
+            InputStream socketInput = socket.getInputStream();
+            Scanner socketInputScanner = new Scanner(socketInput);
+            //creazione stream di scrittura
+            OutputStream socketOutput = socket.getOutputStream();
+            PrintWriter socketOutputWriter = new PrintWriter(socketOutput, true);
+
+            NovaTest nova = new NovaTest(credential.getEndpoint(), credential.getTenant(), credential.getUser(), credential.getPassword(), credential.getRegion());
+            NeutronTest neutron = new NeutronTest(credential.getEndpoint(), credential.getTenant(), credential.getUser(), credential.getPassword(), credential.getRegion());
+            //  Heat heat = new Heat(credential.getEndpoint(), credential.getUser(), credential.getTenant(), credential.getPassword());
+            HashMap<String, ArrayList<Port>> mapResNet = new HashMap<String, ArrayList<Port>>();
+            // List<? extends Resource> l = heat.getResource(stackName);
+            //Iterator it_res = l.iterator();
+
+            socketOutputWriter.println(2);
+            socketOutputWriter.println(credential.getEndpoint());
+            socketOutputWriter.println(credential.getUser());
+            socketOutputWriter.println(credential.getTenant());
+            socketOutputWriter.println(credential.getPassword());
+            socketOutputWriter.println(stackName);
+            
+            while (continua) {
+                String id_res = socketInputScanner.nextLine();
+                if (id_res.equals("1@@@")) {
+                    continua = false;
+                    socket.close();
+                } else {
+
+          //  while (it_res.hasNext()) {
+                    //      Resource r = (Resource) it_res.next();
+                    //      String id_res = r.getPhysicalResourceId();
+                    if (!first) {
+                        nova.stopVm(id_res);
+                        m.updateStateRunTimeInfo(credential.getTenant(), id_res, first);
+                    }
+                    ArrayList<Port> arPort = neutron.getPortFromDeviceId(id_res);
+                    //inserire in quest'array la lista delle porte di quella VM
+                    mapResNet.put(id_res, arPort);
+                    Iterator it_po = arPort.iterator();
+                    while (it_po.hasNext()) {
+                        m.insertPortInfo(credential.getTenant(), neutron.portToString((Port) it_po.next()));
+                    }
+                }
+            }
+            return mapResNet;
+        } catch (Exception e) {
+
+            LOGGER.error("An error is occurred in stack creation phase.");
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
 }

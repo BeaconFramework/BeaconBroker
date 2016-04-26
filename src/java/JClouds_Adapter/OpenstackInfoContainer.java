@@ -29,7 +29,12 @@ public class OpenstackInfoContainer {
         this.region = region;
         this.idCloud=idCloud;
     }
-       
+    
+    public String toString(){
+        return "this.endpoint"+this.endpoint+"this.tenant"+this.tenant+
+                "this.user"+this.user+"this.password"+this.password+
+                "this.region"+this.region+"this.idCloud"+this.idCloud;
+    }
 //<editor-fold defaultstate="collapsed" desc="Variable">
     private String idCloud;
     private String endpoint;

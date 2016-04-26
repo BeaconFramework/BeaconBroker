@@ -167,7 +167,7 @@ public class KeystoneTest {
          return null;
       }
    }
- 
+  
  public void servicetList(){
      
      
@@ -188,9 +188,36 @@ public class KeystoneTest {
      
  }
  
-
  
-  public void serviceGet(String serviceId){
+    /**
+     * It returns service endpoint for Service named with serviceName value.
+     * @param serviceName, name of the service.
+     * @author gtricomi
+     */
+    public String servicetGetEndpoint(String serviceName) {
+        Optional<? extends ServiceAdminApi> ServiceAdminApiExtension = keystoneApi.getServiceAdminApi();
+        ServiceAdminApi ServiceAdminApi = ServiceAdminApiExtension.get();
+        Service s;
+        PaginatedCollection<Service> fluent = ServiceAdminApi.list(new PaginationOptions());
+
+        Iterator<Service> it = fluent.iterator();
+        while (it.hasNext()) {
+            s = it.next();
+            if (s.getName().equals(serviceName)) {
+                if (s.iterator().hasNext()) {
+                    return s.iterator().next().getPublicURL().toString();
+                } else {
+                    return null;
+                }
+            }
+
+        }
+        return null;
+
+    }
+
+    
+   public void serviceGet(String serviceId){
      
      
        Optional<? extends ServiceAdminApi> ServiceAdminApiExtension = keystoneApi.getServiceAdminApi();
@@ -343,6 +370,18 @@ while(i.hasNext()){
     
        
    }
+ /**
+  * Returns tenant ID.
+  * @param tenantName
+  * @return 
+  * @author gtricomi
+  */
+ public String getTenantId(String tenantName){
+     Optional<? extends TenantApi> tenantExt=  keystoneApi.getTenantApi();
+      TenantApi tenantApi=tenantExt.get();
+      Tenant t=tenantApi.getByName(tenantName);
+      return t.getId();
+ }
   
  
  public void endpointLists(){

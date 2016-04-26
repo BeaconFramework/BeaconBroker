@@ -27,7 +27,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.filter.HttpBasicAuthFilter;
+//import org.glassfish.jersey.client.filter.HttpBasicAuthFilter;
 //import org.glassfish.jersey.client.ClientConfig;
 import utils.Exception.*;
 
@@ -62,7 +62,7 @@ public class Client4WS {
         WebTarget target;
         //System.out.println(getBaseURI("http://10.9.0.10:6121/fednet/tenant"));
         target = client.target(getBaseURI(wsPath));
-        target.register(new HttpBasicAuthFilter(username, password));
+     //  target.register(new HttpBasicAuthFilter(username, password));
         //System.out.println(target.getUri());
         Response plainAnswer = null;
         switch (function) {
@@ -86,7 +86,7 @@ public class Client4WS {
                 throw new Exception("operazione non trovata");
         }
 
-        System.out.println(plainAnswer.getStatus() + "\n" + plainAnswer.getStringHeaders().getFirst("Server") + "\n" + plainAnswer.getStringHeaders().getFirst("Content-Length") + "\n" + plainAnswer.getStringHeaders().getFirst("Date") + "\n" + plainAnswer.getStringHeaders().getFirst("Content-Type") + "\n" + plainAnswer.readEntity(String.class));
+   //     System.out.println(plainAnswer.getStatus() + "\n" + plainAnswer.getStringHeaders().getFirst("Server") + "\n" + plainAnswer.getStringHeaders().getFirst("Content-Length") + "\n" + plainAnswer.getStringHeaders().getFirst("Date") + "\n" + plainAnswer.getStringHeaders().getFirst("Content-Type") + "\n" + plainAnswer.readEntity(String.class));
         return plainAnswer;
     }
 

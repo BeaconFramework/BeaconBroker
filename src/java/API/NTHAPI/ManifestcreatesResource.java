@@ -14,7 +14,7 @@
 */
 
 package API.NTHAPI;
-
+//<editor-fold defaultstate="collapsed" desc="Import Section">
 import static API.NTHAPI.SitesResource.LOGGER;
 import MDBInt.DBMongo;
 import MDBInt.Splitter;
@@ -31,7 +31,7 @@ import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-
+//</editor-fold>
 /**
  * REST Web Service
  *
@@ -50,6 +50,7 @@ public class ManifestcreatesResource {
      */
     public ManifestcreatesResource() {
        this.m=new DBMongo(); 
+       this.m.connectLocale();
        this.s=new Splitter(m);
     }
 
@@ -145,4 +146,7 @@ public class ManifestcreatesResource {
         reply.put("errormesg", "None"); //or reply.put("errormesg", "Mesg");
         return reply.toJSONString();
     }
+    
+    
+   
 }

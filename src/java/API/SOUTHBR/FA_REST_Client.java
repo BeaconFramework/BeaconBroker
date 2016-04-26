@@ -85,6 +85,7 @@ public class FA_REST_Client {
         this.key = key;
     }
     //</editor-fold>
+    
     public FA_REST_Client(String endpoint,String tenantName,String userName,String password) {
         this.idsEndpoint=endpoint;
         this.password=password;
@@ -107,8 +108,22 @@ public class FA_REST_Client {
             throw new FA_Exception("Exception is occurred because the service named Federation Agent is not present.\n"
                     + "It is impossible retrieve Federation Agent Endpoint");
     }
-   
-  //  public createSiteTable()
+    
+    /**
+     * This function returns Network Controller.
+     * @param TenantId
+     * @return
+     * @throws Exception
+     * @author gtricomi
+     */
+    public String getNetController(String TenantId) throws Exception{
+        String result= key.servicetGetEndpoint("Network_controller");//>>>BEACON verify this field and modify with correct field
+        if(result!=null)
+            return result;
+        else
+            throw new Exception("Exception is occurred because the service named ....is not present.\n"
+            + "It is impossible retrieve Network Controller Endpoint");
+    }
     
     /**
      * This function is used to create a post request for web service pointed by urlFA.
@@ -119,7 +134,40 @@ public class FA_REST_Client {
      * @throws JSONException 
      * @author gtricomi
      */
-    private Response createPostrequest(String urlFA,JSONObject jsonObject,HttpBasicAuthFilter auth){
+    protected Response createInsertingrequest(String urlFA,JSONObject jsonObject,HttpBasicAuthFilter auth,String type){
+        ClientConfig config = new ClientConfig();
+        Client client = ClientBuilder.newClient(config);
+        WebTarget target;
+        target = client.target(getBaseURI(urlFA));
+        //Response plainAnswer =null; 
+        target.register(auth);
+        
+        Invocation.Builder invocationBuilder =target.request(MediaType.APPLICATION_JSON);
+        MultivaluedHashMap<String,Object> mm=new MultivaluedHashMap<String,Object>();
+        mm.add("content-type", "application/json");
+        mm.add("Accept", "application/json");
+        mm.add("charsets", "utf-8");
+        invocationBuilder.headers(mm);
+        //preliminary operation of request creation ended
+        Response plainAnswer=null;
+        switch(type){
+            case "post":
+            {
+                plainAnswer=invocationBuilder
+                    .post(Entity.entity(jsonObject, MediaType.APPLICATION_JSON));
+                break;
+            }
+            case "put":
+            {
+                plainAnswer =invocationBuilder
+                    .put(Entity.entity(jsonObject, MediaType.APPLICATION_JSON));
+                break;
+            }
+        }
+        return plainAnswer;
+    }
+    
+    protected Response createPutrequest(String urlFA,JSONObject jsonObject,HttpBasicAuthFilter auth){
         ClientConfig config = new ClientConfig();
         Client client = ClientBuilder.newClient(config);
         WebTarget target;
@@ -135,7 +183,7 @@ public class FA_REST_Client {
         invocationBuilder.headers(mm);
         //preliminary operation of request creation ended
         Response plainAnswer =invocationBuilder
-                .post(Entity.entity(jsonObject, MediaType.APPLICATION_JSON));
+                .put(Entity.entity(jsonObject, MediaType.APPLICATION_JSON));
         return plainAnswer;
     }
     
@@ -156,68 +204,69 @@ public class FA_REST_Client {
      * @author gtricomi
      */  
     protected Response checkResponse(Response plainAnswer) throws WSException{
-        switch(plainAnswer.getStatus()){
-            //good answers
-            case 200: {
-                return plainAnswer;
-            }//OK
-            case 202: {
-                return plainAnswer;
-            }//ACCEPTED 
-            case 201: {
-                return plainAnswer;
-            }//CREATED
-            //To be evaluate
-            case 204: {
-                return plainAnswer;
-            }//NO_CONTENT
-            //bad answers
-            case 400: {
-                throw new WSException400("BAD REQUEST! The action can't be completed");
-            }//BAD_REQUEST 
-            case 409: {
-                throw new WSException409("CONFLICT! The action can't be completed");
-            }//CONFLICT 
-            case 403: {
-                throw new WSException403("FORBIDDEN!The action can't be completed");
-            }//FORBIDDEN 
-            case 410: {
-                throw new WSException410("GONE! The action can't be completed");
-            }//GONE
-            case 500: {
-                throw new WSException500("INTERNAL_SERVER_ERROR! The action can't be completed");
-            }//INTERNAL_SERVER_ERROR 
-            case 301: {
-                throw new WSException301("MOVED_PERMANENTLY! The action can't be completed");
-            }//MOVED_PERMANENTLY 
-            case 406: {
-                throw new WSException406("NOT_ACCEPTABLE! The action can't be completed");
-            }//NOT_ACCEPTABLE
-            case 404: {
-                throw new WSException404("NOT_FOUND! The action can't be completed");
-            }//NOT_FOUND
-            case 304: {
-                throw new WSException304("NOT_MODIFIED! The action can't be completed");
-            }//NOT_MODIFIED 
-            case 412: {
-                throw new WSException412("PRECONDITION_FAILED! The action can't be completed");
-            }//PRECONDITION_FAILED 
-            case 303: {
-                throw new WSException303("SEE_OTHER! The action can't be completed");
-            }//SEE_OTHER
-            case 503: {
-                throw new WSException503("SERVICE_UNAVAILABLE! The action can't be completed");
-            }//SERVICE_UNAVAILABLE
-            case 307: {
-                throw new WSException307("TEMPORARY_REDIRECT! The action can't be completed");
-            }//TEMPORARY_REDIRECT 
-            case 401: {
-                throw new WSException401("UNAUTHORIZED! The action can't be completed");
-            }//UNAUTHORIZED 
-            case 415: {
-                throw new WSException415("UNSUPPORTED_MEDIA_TYPE! The action can't be completed");
-            }//UNSUPPORTED_MEDIA_TYPE 
-        }
+        if(plainAnswer!=null)
+            switch(plainAnswer.getStatus()){
+                //good answers
+                case 200: {
+                    return plainAnswer;
+                }//OK
+                case 202: {
+                    return plainAnswer;
+                }//ACCEPTED 
+                case 201: {
+                    return plainAnswer;
+                }//CREATED
+                //To be evaluate
+                case 204: {
+                    return plainAnswer;
+                }//NO_CONTENT
+                //bad answers
+                case 400: {
+                    throw new WSException400("BAD REQUEST! The action can't be completed");
+                }//BAD_REQUEST 
+                case 409: {
+                    throw new WSException409("CONFLICT! The action can't be completed");
+                }//CONFLICT 
+                case 403: {
+                    throw new WSException403("FORBIDDEN!The action can't be completed");
+                }//FORBIDDEN 
+                case 410: {
+                    throw new WSException410("GONE! The action can't be completed");
+                }//GONE
+                case 500: {
+                    throw new WSException500("INTERNAL_SERVER_ERROR! The action can't be completed");
+                }//INTERNAL_SERVER_ERROR 
+                case 301: {
+                    throw new WSException301("MOVED_PERMANENTLY! The action can't be completed");
+                }//MOVED_PERMANENTLY 
+                case 406: {
+                    throw new WSException406("NOT_ACCEPTABLE! The action can't be completed");
+                }//NOT_ACCEPTABLE
+                case 404: {
+                    throw new WSException404("NOT_FOUND! The action can't be completed");
+                }//NOT_FOUND
+                case 304: {
+                    throw new WSException304("NOT_MODIFIED! The action can't be completed");
+                }//NOT_MODIFIED 
+                case 412: {
+                    throw new WSException412("PRECONDITION_FAILED! The action can't be completed");
+                }//PRECONDITION_FAILED 
+                case 303: {
+                    throw new WSException303("SEE_OTHER! The action can't be completed");
+                }//SEE_OTHER
+                case 503: {
+                    throw new WSException503("SERVICE_UNAVAILABLE! The action can't be completed");
+                }//SERVICE_UNAVAILABLE
+                case 307: {
+                    throw new WSException307("TEMPORARY_REDIRECT! The action can't be completed");
+                }//TEMPORARY_REDIRECT 
+                case 401: {
+                    throw new WSException401("UNAUTHORIZED! The action can't be completed");
+                }//UNAUTHORIZED 
+                case 415: {
+                    throw new WSException415("UNSUPPORTED_MEDIA_TYPE! The action can't be completed");
+                }//UNSUPPORTED_MEDIA_TYPE 
+            }
         return plainAnswer;
     }
 }

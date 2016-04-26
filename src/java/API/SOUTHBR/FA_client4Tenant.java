@@ -40,7 +40,7 @@ public class FA_client4Tenant extends FA_REST_Client{
      */
     public boolean createTenantFA(String TenantId, String faURL)throws WSException{
         boolean result= true;
-        JSONObject jo=new JSONObject();
+    /*    JSONObject jo=new JSONObject();
         try {
             jo.put("name",this.getTenantName());
             jo.put("id",TenantId );
@@ -51,15 +51,15 @@ public class FA_client4Tenant extends FA_REST_Client{
         HttpBasicAuthFilter auth=new HttpBasicAuthFilter(this.getUserName(), this.getPassword());
         Response r=this.createPostrequest("http://"+faURL+"/net-fa/tenants",jo,auth);
         try{
-            this.checkResponse(r);
+           this.checkResponse(r);
         }
         catch(WSException wse){
             LOGGER.error("Exception occurred in createTenantFA method, the web service has answer with bad status!\n"+wse.getMessage());
             result=false;
             throw wse;
-        }
+        }*/
         return result;
     }
-    
+   
     
 }

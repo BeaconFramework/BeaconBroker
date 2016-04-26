@@ -73,9 +73,9 @@ public class SerGrManager {
         }
         return resources;
     }
-    public void verifycorrelation(String resName,JSONObject outputelem){
+    public void verifycorrelation(String resName,JSONObject outputelem,String outName){
         if(this.container.resourceIsPresent(resName)){
-            this.container.addOutput(outputelem,resName);
+            this.container.addOutput(outputelem,outName);
         }
     }
 

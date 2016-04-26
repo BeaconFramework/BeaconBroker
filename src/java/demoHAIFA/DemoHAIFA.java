@@ -35,6 +35,7 @@ import org.json.JSONObject;
 import org.yaml.snakeyaml.Yaml;
 import JClouds_Adapter.OpenstackInfoContainer;
 import MDBInt.MDBIException;
+import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -65,6 +66,7 @@ public class DemoHAIFA {
         String region="";
         DBMongo m=null;
         String templateUUID="";
+        
         do{
             path=dh.consoleRequest("Insert absolute path of file where template are stored, or leave blank to use default value(./templateTOupload/templateYAML.yaml)",defPath);
             if(path.equals(""))
@@ -119,11 +121,12 @@ public class DemoHAIFA {
 //2.3 chiama heat function per deploy of stack, e stampa a video equivalente della chiamata heat
 ////2.4 invocare funzione che lista da heat l'insieme delle risorse nello stack, per ogni risorsa recupera le informazioni sulla rete
 ////// e mette in un hashMap<String,string> (idRisorsa,idRete) e poi le trasferisce salvandole su Mongo DB
+                dh.listSplittedTemplate();
                 while(stack.equals("")){
                     stack=dh.consoleRequest("Insert stack name(name of submanifest) that we want instatiate","");
                 }
-                String template=dh.readFromFile(stack);
-                String stackName=stack.substring(stack.lastIndexOf("_"), stack.lastIndexOf(".yaml"));
+                String template=dh.readFromFile("./subrepoTemplate/"+stack);
+                String stackName=stack.substring(stack.lastIndexOf("_")+1,stack.lastIndexOf(".yaml")>=0?stack.lastIndexOf(".yaml"):stack.length());
                 ArrayList arDC=(ArrayList<ArrayList<String>>)tmpMap.get(stackName);
                 ArrayList arCr=(ArrayList<ArrayList<OpenstackInfoContainer>>)tmpMapcred.get(stackName);
                 ArrayList<ArrayList<HashMap<String,ArrayList<Port>>>> arMapRes= new ArrayList<ArrayList<HashMap<String,ArrayList<Port>>>>();
@@ -139,19 +142,22 @@ public class DemoHAIFA {
                         user = ((OpenstackInfoContainer) tmpArDC1).getUser(); //new JSONObject((String)tmpArCr.get(index)).getString("federatedUser");
                         psw = ((OpenstackInfoContainer) tmpArDC1).getPassword(); //new JSONObject((String)tmpArCr.get(index)).getString("federatedPassword");
                         */
-                        
-                        boolean result=om.stackInstantiate(template,(OpenstackInfoContainer) tmpArCrob,m,templateUUID);//BEACON>>> in final version of OSFFM 
+                        //System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"+template);
+                        boolean resultIS=om.stackInstantiate(template,(OpenstackInfoContainer) tmpArCrob,m,stackName);//BEACON>>> in final version of OSFFM
                         //we will use variable result to understand if the stack is deployed inside the federated cloud
                         
                         region=dh.consoleRequest("Insert region name:[Deafult: RegionOne]","RegionOne");//this element it will be analized in second 
                         ((OpenstackInfoContainer)tmpArCrob).setRegion(region);
                           HashMap<String,ArrayList<Port>> map_res_port=om.sendShutSignalStack4DeployAction(stackName,(OpenstackInfoContainer)tmpArCrob,first,m);
-                        if(result)
+                        if(resultIS)
                             first=false;//if first stack creation is successfully completed, the other stacks instantiated are not the First
                         //and need different treatment.
                         arRes.add(map_res_port);
                     }
                     arMapRes.add(arRes);
+                    arindex++;
+                    if(arindex>=arDC.size())
+                        skip=true;
                 }
 //2.5 invocare funzione che simula la sofferenza della risorsa X
 ////2.6 spegnimento VM tramite Nova con le informazioni contenute su Mongo relative al runtime del sistema
@@ -182,7 +188,7 @@ public class DemoHAIFA {
               new BufferedReader(new InputStreamReader(in))) {
             String line = null;
             while ((line = reader.readLine()) != null) {
-                manifest=manifest+line;
+                manifest=manifest+"\n"+line;
             }
         } catch (IOException x) {
             System.err.println(x.getMessage());
@@ -212,5 +218,16 @@ public class DemoHAIFA {
             }
             return result;
     }
-    
+      private void listSplittedTemplate(){
+        File folder = new File("./subrepoTemplate");
+        File[] listOfFiles = folder.listFiles();
+
+        for (int i = 0; i < listOfFiles.length; i++) {
+          if (listOfFiles[i].isFile()) {
+            System.out.println("File " + listOfFiles[i].getName());
+          } else if (listOfFiles[i].isDirectory()) {
+            System.out.println("Directory " + listOfFiles[i].getName());
+          }
+        }
+    }
 }
