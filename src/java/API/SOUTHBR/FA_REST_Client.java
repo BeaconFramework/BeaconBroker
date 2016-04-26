@@ -167,7 +167,7 @@ public class FA_REST_Client {
         return plainAnswer;
     }
     
-    protected Response createPutrequest(String urlFA,JSONObject jsonObject,HttpBasicAuthFilter auth){
+    protected Response createInsertingrequest(String urlFA,String jsonObject,HttpBasicAuthFilter auth,String type,String mt){
         ClientConfig config = new ClientConfig();
         Client client = ClientBuilder.newClient(config);
         WebTarget target;
@@ -175,15 +175,28 @@ public class FA_REST_Client {
         //Response plainAnswer =null; 
         target.register(auth);
         
-        Invocation.Builder invocationBuilder =target.request(MediaType.APPLICATION_JSON);
+        Invocation.Builder invocationBuilder =target.request();
         MultivaluedHashMap<String,Object> mm=new MultivaluedHashMap<String,Object>();
         mm.add("content-type", "application/json");
         mm.add("Accept", "application/json");
         mm.add("charsets", "utf-8");
         invocationBuilder.headers(mm);
         //preliminary operation of request creation ended
-        Response plainAnswer =invocationBuilder
-                .put(Entity.entity(jsonObject, MediaType.APPLICATION_JSON));
+        Response plainAnswer=null;
+        switch(type){
+            case "post":
+            {
+                plainAnswer=invocationBuilder
+                    .post(Entity.entity(jsonObject, mt));
+                break;
+            }
+            case "put":
+            {
+                plainAnswer =invocationBuilder
+                    .put(Entity.entity(jsonObject, mt));
+                break;
+            }
+        }
         return plainAnswer;
     }
     
