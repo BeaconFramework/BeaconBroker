@@ -1070,7 +1070,7 @@ exists or setup the property manually. For example like this:
         <copyfiles files="${file.reference.json-simple-1.1.1.jar}" iftldtodir="${build.web.dir}/WEB-INF" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${libs.restlib.classpath}" iftldtodir="${build.web.dir}/WEB-INF" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${libs.restapi.classpath}" iftldtodir="${build.web.dir}/WEB-INF" todir="${dist.ear.dir}/lib"/>
-        <copyfiles files="${file.reference.myOpenstack4jLibrary.jar}" iftldtodir="${build.web.dir}/WEB-INF" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.Heat.jar}" iftldtodir="${build.web.dir}/WEB-INF" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.log4j.jar}" iftldtodir="${build.web.dir}/WEB-INF" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.jclouds-okhttp-1.9.1.jar}" iftldtodir="${build.web.dir}/WEB-INF" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.openstack-keystone-2.0.0-SNAPSHOT.jar}" iftldtodir="${build.web.dir}/WEB-INF" todir="${dist.ear.dir}/lib"/>
@@ -1125,7 +1125,7 @@ exists or setup the property manually. For example like this:
         <copyfiles files="${file.reference.json-simple-1.1.1.jar}" todir="${build.web.dir}/WEB-INF/lib"/>
         <copyfiles files="${libs.restlib.classpath}" todir="${build.web.dir}/WEB-INF/lib"/>
         <copyfiles files="${libs.restapi.classpath}" todir="${build.web.dir}/WEB-INF/lib"/>
-        <copyfiles files="${file.reference.myOpenstack4jLibrary.jar}" todir="${build.web.dir}/WEB-INF/lib"/>
+        <copyfiles files="${file.reference.Heat.jar}" todir="${build.web.dir}/WEB-INF/lib"/>
         <copyfiles files="${file.reference.log4j.jar}" todir="${build.web.dir}/WEB-INF/lib"/>
         <copyfiles files="${file.reference.jclouds-okhttp-1.9.1.jar}" todir="${build.web.dir}/WEB-INF/lib"/>
         <copyfiles files="${file.reference.openstack-keystone-2.0.0-SNAPSHOT.jar}" todir="${build.web.dir}/WEB-INF/lib"/>

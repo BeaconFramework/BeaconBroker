@@ -196,6 +196,9 @@
                 </library>
                 <library dirs="200">
                     <file>${file.reference.myOpenstack4jLibrary.jar}</file>
+                </library>
+                <library dirs="200">
+                    <file>${file.reference.Heat.jar}</file>
                     <path-in-war>WEB-INF/lib</path-in-war>
                 </library>
                 <library dirs="200">
