@@ -78,10 +78,10 @@ public class JcloudTest {
         
        
         
-     NeutronTest neutron = new NeutronTest("http://172.17.1.217:35357/v2.0","demo","admin","password","RegionOne");
-     // neutron.listNetworks();
+     NeutronTest neutron = new NeutronTest("http://172.17.1.217:35357/v2.0","beacon","admin","password","RegionOne");
+      neutron.listNetworks();
 //neutron.listRegions();
-neutron.createRouter("prova","RegionOne","f225b4d8-9da8-422f-a637-9427a4f64a7a","62da5ef7-87ed-4e49-8cd7-1bad78257080");
+//neutron.createRouter("prova","RegionOne","f225b4d8-9da8-422f-a637-9427a4f64a7a","62da5ef7-87ed-4e49-8cd7-1bad78257080");
        // neutron.deleteNetworks();
        //neutron.createNetwork();
       // neutron.updateNetwork();
@@ -95,7 +95,7 @@ neutron.createRouter("prova","RegionOne","f225b4d8-9da8-422f-a637-9427a4f64a7a",
 
      //   neutron.getStatus();
    //    neutron.listRegions();
-  neutron.printListExtension();
+ // neutron.printListExtension();
        //neutron.createFloading();
         //NovaTest nova=new NovaTest();
         //nova.test();

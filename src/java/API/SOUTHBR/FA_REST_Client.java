@@ -17,22 +17,24 @@ package API.SOUTHBR;
 //<editor-fold defaultstate="collapsed" desc="Import Section">
 import API.SOUTHBR.Exception.FA_Exception;
 import JClouds_Adapter.KeystoneTest;
+import JClouds_Adapter.NeutronTest;
 import java.net.URI;
+import java.util.Iterator;
 import java.util.logging.Level;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
-import org.glassfish.jersey.client.filter.HttpBasicAuthFilter;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
+import org.apache.log4j.Logger;
 import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.filter.HttpBasicAuthFilter;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.apache.log4j.Logger;
 import utils.Exception.*;
 //</editor-fold>
 /**
@@ -41,10 +43,20 @@ import utils.Exception.*;
  */
 public class FA_REST_Client {
 
-    private String idsEndpoint="",tenantName="",userName="",password="";
+    
+
+    private String idsEndpoint="",tenantName="",userName="",password="",region="RegionOne";
     private KeystoneTest key;
     static final Logger LOGGER = Logger.getLogger(FA_REST_Client.class);
 //<editor-fold defaultstate="collapsed" desc="Getter&Setter">
+    public String getRegion() {
+        return region;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
+    }
+    
     protected String getIdsEndpoint() {
         return idsEndpoint;
     }
@@ -123,6 +135,18 @@ public class FA_REST_Client {
         else
             throw new Exception("Exception is occurred because the service named ....is not present.\n"
             + "It is impossible retrieve Network Controller Endpoint");
+    }
+    
+    /**
+     * Function used to obtain from Jclouds adapter the collection iterator representing 
+     * all networks available for the tenant.
+     * @return Iterator<Network>
+     * @author gtricomi
+     */
+    public Iterator getNetworkList(){
+        NeutronTest nt=new NeutronTest(this.idsEndpoint,this.tenantName,this.userName,this.password,this.region);
+        Iterator i=nt.listNetworks();
+        return i;
     }
     
     /**

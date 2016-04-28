@@ -45,7 +45,7 @@ public class FA_client4Sites extends FA_REST_Client{
         
         
         try{
-            this.checkResponse(r);
+            this.checkResponse(r);//as answer we expect a status code 200
         }
         catch(WSException wse){
             LOGGER.error("Exception occurred in createTenantFA method, the web service has answer with bad status!\n"+wse.getMessage());
