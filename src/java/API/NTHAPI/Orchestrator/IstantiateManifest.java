@@ -93,7 +93,10 @@ public class IstantiateManifest {
         //SIMPLE UNAUTHENTICATING OPERATION
         String templatename="";
         //templatename="cc228189-0f2f-4aa4-8336-88db88e477d2";
-        String prepath="./subrepoTemplate";
+        String home=System.getProperty("java.home");
+        String fs=System.getProperty("file.separator");
+        //String prepath=home+fs+"subrepoTemplate";
+        String prepath="./subrepoTemplate/"+tenant;
         //System.out.println("SI PARTE");
         JSONObject input=new JSONObject(),reply=new JSONObject();
         JSONParser jp=new JSONParser();
@@ -200,7 +203,7 @@ public class IstantiateManifest {
             File currentFile = new File(f.getPath(),s);
             currentFile.delete();
         }
-        f.delete();
+        f.delete();//infine 
         reply.put("returncode", 0);
         reply.put("errormesg", "");
         return reply.toJSONString();

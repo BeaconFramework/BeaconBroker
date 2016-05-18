@@ -13,14 +13,12 @@
 *   limitations under the License.
 */
 
-package API.SOUTHBR;
+package API.EASTAPI.Clients;
+
 //<editor-fold defaultstate="collapsed" desc="Import Section">
-import API.SOUTHBR.Exception.FA_Exception;
-import JClouds_Adapter.KeystoneTest;
-import JClouds_Adapter.NeutronTest;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.util.Iterator;
-import java.util.logging.Level;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -30,49 +28,40 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
+import org.apache.commons.httpclient.UsernamePasswordCredentials;
+import org.apache.commons.httpclient.auth.AuthScope;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.net.util.Base64;
 import org.apache.log4j.Logger;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.filter.HttpBasicAuthFilter;
+import org.jclouds.domain.Credentials;
+import org.jclouds.rest.HttpClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 import utils.Exception.*;
 //</editor-fold>
+
 /**
- *
+ * This CLASS NEED TO BE MODIFIED.
+ * This CLASS IS USED TO MAKE REQUESTS FORFEDSDN
  * @author Giuseppe Tricomi
  */
-public class FA_REST_Client {
+public class EastBrRESTClient {
 
     
 
-    private String idsEndpoint="",tenantName="",userName="",password="",region="RegionOne";
-    private KeystoneTest key;
-    static final Logger LOGGER = Logger.getLogger(FA_REST_Client.class);
+    private String userName="",password="";//,region="RegionOne";
+    static final Logger LOGGER = Logger.getLogger(EastBrRESTClient.class);
 //<editor-fold defaultstate="collapsed" desc="Getter&Setter">
-    public String getRegion() {
+    /*public String getRegion() {
         return region;
     }
 
     public void setRegion(String region) {
         this.region = region;
     }
-    
-    protected String getIdsEndpoint() {
-        return idsEndpoint;
-    }
-
-    protected void setIdsEndpoint(String idsEndpoint) {
-        this.idsEndpoint = idsEndpoint;
-    }
-
-    protected String getTenantName() {
-        return tenantName;
-    }
-
-    protected void setTenantName(String tenantName) {
-        this.tenantName = tenantName;
-    }
-
+ */
     protected String getUserName() {
         return userName;
     }
@@ -89,146 +78,67 @@ public class FA_REST_Client {
         this.password = password;
     }
 
-    public KeystoneTest getKey() {
-        return key;
-    }
-
-    protected void setKey(KeystoneTest key) {
-        this.key = key;
-    }
     //</editor-fold>
     
-    public FA_REST_Client(String endpoint,String tenantName,String userName,String password) {
-        this.idsEndpoint=endpoint;
+    public EastBrRESTClient(String userName,String password) {
         this.password=password;
-        this.tenantName=tenantName;
         this.userName=userName;
-        key=new KeystoneTest(this.tenantName,this.userName,this.password,this.idsEndpoint);
     }
     
 
-    /**
-     * This function returns FA URL.
-     * @param TenantId
-     * @return 
-     */
-    public String getFA_Url(String TenantId) throws FA_Exception{
-        String result= key.servicetGetEndpoint("Federation_Agent");
-        if(result!=null)
-            return result;
-        else
-            throw new FA_Exception("Exception is occurred because the service named Federation Agent is not present.\n"
-                    + "It is impossible retrieve Federation Agent Endpoint");
-    }
     
-    /**
-     * This function returns Network Controller.
-     * @param TenantId
-     * @return
-     * @throws Exception
-     * @author gtricomi
-     */
-    public String getNetController(String TenantId) throws Exception{
-        String result= key.servicetGetEndpoint("Network_controller");//>>>BEACON verify this field and modify with correct field
-        if(result!=null)
-            return result;
-        else
-            throw new Exception("Exception is occurred because the service named ....is not present.\n"
-            + "It is impossible retrieve Network Controller Endpoint");
-    }
-    
-    /**
-     * Function used to obtain from Jclouds adapter the collection iterator representing 
-     * all networks available for the tenant.
-     * @return Iterator<Network>
-     * @author gtricomi
-     */
-    public Iterator getNetworkList(){
-        NeutronTest nt=new NeutronTest(this.idsEndpoint,this.tenantName,this.userName,this.password,this.region);
-        Iterator i=nt.listNetworks();
-        return i;
-    }
-    
-    /**
-     * This function is used to create a post request for web service pointed by urlFA.
-     * @param urlFA
-     * @param jsonObject
-     * @param auth
-     * @return
-     * @throws JSONException 
-     * @author gtricomi
-     */
-    protected Response createInsertingrequest(String urlFA,JSONObject jsonObject,HttpBasicAuthFilter auth,String type){
+   public Response makeSimpleRequest(String urlFEDSDN,String body,String type){
+    HttpBasicAuthFilter auth=new HttpBasicAuthFilter(this.userName,this.password);
         ClientConfig config = new ClientConfig();
         Client client = ClientBuilder.newClient(config);
         WebTarget target;
-        target = client.target(getBaseURI(urlFA));
-        //Response plainAnswer =null; 
-        target.register(auth);
-        
-        Invocation.Builder invocationBuilder =target.request(MediaType.APPLICATION_JSON);
-        MultivaluedHashMap<String,Object> mm=new MultivaluedHashMap<String,Object>();
-        mm.add("content-type", MediaType.APPLICATION_JSON);
-        mm.add("Accept", "application/json");
-        mm.add("charsets", "utf-8");
-        invocationBuilder.headers(mm);
-        //preliminary operation of request creation ended
-        Response plainAnswer=null;
-        switch(type){
-            case "post":
-            {
-                plainAnswer=invocationBuilder
-                    .post(Entity.entity(jsonObject.toString(), MediaType.APPLICATION_JSON_TYPE));
-                break;
-            }
-            case "put":
-            {
-                plainAnswer =invocationBuilder
-                    .put(Entity.entity(jsonObject.toString(), MediaType.APPLICATION_JSON));
-                break;
-            }
-        }
-        return plainAnswer;
-    }
-    
-    protected Response createInsertingrequest(String urlFA,String stringjsonObject,HttpBasicAuthFilter auth,String type,String mt){
-        ClientConfig config = new ClientConfig();
-        Client client = ClientBuilder.newClient(config);
-        WebTarget target;
-        target = client.target(getBaseURI(urlFA));
-        //Response plainAnswer =null; 
-        target.register(auth);
+        client.register(auth);
+        target = client.target(getBaseURI(urlFEDSDN));
         
         Invocation.Builder invocationBuilder =target.request();
         MultivaluedHashMap<String,Object> mm=new MultivaluedHashMap<String,Object>();
         mm.add("content-type", "application/json");
         mm.add("Accept", "application/json");
         mm.add("charsets", "utf-8");
+        String auth1 = this.getUserName() + ":" + this.getPassword();
+        byte[] encodedAuth = Base64.encodeBase64(auth1.getBytes(Charset.forName("ISO-8859-1")));
+        String authHeader = "Basic " + new String(encodedAuth);
+        mm.add("Authorization", authHeader);
         invocationBuilder.headers(mm);
-        //preliminary operation of request creation ended
-        Response plainAnswer=null;
-        switch(type){
-            case "post":
-            {
-                plainAnswer=invocationBuilder
-                    .post(Entity.entity(stringjsonObject, mt));
+        Response plainAnswer = null;
+        switch (type) {
+            case "post": {
+                plainAnswer = invocationBuilder
+                        .post(Entity.entity(body, MediaType.APPLICATION_JSON));
                 break;
             }
-            case "put":
-            {
-                plainAnswer =invocationBuilder
-                    .put(Entity.entity(stringjsonObject, mt));
+            case "put": {
+                plainAnswer = invocationBuilder
+                        .put(Entity.entity(body, MediaType.APPLICATION_JSON));
                 break;
+            }
+            case "delete": {
+                plainAnswer = invocationBuilder
+                        .delete();
+                break;
+            }
+            case "get": {
+                plainAnswer = invocationBuilder
+                        .get();
+                break;
+            }
+            default :{
+                //nothing to do
             }
         }
         return plainAnswer;
     }
     
+    
     /**
      * Uri contructor.
      * @param targetURI
      * @return 
-     * @author gtricomi
      */
     protected static URI getBaseURI(String targetURI) {
         return UriBuilder.fromUri(targetURI).build();

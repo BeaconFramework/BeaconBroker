@@ -7,14 +7,18 @@
 package API.SOUTHBR;
 
 import static API.SOUTHBR.FA_REST_Client.LOGGER;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.glassfish.jersey.client.filter.HttpBasicAuthFilter;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import utils.Exception.WSException;
+import utils.Exception.WSException500;
 
 /**
  *
@@ -36,31 +40,90 @@ public class FA_client4Network extends FA_REST_Client{
      * @throws WSException
      * @author gtricomi
      */
-    public Response createSiteTable(String TenantId, String faURL,String body,int version)throws WSException{
+    public Response createNetTable(String TenantId, String faURL,String body)throws WSException{
         JSONObject jo=null;
         Response r=null;
         HttpBasicAuthFilter auth=new HttpBasicAuthFilter(this.getUserName(), this.getPassword());
-        try {
-            
-            jo=new JSONObject();
-            jo.append("version", version);
-            jo.append("table", body.substring(1, (body.length()-1)));
-        } catch (JSONException ex) {
-            LOGGER.error("It's impossible parse body received in JSONObject! error occurred in createSiteTable operation.\n"+ex.getMessage());
-        }
-        
-        if(jo!=null)
-        {
-            r=this.createInsertingrequest("http://"+faURL+"/net-fa/tenants/"+TenantId+"/networks_table",jo,auth,"put");
+        //System.out.println(jo.toString());
+            r=this.createInsertingrequest("http://"+faURL+"/net-fa/tenants/"+TenantId+"/networks_table",body,auth,"put",MediaType.APPLICATION_JSON);
             try{
                 this.checkResponse(r);//as answer we expect a status code 200
+            }
+            catch(WSException500 wse500){
+                LOGGER.error("Exception occurred in createTenantFA method, the web service has answer with bad status!\n"+wse500.getMessage()+"\nAnyway the execution It will be continued.");
+                return r;
             }
             catch(WSException wse){
                 LOGGER.error("Exception occurred in createTenantFA method, the web service has answer with bad status!\n"+wse.getMessage());
                 throw wse;
             }
             return r;
+    }
+    
+    /*
+    
+            */
+    
+    
+    /**
+     * This function prepare the object for FA Create Network Table function.
+     * @param sites
+     * @return 
+     * @author gtricomi
+     */
+    public String constructNetworkTableJSON(ArrayList<ArrayList<HashMap<String,Object>>> networks,int version){
+        //>>>BEACON this String need to be reviewed
+        String result="";
+        String tmp="{\"table\": [";
+        boolean infirst=true,first=true;
+        JSONArray ja=new JSONArray();
+        try {
+
+            for (ArrayList<HashMap<String,Object>> superiorelem : networks) {
+                if (!first) {
+                        tmp = tmp + ", ";
+                    }
+                tmp=tmp+"[";
+                for (HashMap elem : superiorelem) {
+                    /*
+                     {"table": 
+                     [
+                     [
+                     {
+                     "tenant_id": "ab6a28b9f3624f4fa46e78247848544e",
+                     "site_name": "site1",
+                     "name": "private",
+                     "vnid": "c926e107-3292-48d4-a36b-f72fa81507dd"
+                     },
+                     {
+                     "tenant_id": "0ce39f6ae8044445b31d5b7f9b34062b",
+                     "site_name": "site2",
+                     "name": "private",
+                     "vnid": "d2c11d66-fb61-4438-819c-c562e108dbb5"
+                     }
+                     ]
+                     ],
+                     "version": 111}
+                     */
+                    if (!infirst) {
+                        tmp = tmp + ", ";
+                    }
+                    tmp = tmp + "{";
+                    tmp = tmp + ("\"tenant_id\": \"" + elem.get("tenant_id") + "\", ");
+                    tmp = tmp + ("\"site_name\": \"" + elem.get("site_name") + "\", ");
+                    tmp = tmp + ("\"name\": \"" + elem.get("name") + "\", ");
+                    tmp = tmp + ("\"vnid\": \"" + elem.get("vnid") + "\"");
+                    tmp = tmp + "}";
+                    infirst = false;
+                }
+                tmp=tmp+"]";
+                first = false;
+            }
+            tmp=tmp+"], \"version\": "+version+"}";
+        } catch(Exception e){
+            
         }
-        return r;
+        
+        return tmp;    
     }
 }

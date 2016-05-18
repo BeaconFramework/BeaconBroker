@@ -15,6 +15,8 @@
 
 package JClouds_Adapter;
 
+import java.util.HashMap;
+
 /**
  *
  * @author Giuseppe Tricomi/gtricomi
@@ -25,7 +27,18 @@ public class FunctionResponseContainer {
     Object responseObject=null;
     String responseMessage="";
     String responseObjectType="";
+    
+    HashMap mapContainer=null;
 
+    public HashMap getMapContainer() {
+        return mapContainer;
+    }
+
+    public void insertOnMapContainer(String key,Object elem) {
+        if(this.mapContainer==null)
+            this.mapContainer=new HashMap();
+        this.mapContainer.put(key, elem);
+    }
     public boolean isResponseCode() {
         return responseCode;
     }
@@ -53,5 +66,9 @@ public class FunctionResponseContainer {
 
     public void setResponseMessage(String responseMessage) {
         this.responseMessage = responseMessage;
+    }
+
+    public FunctionResponseContainer() {
+       
     }
 }

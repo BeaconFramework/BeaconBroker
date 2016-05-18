@@ -15,6 +15,13 @@
 
 package API.EASTAPI;
 
+import JClouds_Adapter.KeystoneTest;
+import JClouds_Adapter.OpenstackInfoContainer;
+import MDBInt.FederatedCloud;
+import MDBInt.FederatedUser;
+import MDBInt.FederationUser;
+import OSFFMIDM.SimpleIDM;
+import java.util.HashMap;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -23,15 +30,10 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
+import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import OSFFMIDM.SimpleIDM;
-import MDBInt.FederatedCloud;
-import MDBInt.FederatedUser;
-import MDBInt.FederationUser;
-import JClouds_Adapter.OpenstackInfoContainer;
-import org.apache.log4j.Logger;
 /**
  * REST Web Service
  *
@@ -61,6 +63,7 @@ public class UsersResource {
     @Consumes("application/json")
     @Produces("application/json")
     public String validate_user(String content) {
+        //VERIFICARE L'APPROCCIO NELL'INTERAZIONE CON IL FEDSDN
         JSONObject reply=new JSONObject();
         JSONParser parser= new JSONParser();
         JSONObject input=null;
@@ -93,14 +96,32 @@ public class UsersResource {
         OpenstackInfoContainer oic=new OpenstackInfoContainer(cloud,cmp_endpoint,tenant,username,pass,region);
         //costruzione oggetto Openstackinfocontainer, e verifica delle credenziali attraverso il modulo di keystone 
         //fornito da jclouds
-        
-        
-        String token=null;
-        String tenant_id=null;
-        // TODO invocare funzione che ottiene token da keystone per username del tenant all'indirizzo cmp_endpoint
-        
-               
-        
+        KeystoneTest key=new KeystoneTest(tenant,username,pass,cmp_endpoint);
+        HashMap hm=key.getToken(tenant, username, pass);
+        String token=(String)hm.get("ID");
+        //When FEDSDN will take in count token expiration date we will use this token as
+        ////output parameter that will be returned to it. For the moment we will return a static 
+        //////token taken  from MongoDb 
+        token=sidm.getFederationToken(tenant, username);
+        if((String)hm.get("ID")==null)
+        {
+            LOGGER.debug("User not Valid!");
+            reply.put("returncode", 1); 
+            reply.put("errormesg", "User not Valid!");
+            reply.put("token",null);
+            reply.put("tenant_id", null);
+            return reply.toJSONString();
+        }
+        else if(token==null)
+        {
+            LOGGER.error("It is impossible retrieve token");
+            reply.put("returncode", 1); 
+            reply.put("errormesg", "It is impossible retrieve token: OPERATION ABORTED");
+            reply.put("token",null);
+            reply.put("tenant_id", null);
+            return reply.toJSONString();
+        }
+        String tenant_id=key.getTenantId(tenant);
         reply.put("returncode", 0); // or reply.put("returncode", 1);
         reply.put("errormesg", "None"); //or reply.put("errormesg", "Mesg");
         reply.put("token",token);
@@ -108,14 +129,9 @@ public class UsersResource {
         return reply.toJSONString();
     }
     
-    
-    
-    
-    
-    
     /**
      * Sub-resource locator method for validate_user
-     */
+    */
     /*@Path("{user_id}/info")
     
     public UserResource getUserResource(@PathParam("user_id") String userid)) {

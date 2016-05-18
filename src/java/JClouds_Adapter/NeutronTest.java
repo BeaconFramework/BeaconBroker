@@ -49,6 +49,7 @@ import org.jclouds.openstack.neutron.v2.domain.Port;
 import org.jclouds.openstack.neutron.v2.domain.Ports;
 import org.jclouds.openstack.neutron.v2.domain.Router;
 import org.jclouds.openstack.neutron.v2.domain.Router.CreateRouter;
+import org.jclouds.openstack.neutron.v2.domain.Routers;
 import org.jclouds.openstack.neutron.v2.domain.Subnet;
 import org.jclouds.openstack.neutron.v2.domain.Subnet.CreateSubnet;
 import org.jclouds.openstack.neutron.v2.domain.Subnets;
@@ -143,7 +144,7 @@ public class NeutronTest {
         cb = cb.name("ert");
         cb = cb.shared(Boolean.TRUE);
         cb = cb.external(Boolean.TRUE);
-        cb = cb.tenantId("d43c22b4619948d2b265bf082775780e");
+        cb = cb.tenantId("demo");
 
         cn = cb.build();
         net = networkApi.create(cn);
@@ -187,7 +188,7 @@ public class NeutronTest {
      * Function modified in order to be used as Jclouds neutron interface element.
      * @author gtricomi
      */
-    public Iterator listNetworks() {
+    public Iterator<Network> listNetworks() {
 
         NetworkApi networkApi = neutronApi.getNetworkApi("RegionOne");
         Networks it2 = networkApi.list(new PaginationOptions());
@@ -228,7 +229,7 @@ public class NeutronTest {
         cb.adminStateUp(Boolean.TRUE);
         cb.shared(Boolean.TRUE);
         cb.external(Boolean.TRUE);
-        cb.tenantId("b809dcb956a74b009ac728931536d04e");
+        cb.tenantId("demo");
 
         cn = cb.build();
         net = networkApi.create(cn);
@@ -337,7 +338,7 @@ public class NeutronTest {
         cb.name("mysubnet");
         cb.ipVersion(4);
         cb.allocationPools(pool);
-        cb.gatewayIp("192.168.0.1");
+       cb.gatewayIp("192.168.0.1");
         cb.enableDhcp(Boolean.TRUE);
 
         cs=cb.build();
@@ -522,8 +523,8 @@ public class NeutronTest {
             boolean adminStateUp,
             String net_name
     ){
-        boolean result=true;
         FunctionResponseContainer frc= new FunctionResponseContainer();
+        RouterApi routerApi=null;
         //preliminary checks
         if(((cidr==null)||(cidr==""))||((all_pool_start==null)||(all_pool_start==""))||((all_pool_end==null)||(all_pool_end=="")))
         {
@@ -543,8 +544,8 @@ public class NeutronTest {
         }
         if((subnet_name==null)||(subnet_name==""))
             subnet_name=java.util.UUID.randomUUID().toString();
-        if((gateway_IP==null)||(gateway_IP==""))
-            gateway_IP=(cidr.substring(0, cidr.lastIndexOf("/")-1))+1;
+        /*if((gateway_IP==null)||(gateway_IP==""))
+            gateway_IP=(cidr.substring(0, cidr.lastIndexOf(".")))+1;*/
         if((tenantId==null)||(tenantId==""))
         {
             LOGGER.error("An exception is generated in subnet creation function.Cannot create a net tenantId is not specified");
@@ -558,10 +559,53 @@ public class NeutronTest {
         if((region==null)||(region==""))
             region=this.regionName;
         //end check
-        FunctionResponseContainer tmp=this.createNetwork(region, tenantId, shared, external, adminStateUp, net_name);
-        Network t=(Network)tmp.responseObject;
-        return null;
+        FunctionResponseContainer tmpNet=this.createNetwork(region, tenantId, shared, external, adminStateUp, net_name);
+        Network t=(Network)tmpNet.responseObject;
+        FunctionResponseContainer tmpSub=this.createSubnet(region, t.getId(), cidr, all_pool_start, all_pool_end, subnet_name, gateway_IP, dhcpEnable);
+        Subnet s=(Subnet)tmpSub.responseObject;
+        if(external)//creazione router o link al preesistente router
+        {
+            boolean externalRouterfound=false;
+            
+            Optional<RouterApi> rou = neutronApi.getRouterApi(region);
+            routerApi =rou.get();
+            Routers routers =routerApi.list(new PaginationOptions());
+            String routername="";
+            String routerId="";
+            for(Router ro : routers)
+                if(ro.getExternalGatewayInfo()!=null && !externalRouterfound)
+                {
+                    externalRouterfound=true;
+                    routername=ro.getName();
+                    routerId=ro.getId();
+                    break;
+                }
+            routername=java.util.UUID.randomUUID().toString();
+            routerId=this.createRouter(routername, region, s.getId(), t.getId());
+            routerApi.addInterfaceForSubnet(routerId, s.getId());
+        }
+        frc.getMapContainer().put("Subnet", s);
+        frc.getMapContainer().put("Network", t);
+        //inserimento all'interno dell'oggetto di tutti gli elementi creati in qst processo
+        return frc;
     }
+    /*
+      public void testListRouters() {
+        RouterApi routerApi=null;
+        Optional<RouterApi> rou = neutronApi.getRouterApi("RegionOne");
+        routerApi = rou.get();
+        Routers routers = routerApi.list(new PaginationOptions());
+        //routers.get(0).getExternalGatewayInfo().
+        for(Router ro : routers){
+            if(ro.getExternalGatewayInfo()==null)
+                System.out.println("NULL");
+            else    
+              System.out.println("&&&&"+ro.getName()+ro.getExternalGatewayInfo().toString());
+              
+        }
+        String routername = java.util.UUID.randomUUID().toString();
+        //this.createRouter(routername, "RegionOne", s.getId(), t.getId());
+    }*/
     
     /**
      * Function used to create subnet. 
@@ -606,8 +650,8 @@ public class NeutronTest {
         }
         if((subnet_name==null)||(subnet_name==""))
             subnet_name=java.util.UUID.randomUUID().toString();
-        if((gateway_IP==null)||(gateway_IP==""))
-            gateway_IP=(cidr.substring(0, cidr.lastIndexOf("/")-1))+1;
+        /*if((gateway_IP==null)||(gateway_IP==""))
+            gateway_IP=(cidr.substring(0, cidr.lastIndexOf("/")-1))+1;*/
         if((region==null)||(region==""))
             region=this.regionName;
         //end check
@@ -632,7 +676,8 @@ public class NeutronTest {
         cb.name(subnet_name);
         cb.ipVersion(4);
         cb.allocationPools(pool);
-        cb.gatewayIp(gateway_IP);
+        if((gateway_IP==null)||(gateway_IP==""))
+            cb.gatewayIp(gateway_IP);
         cb.enableDhcp(dhcpEnable);
         
         cs=cb.build();
@@ -724,59 +769,45 @@ public class NeutronTest {
         }
     }
     
-    
-     public boolean createRouter(
+    /**
+     * 
+     * @param nomeRouter
+     * @param region
+     * @param subnetId
+     * @param networkID
+     * @return 
+     * @author gtricomi
+     */
+     public String createRouter(
              String nomeRouter,
              String region,
              String subnetId,
-             String networkID) {//what is needed here?
-
-        //  Optional<RouterApi> router=neutronApi.getRouterApi("RegionOne");
+             String networkID) {
         RouterApi routerApi=null;
         NetworkApi networkApi=null;
         SubnetApi subnetApi=null;
         String routerId="";
-        //
         for (String regionel : neutronApi.getConfiguredRegions()) {
             
-                System.out.println(regionel);
-                Optional<RouterApi> t = neutronApi.getRouterApi(region);
+               //LOGGER.debug(regionel);
+               Optional<RouterApi> t = neutronApi.getRouterApi(region);
                routerApi =t.get(); 
         }
-        /*for (String regionel : neutronApi.getConfiguredRegions()) {
-            routerApi = neutronApi.getRouterApi(region).get();
-            networkApi = neutronApi.getNetworkApi(region);
-            subnetApi = neutronApi.getSubnetApi(region);
-            //verificare se il tenant possiede già un router
-            ////se non presente crearne uno
-            ////se presente ottenere il router marcato come external
-            //aggiungere al router l'interfaccia per la subnet in question
-            routerId=null;
-            Iterator pi=routerApi.list().iterator();   */
-          /*  while(pi.hasNext()){
-                Router r=(Router)pi.next();
-                
-            }*/
             Router.CreateBuilder cb =Router.createBuilder();
             cb.adminStateUp(Boolean.TRUE);
-            //
             ExternalGatewayInfo egi;
             ExternalGatewayInfo.Builder cbe=ExternalGatewayInfo.builder();
             cbe.enableSnat(Boolean.FALSE);
             cbe.networkId(networkID);
             egi=cbe.build();
-            //
             cb.externalGatewayInfo(egi);
+            
             CreateRouter r=cb.build();
             
             routerApi.create(r);
-      //  }
-       // routerApi.addInterfaceForSubnet(routerId, subnetId);
-        
-        return true;
+            
+        return r.getId();
     }
-    
-    
     
     
     

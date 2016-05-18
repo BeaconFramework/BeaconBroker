@@ -55,6 +55,7 @@ public class LinksResource {
     @Consumes("application/json")
     @Produces("application/json")
     public String LinkFunctions(String content) {
+        
         JSONObject reply=new JSONObject();
         JSONParser parser= new JSONParser();
         JSONObject input=null;

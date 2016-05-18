@@ -40,10 +40,12 @@ import com.mongodb.AggregationOutput;
 import java.util.HashSet;
 import java.util.Set;
 import org.apache.log4j.Logger;
+
+
 /**
  * @author agalletta
  * @author gtricomi
-*/
+ */
 public class DBMongo {
 
     private String serverURL;
@@ -58,6 +60,7 @@ public class DBMongo {
     private ParserXML parser;
     private MessageDigest messageDigest;
     static final Logger LOGGER = Logger.getLogger(DBMongo.class);
+
     public DBMongo() {
 
         map = new HashMap();
@@ -81,13 +84,13 @@ public class DBMongo {
             password = params.getChildText("password");
             serverList = params.getChild("serversList");
             //this.connectReplication();
-            
+
         } //init();
         catch (Exception ex) {
             ex.printStackTrace();
         }
     }
-    
+
     public String getRunTimeInfo(String dbName, String uuid) {
 
         BasicDBObject first = new BasicDBObject();
@@ -99,17 +102,16 @@ public class DBMongo {
 
         obj = collection.findOne(first);
 
-       
         return obj.toString();
 
     }
-    
+
     private void connectReplication() {
 
         MongoCredential credential;
         ArrayList<ServerAddress> lista = new ArrayList();
         List<Element> servers = serverList.getChildren();
-      //  System.out.println("dentro connect");
+        //  System.out.println("dentro connect");
         String ip;
         int porta;
         try {
@@ -128,8 +130,8 @@ public class DBMongo {
         }
 
     }
-    
-      /**
+
+    /**
      *
      * @param dbName
      * @param userName
@@ -148,7 +150,7 @@ public class DBMongo {
         BasicDBObject obj;
         query.append("federationPassword", this.toMd5(password));
            // System.out.println("password: "+this.toMd5(password));
-        
+
         federationUser = collezione.findOne(query);
 
         if (federationUser == null) {
@@ -165,11 +167,13 @@ public class DBMongo {
         }
         return null;
     }
+
     /**
-     * This use only token. 
-     * It will be 
+     * This use only token. It will be
+     *
      * @param dbName
-     * @param token, this is an UUID generated from simple_IDM when a new Federation user is added. 
+     * @param token, this is an UUID generated from simple_IDM when a new
+     * Federation user is added.
      * @param cloudID
      * @return
      * @author gtricomi
@@ -199,11 +203,13 @@ public class DBMongo {
         }
         return null;
     }
+
     /**
      * Returns generic federation infoes.
+     *
      * @param dbName
-     * @param token
-     * @return 
+     * @param token, this is an internal token?
+     * @return
      * @author gtricomi
      */
     public String getFederationCredential(String dbName, String token) {
@@ -211,44 +217,36 @@ public class DBMongo {
         DBCollection collezione = this.getCollection(dataBase, "credentials");
         DBObject federationUser = null;
         BasicDBObject query = new BasicDBObject("token", token);
-        BasicDBList credList;
-        Iterator it;
-        BasicDBObject obj;
-        String result="{";
         federationUser = collezione.findOne(query);
 
         if (federationUser == null) {
             return null;
         }
-        BasicDBObject bo=new BasicDBObject();
-        bo.append("federationUser", (String)federationUser.get("federationUser"));
-        bo.append("federationPassword", (String)federationUser.get("federationPassword"));
-        /*String fu=(String)federationUser.get("federationUser");
-        result+="\"federationUser\":\""+fu+"\",";
-        String fp=(String)federationUser.get("federationPassword");
-        result+="\"federationPassword\":\""+fp+"\"";
-        result+="}";*/
-        return bo.toString();//result;
+        BasicDBObject bo = new BasicDBObject();
+        bo.append("federationUser", (String) federationUser.get("federationUser"));
+        bo.append("federationPassword", (String) federationUser.get("federationPassword"));
+        return bo.toString();
     }
-    
+
     public void connectLocale() {
 
         try {
-            mongoClient= new MongoClient("172.17.3.142");
+            mongoClient = new MongoClient("172.17.3.142");
         } catch (Exception ex) {
             ex.printStackTrace();
         }
 
     }
-    
+
     /**
-     * Function used for testing/prototype. 
+     * Function used for testing/prototype.
+     *
      * @author gtricomi
      */
     public void connectLocale(String ip) {
 
         try {
-            mongoClient= new MongoClient(ip);
+            mongoClient = new MongoClient(ip);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -280,7 +278,12 @@ public class DBMongo {
         return database;
 
     }
-
+    /**
+     * This update Federation User with element 
+     * @param dbName
+     * @param collectionName
+     * @param docJSON 
+     */
     public void insertUser(String dbName, String collectionName, String docJSON) {
 
         DB dataBase = this.getDB(dbName);
@@ -292,8 +295,8 @@ public class DBMongo {
         obj.append("insertTimestamp", System.currentTimeMillis());
         collezione.save(obj);
     }
-    
-        public void insert(String dbName, String collectionName, String docJSON) {
+
+    public void insert(String dbName, String collectionName, String docJSON) {
 
         DB dataBase = this.getDB(dbName);
         DBCollection collezione = this.getCollection(dataBase, collectionName);
@@ -301,7 +304,6 @@ public class DBMongo {
         obj.append("insertTimestamp", System.currentTimeMillis());
         collezione.save(obj);
     }
-
 
     public DBCollection getCollection(DB nameDB, String nameCollection) {
 
@@ -345,10 +347,13 @@ public class DBMongo {
 
         collezione.save(obj);
     }
+
     /**
-     * function that returns all element in collection without _id,credentialList, federationPassword
+     * function that returns all element in collection without
+     * _id,credentialList, federationPassword
+     *
      * @param dbName
-     * @param collectionName 
+     * @param collectionName
      */
     public void listFederatedUser(String dbName, String collectionName) {
 
@@ -382,7 +387,7 @@ public class DBMongo {
         obj.append("insertTimestamp", System.currentTimeMillis());
         collezione.save(obj);
     }
-    
+
     public String getFederateCloud(String dbName, String collectionName, String cloudId) {
 
         DB dataBase = this.getDB(dbName);
@@ -399,113 +404,139 @@ public class DBMongo {
         return null;
     }
 
-    public String getObj(String dbName,String collName, String query)throws MDBIException{
-    
-        BasicDBObject constrains= null, results=null;
+    public String getObj(String dbName, String collName, String query) throws MDBIException {
+
+        BasicDBObject constrains = null, results = null;
         DBCursor cursore;
-        DB db= this.getDB(dbName);
-        DBCollection coll= db.getCollection(collName);
-        BasicDBObject obj=(BasicDBObject) JSON.parse(query);
-        constrains=new BasicDBObject("_id",0);
+        DB db = this.getDB(dbName);
+        DBCollection coll = db.getCollection(collName);
+        BasicDBObject obj = (BasicDBObject) JSON.parse(query);
+        constrains = new BasicDBObject("_id", 0);
         constrains.put("insertTimestamp", 0);
-        cursore=coll.find(obj,constrains);
-        try{
-        results= (BasicDBObject) cursore.next();
-        }
-        catch(NoSuchElementException e){
+        cursore = coll.find(obj, constrains);
+        try {
+            results = (BasicDBObject) cursore.next();
+        } catch (NoSuchElementException e) {
             LOGGER.error("manifest non trovato!");
             throw new MDBIException("Manifest required is not found inside DB.");
         }
-        return results.toString(); 
+        return results.toString();
     }
-    
+
     /**
-     * Returns an ArraList<String> where each String is a JSONObject in String version.
+     * Returns an ArraList<String> where each String is a JSONObject in String
+     * version.
+     *
      * @param tenant
      * @param geoShape
-     * @return 
+     * @return
      */
-    public ArrayList<String> getDatacenters(String tenant,String geoShape){
-        DB database=this.getDB(tenant);
-        DBCollection collection=database.getCollection("datacenters");
-        
-        BasicDBObject shape=(BasicDBObject) JSON.parse(geoShape);
-        ArrayList<String> datacenters=new ArrayList();
-        BasicDBObject geoJSON=(BasicDBObject)shape.get("geometry");
-        BasicDBObject geometry=new BasicDBObject();
-        BasicDBObject geoSpazialOperator=new BasicDBObject();
-        BasicDBObject query=new BasicDBObject();
-        BasicDBObject constrains=new BasicDBObject("_id",0);
-        Iterator <DBObject> it;
+    public ArrayList<String> getDatacenters(String tenant, String geoShape) {
+        DB database = this.getDB(tenant);
+        DBCollection collection = database.getCollection("datacenters");
+
+        BasicDBObject shape = (BasicDBObject) JSON.parse(geoShape);
+        ArrayList<String> datacenters = new ArrayList();
+        BasicDBObject geoJSON = (BasicDBObject) shape.get("geometry");
+        BasicDBObject geometry = new BasicDBObject();
+        BasicDBObject geoSpazialOperator = new BasicDBObject();
+        BasicDBObject query = new BasicDBObject();
+        BasicDBObject constrains = new BasicDBObject("_id", 0);
+        Iterator<DBObject> it;
         DBCursor cursore;
 
         geometry.put("$geometry", geoJSON);
         geoSpazialOperator.put("$geoIntersects", geometry);
         query.put("geometry", geoSpazialOperator);
-        cursore=collection.find(query,constrains);
-       
-        it=cursore.iterator();
-        while(it.hasNext()){
-        datacenters.add(it.next().toString());
-        
+        cursore = collection.find(query, constrains);
+
+        it = cursore.iterator();
+        while (it.hasNext()) {
+            datacenters.add(it.next().toString());
+
         }
-    return datacenters;
+        return datacenters;
     }
-    
-    public String getDatacenter(String tenant,String idCloud) throws MDBIException{
-        DB database=this.getDB(tenant);
-        DBCollection collection=database.getCollection("datacenters");
-        
+
+    public String getDatacenter(String tenant, String idCloud) throws MDBIException {
+        DB database = this.getDB(tenant);
+        DBCollection collection = database.getCollection("datacenters");
+
         BasicDBObject first = new BasicDBObject();
         first.put("cloudId", idCloud);
 
         DBObject obj = null;
-        try{
+        try {
             obj = collection.findOne(first);
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             throw new MDBIException(e.getMessage());
         }
         return obj.toString();
 
     }
     
-    
     /**
-     * Function used to retrieve cloudId from cmp_endpoint
-     * @param federationUser
-     * @param cmp_endpoint
-     * @return 
+     * It returns OSFFM token assigned to federationUser.
+     * @param tenant
+     * @param user, this is federation UserName
+     * @return
+     * @throws MDBIException
      * @author gtricomi
      */
-    public String getDatacenterIDfrom_cmpEndpoint(String federationUser,String cmp_endpoint )throws MDBIException{
-        DB database=this.getDB(federationUser);
-        DBCollection collection=database.getCollection("datacenters");
-        
+    public String getFederationToken(String tenant, String user) throws MDBIException {
+        DB database = this.getDB(tenant);
+        DBCollection collection = database.getCollection("credentials");
+
+        BasicDBObject first = new BasicDBObject();
+        first.put("federationUser", user);
+
+        DBObject obj = null;
+        try {
+            obj = collection.findOne(first);
+        } catch (Exception e) {
+            throw new MDBIException(e.getMessage());
+        }
+        return (String)obj.get("token");
+
+    }
+
+    /**
+     * Function used to retrieve cloudId from cmp_endpoint
+     *
+     * @param federationUser
+     * @param cmp_endpoint
+     * @return
+     * @author gtricomi
+     */
+    public String getDatacenterIDfrom_cmpEndpoint(String federationUser, String cmp_endpoint) throws MDBIException {
+        DB database = this.getDB(federationUser);
+        DBCollection collection = database.getCollection("datacenters");
+
         BasicDBObject first = new BasicDBObject();
         first.put("idmEndpoint", cmp_endpoint);
 
         DBObject obj = null;
-        try{
+        try {
             obj = collection.findOne(first);
+        } catch (Exception e) {
+            throw new MDBIException("An Exception is generated by OSFFM DB connector, when getDatacenterIDfrom_cmpEndpoint is launched with [federationUser:\" " + federationUser + "\",cmp_endpoint: " + cmp_endpoint + "\"]\n" + e.getMessage());
         }
-        catch(Exception e){
-            throw new MDBIException("An Exception is generated by OSFFM DB connector, when getDatacenterIDfrom_cmpEndpoint is launched with [federationUser:\" "+federationUser+"\",cmp_endpoint: "+cmp_endpoint+"\"]\n"+e.getMessage());
-        }
-        return ((String)obj.get("cloudId"));
+        return ((String) obj.get("cloudId"));
 
     }
-    
+
     /**
-     * Returns an ArraList<String> where each String is a JSONObject in String version.
+     * Returns an ArraList<String> where each String is a JSONObject in String
+     * version.
+     *
      * @param tenant
      * @param deviceId, this is the Vm Name
-     * @return 
+     * @return
      */
-    public ArrayList<String> getportinfoes(String tenant,String deviceId){
-        DB database=this.getDB(tenant);
-        DBCollection collection=database.getCollection("portInfo");
-        
+    public ArrayList<String> getportinfoes(String tenant, String deviceId) {
+        DB database = this.getDB(tenant);
+        DBCollection collection = database.getCollection("portInfo");
+
         DBCursor cursore;
         BasicDBObject campi;
         Iterator<DBObject> it;
@@ -513,15 +544,14 @@ public class DBMongo {
         campi.put("deviceId", deviceId);
         cursore = collection.find(new BasicDBObject(), campi);
         it = cursore.iterator();
-        ArrayList<String> pI=new ArrayList<String>();
-        while(it.hasNext()){
+        ArrayList<String> pI = new ArrayList<String>();
+        while (it.hasNext()) {
             pI.add(it.next().toString());
-        
+
         }
-    return pI;
+        return pI;
     }
-    
-    
+
     public void insertStackInfo(String dbName, String docJSON) {
 
         this.insert(dbName, "stackInfo", docJSON);
@@ -582,9 +612,9 @@ public class DBMongo {
         return mates;
 
     }
-    
-    public boolean updateStateRunTimeInfo(String dbName,String phisicalResourceId,boolean newState){
-        boolean result=true;
+
+    public boolean updateStateRunTimeInfo(String dbName, String phisicalResourceId, boolean newState) {
+        boolean result = true;
         BasicDBObject first = new BasicDBObject();
         first.put("phisicalResourceId", phisicalResourceId);
 
@@ -592,14 +622,14 @@ public class DBMongo {
         DBCollection collection = database.getCollection("runTimeInfo");
         BasicDBObject obj = null;
 
-        obj = (BasicDBObject)collection.findOne(first);
+        obj = (BasicDBObject) collection.findOne(first);
         obj.append("state", newState);
         collection.save(obj);
         return result;
     }
-    
+
     private String toMd5(String original) {
-        MessageDigest md;
+        /*MessageDigest md;
         byte[] digest;
         StringBuffer sb;
         String hashed = null;
@@ -615,22 +645,23 @@ public class DBMongo {
         } catch (NoSuchAlgorithmException ex) {
             ex.printStackTrace();
         }
-        return hashed;
+        return hashed;*/
+        return utils.staticFunctionality.toMd5(original);
     }
 //////////////////////////////////////////////////////////////////////////////////////7
     //funzioni da eliminare
-    
-    
-    
+
     /**
-     * Returns ArrayList with all federatedUser registrated for the federationUser
+     * Returns ArrayList with all federatedUser registrated for the
+     * federationUser
+     *
      * @param dbName
      * @param collectionName
      * @param federationUserName
-     * @return 
+     * @return
      * @author gtricomi
      */
-    public ArrayList<String> listFederatedUser(String dbName, String collectionName,String federationUserName) {
+    public ArrayList<String> listFederatedUser(String dbName, String collectionName, String federationUserName) {
 
         DBCursor cursore;
         DB dataBase;
@@ -643,30 +674,28 @@ public class DBMongo {
         campi.put("federationUser", federationUserName);
         cursore = collezione.find(campi);
         it = cursore.iterator();
-        ArrayList<String> als=new ArrayList();
+        ArrayList<String> als = new ArrayList();
         while (it.hasNext()) {
             als.add(it.next().get("crediantialList").toString());
         }
         return als;
     }
-       
-    public void insertTemplateInfo(String db, String id, String templateName, Float version, String user, String templateRef){
-    
+
+    public void insertTemplateInfo(String db, String id, String templateName, Float version, String user, String templateRef) {
 
         BasicDBObject obj;
-        
+
         obj = new BasicDBObject();
-        
+
         obj.append("id", id);
         obj.append("templateName", templateName);
         obj.append("version", version);
         obj.append("user", user);
         obj.append("templateRef", templateRef);
-        
+
         this.insert(db, "templateInfo", obj.toString());
     }
-    
-    
+
     public ArrayList<String> listTemplates(String dbName) {
 
         DBCursor cursore;
@@ -677,7 +706,7 @@ public class DBMongo {
         collezione = dataBase.getCollection("templateInfo");
         cursore = collezione.find();
         it = cursore.iterator();
-        ArrayList<String> templatesInfo=new ArrayList();
+        ArrayList<String> templatesInfo = new ArrayList();
         while (it.hasNext()) {
             templatesInfo.add(it.next().toString());
         }
@@ -686,33 +715,34 @@ public class DBMongo {
 
     /**
      * Returns a specific template istance.
+     *
      * @param dbName
      * @return
      * @author gtricomi
      */
-    public String getTemplate(String dbName,String uuidManifest) {
+    public String getTemplate(String dbName, String uuidManifest) {
 
         DB dataBase;
         DBCollection collezione;
         dataBase = this.getDB(dbName);
         collezione = dataBase.getCollection("templateInfo");
-        
+
         BasicDBObject first = new BasicDBObject();
         first.put("id", uuidManifest);
-        DBObject j=collezione.findOne(first);
+        DBObject j = collezione.findOne(first);
         return j.toString();
     }
-    
-    
+
     //BEACON>>> Function added for preliminaryDEMO. HAVE TO BE REMOVED
     /**
      * Returns generic federation infoes.
+     *
      * @param dbName
      * @param token
-     * @return 
+     * @return
      * @author gtricomi
      */
-    public String getFederationCredential(String dbName, String value,String type) {
+    public String getFederationCredential(String dbName, String value, String type) {
         DB dataBase = this.getDB(dbName);
         DBCollection collezione = this.getCollection(dataBase, "credentials");
         DBObject federationUser = null;
@@ -720,24 +750,23 @@ public class DBMongo {
         BasicDBList credList;
         Iterator it;
         BasicDBObject obj;
-        String result="{";
+        String result = "{";
         federationUser = collezione.findOne(query);
-
 
         if (federationUser == null) {
             return null;
         }
-         BasicDBObject bo=new BasicDBObject();
-        bo.append("federationUser", (String)federationUser.get("federationUser"));
-        bo.append("federationPassword", (String)federationUser.get("federationPassword"));
+        BasicDBObject bo = new BasicDBObject();
+        bo.append("federationUser", (String) federationUser.get("federationUser"));
+        bo.append("federationPassword", (String) federationUser.get("federationPassword"));
         /*String fu=(String)federationUser.get("federationUser");
-        result+="\"federationUser\":\""+fu+"\",";
-        String fp=(String)federationUser.get("federationPassword");
-        result+="\"federationPassword\":\""+fp+"\"";
-        result+="}";*/
+         result+="\"federationUser\":\""+fu+"\",";
+         String fp=(String)federationUser.get("federationPassword");
+         result+="\"federationPassword\":\""+fp+"\"";
+         result+="}";*/
         return bo.toString();//result;
     }
-    
+
     private Iterable<DBObject> operate(String dbName, String collectionName, String campoMatch, String valoreMatch, String campoOperazione, String nomeOperazione, String operation) {
 
         DB database = this.getDB(dbName);
@@ -765,183 +794,307 @@ public class DBMongo {
         return cursor;
 
     }
-     
-public float getVersion(String dbName,String collectionName, String templateRef){
-    
-    String v="version";
-     Iterable<DBObject> cursor=this.operate(dbName, collectionName, "templateRef", templateRef, v, v, "$max");
-     Iterator <DBObject> it;
-     DBObject result, query;
-     DBObject risultato;
-     float versione=0;
-     
-     it=cursor.iterator();
-     
-     if(it.hasNext()){
-         result=it.next();
-         versione=(float) ((double)result.get(v));
-     }
-     else{
-         query=new BasicDBObject("id",templateRef);
-         risultato=this.find(dbName, collectionName, query);
-         if(risultato!=null){
-             versione = 0.1F;
-             }
-         }
-     System.out.println("VERSIONE:"+versione);
-     return versione;
-//controlla che il cursore nn sia vuoto, se vuoto controlla se è presente come versione 0.1
-    //altrimenti restituisci 0.1
 
-}
+    public float getVersion(String dbName, String collectionName, String templateRef) {
+
+        String v = "version";
+        Iterable<DBObject> cursor = this.operate(dbName, collectionName, "templateRef", templateRef, v, v, "$max");
+        Iterator<DBObject> it;
+        DBObject result, query;
+        DBObject risultato;
+        float versione = 0;
+
+        it = cursor.iterator();
+
+        if (it.hasNext()) {
+            result = it.next();
+            versione = (float) ((double) result.get(v));
+        } else {
+            query = new BasicDBObject("id", templateRef);
+            risultato = this.find(dbName, collectionName, query);
+            if (risultato != null) {
+                versione = 0.1F;
+            }
+        }
+        System.out.println("VERSIONE:" + versione);
+        return versione;
+//controlla che il cursore nn sia vuoto, se vuoto controlla se è presente come versione 0.1
+        //altrimenti restituisci 0.1
+
+    }
 
     public DBObject find(String dbName, String collName, DBObject obj) {
         DB dataBase = this.getDB(dbName);
         DBCollection collezione = dataBase.getCollection(collName);
-       // BasicDBObject obj = (BasicDBObject) JSON.parse(query);
+        // BasicDBObject obj = (BasicDBObject) JSON.parse(query);
         DBObject risultato = collezione.findOne(obj);
-        
+
         return risultato;
-        
 
     }
-    
-          public DBObject getDatacenterFromId(String dbName, String id){
-          DB dataBase = this.getDB(dbName);
+
+    public DBObject getDatacenterFromId(String dbName, String id) {
+        DB dataBase = this.getDB(dbName);
         DBCollection collezione = dataBase.getCollection("datacenters");
-        BasicDBObject obj = new BasicDBObject("cloudId",id);
-          DBObject risultato = collezione.findOne(obj);
-          
-          return risultato;
-      }
-    
-     public String getMapInfo(String dbName, String uuidTemplate){
-               
+        BasicDBObject obj = new BasicDBObject("cloudId", id);
+        DBObject risultato = collezione.findOne(obj);
+
+        return risultato;
+    }
+
+    public String getMapInfo(String dbName, String uuidTemplate) {
+
         DB database = this.getDB(dbName);
         DBCollection collection = database.getCollection("runTimeInfo");
-        DBObject obj = null, datacenter, punto, country,geoShape;
+        DBObject obj = null, datacenter, punto, country, geoShape;
         BasicDBObject query = new BasicDBObject();
         DBCursor cursore = null;
-        Set<String> attivi =  new HashSet<String>(); 
+        Set<String> attivi = new HashSet<String>();
         ArrayList<String> listCloud = new ArrayList();
         Iterator<DBObject> it;
-        String idCloud,idmEndpoint,idRisorsa,nameRisorsa;
+        String idCloud, idmEndpoint, idRisorsa, nameRisorsa;
         boolean isPresent;
         MapInfo map;
         Shape s;
         boolean state;
         Risorse r;
-        int i,j;
+        int i, j;
         Collegamenti link;
         Object array[];
-        
+
         query.put("uuidTemplate", uuidTemplate);
         cursore = collection.find(query);
-        map=new MapInfo();
-        
+        map = new MapInfo();
+
         if (cursore != null) {
             it = cursore.iterator();
             while (it.hasNext()) {
                 //oggetto map info
-                obj=it.next();
-                idCloud=(String) obj.get("idCloud");
-                isPresent=listCloud.contains(idCloud);
-                if(!isPresent){
-                   
-                    datacenter=this.getDatacenterFromId(dbName, idCloud);
-                    idmEndpoint= (String) datacenter.get("idmEndpoint");
-                    state=(boolean) obj.get("state");
-                  
-                    punto=(DBObject) datacenter.get("geometry");
-                    country=this.getFirstCountry(dbName, punto);
-                    geoShape= (DBObject) country.get("geometry");
-                    System.out.println("geogeo"+geoShape);
-                    s=new Shape(idCloud, idmEndpoint,geoShape.toString(),state);
-                      if (state){
+                obj = it.next();
+                idCloud = (String) obj.get("idCloud");
+                isPresent = listCloud.contains(idCloud);
+                if (!isPresent) {
+
+                    datacenter = this.getDatacenterFromId(dbName, idCloud);
+                    idmEndpoint = (String) datacenter.get("idmEndpoint");
+                    state = (boolean) obj.get("state");
+
+                    punto = (DBObject) datacenter.get("geometry");
+                    country = this.getFirstCountry(dbName, punto);
+                    geoShape = (DBObject) country.get("geometry");
+                    System.out.println("geogeo" + geoShape);
+                    s = new Shape(idCloud, idmEndpoint, geoShape.toString(), state);
+                    if (state) {
                         attivi.add(idCloud);
-                         idRisorsa =(String) obj.get("phisicalResourceId");
-                    nameRisorsa = (String) obj.get("resourceName");
-                    r=new Risorse(idRisorsa,nameRisorsa);                    
-                    s.addResource(r);
+                        idRisorsa = (String) obj.get("phisicalResourceId");
+                        nameRisorsa = (String) obj.get("resourceName");
+                        r = new Risorse(idRisorsa, nameRisorsa);
+                        s.addResource(r);
                     }
-                   
+
                     listCloud.add(idCloud);
                     map.addShape(s);
-                 
-                }
-                else{
-                    s=map.getShape(idCloud);
-                    state=(boolean) obj.get("state");
-                    if(state){
+
+                } else {
+                    s = map.getShape(idCloud);
+                    state = (boolean) obj.get("state");
+                    if (state) {
                         s.setState(state);
                         attivi.add(idCloud);
-                    
-                    idRisorsa =(String) obj.get("phisicalResourceId");
-                    nameRisorsa = (String) obj.get("resourceName");
-                    r=new Risorse(idRisorsa,nameRisorsa);                    
-                    s.addResource(r);
-                } 
+
+                        idRisorsa = (String) obj.get("phisicalResourceId");
+                        nameRisorsa = (String) obj.get("resourceName");
+                        r = new Risorse(idRisorsa, nameRisorsa);
+                        s.addResource(r);
+                    }
                 }
             }
-            array= attivi.toArray();
-            for(i=0;i<array.length;i++)
-                for(j=i+1;j<array.length;j++){
-                    link=new Collegamenti((String)array[i],(String)array[j]);
+            array = attivi.toArray();
+            for (i = 0; i < array.length; i++) {
+                for (j = i + 1; j < array.length; j++) {
+                    link = new Collegamenti((String) array[i], (String) array[j]);
                     map.addCollegamento(link);
                 }
+            }
         }
         return map.toString();
-      }
-      
-      
-       public DBObject getFirstCountry(String tenant,DBObject shape){
-        
+    }
+
+    public DBObject getFirstCountry(String tenant, DBObject shape) {
+
         //{"geometry": {$geoIntersects: {$geometry: { "coordinates" : [  15.434675, 38.193164  ], "type" : "Point" }}}}
-        
-        DB database=this.getDB(tenant);
-        DBCollection collection=database.getCollection("Countries");
+        DB database = this.getDB(tenant);
+        DBCollection collection = database.getCollection("Countries");
         DBObject result;
-        BasicDBObject geometry=new BasicDBObject("$geometry",shape);
-        BasicDBObject geoSpazialOperator=new BasicDBObject("$geoIntersects",geometry);
-        BasicDBObject query=new BasicDBObject("geometry",geoSpazialOperator);
-        BasicDBObject constrains=new BasicDBObject("_id",0);
-        Iterator <DBObject> it;
-         result=collection.findOne(query,constrains);
-    return result;
+        BasicDBObject geometry = new BasicDBObject("$geometry", shape);
+        BasicDBObject geoSpazialOperator = new BasicDBObject("$geoIntersects", geometry);
+        BasicDBObject query = new BasicDBObject("geometry", geoSpazialOperator);
+        BasicDBObject constrains = new BasicDBObject("_id", 0);
+        Iterator<DBObject> it;
+        result = collection.findOne(query, constrains);
+        return result;
     }
-         
-    public ArrayList getCountry(String tenant,DBObject shape){
-        
+
+    public ArrayList getCountry(String tenant, DBObject shape) {
+
         //{"geometry": {$geoIntersects: {$geometry: { "coordinates" : [  15.434675, 38.193164  ], "type" : "Point" }}}}
-        
-        DB database=this.getDB(tenant);
-        DBCollection collection=database.getCollection("Countries");
-        ArrayList<String> datacenters=new ArrayList();
-        
-        BasicDBObject geometry=new BasicDBObject("$geometry",shape);
-        BasicDBObject geoSpazialOperator=new BasicDBObject("$geoIntersects",geometry);
-        BasicDBObject query=new BasicDBObject("geometry",geoSpazialOperator);
-        BasicDBObject constrains=new BasicDBObject("_id",0);
-        Iterator <DBObject> it;
+        DB database = this.getDB(tenant);
+        DBCollection collection = database.getCollection("Countries");
+        ArrayList<String> datacenters = new ArrayList();
+
+        BasicDBObject geometry = new BasicDBObject("$geometry", shape);
+        BasicDBObject geoSpazialOperator = new BasicDBObject("$geoIntersects", geometry);
+        BasicDBObject query = new BasicDBObject("geometry", geoSpazialOperator);
+        BasicDBObject constrains = new BasicDBObject("_id", 0);
+        Iterator<DBObject> it;
         DBCursor cursore;
-       
-    
-         cursore=collection.find(query,constrains);
-       
-         it=cursore.iterator();
-        while(it.hasNext()){
-        datacenters.add(it.next().toString());
-        
+
+        cursore = collection.find(query, constrains);
+
+        it = cursore.iterator();
+        while (it.hasNext()) {
+            datacenters.add(it.next().toString());
+
         }
-        
-        
-    return datacenters;
-    
-    
+
+        return datacenters;
     }
-  
+   
     
     
+    //<editor-fold defaultstate="collapsed" desc="NetworkId Management">
+    
+    /**
+     * This method is used to add inside "netIDMatch" collection, the document that represent netsegment infoes
+     * make a correlation with internal OpenstackID.
+     * @param dbName
+     * @param fedsdnID
+     * @param cloudId
+     * @param internalNetworkId
+     * @return 
+     * @author gtricomi
+     */
+    public boolean storeInternalNetworkID(String dbName,String fedsdnID,String cloudId,String internalNetworkId ){
+        
+        DB dataBase = this.getDB(dbName);
+        DBCollection collezione = this.getCollection(dataBase, "netIDMatch");
+        BasicDBObject obj = new BasicDBObject();
+        obj.put("fedsdnID", fedsdnID);
+        obj.put("cloudId",cloudId);
+        obj.put("internalNetworkId",internalNetworkId);
+        obj.append("insertTimestamp", System.currentTimeMillis());
+        collezione.save(obj);
+        return true;
+    }
+    
+    /**
+     * This method is used to update inside "netIDMatch" collection, the document that represent netsegment infoes
+     * make a correlation with internal OpenstackID.
+     * @param dbName, tenant name
+     * @param fedsdnID, netsegment id stored on FEDSDN
+     * @param cloudId
+     * @param internalNetworkId
+     * @return 
+     * @author gtricomi
+     */
+    public boolean updateInternalNetworkID(String dbName,String fedsdnID,String cloudId,String internalNetworkId ){
+        
+        DB dataBase = this.getDB(dbName);
+        DBCollection collezione = this.getCollection(dataBase, "netIDMatch");
+        BasicDBObject obj = new BasicDBObject();
+        obj.put("fedsdnID", fedsdnID);
+        obj.put("cloudId",cloudId);
+        obj = (BasicDBObject) collezione.findOne(obj);
+        if(obj==null){
+            LOGGER.error("Document with fedsdnID:"+fedsdnID+" ,cloudId :"+cloudId+" for tenant :"+dbName+" isn't found!");
+            return false;
+        }
+        obj.replace("internalNetworkId",internalNetworkId);
+        obj.append("insertTimestamp", System.currentTimeMillis());
+        collezione.save(obj);
+        return true;
+    }
+    
+    /**
+     * 
+     * @param fedsdnID
+     * @param dbName, name of the Db where execute the operation
+     * @return 
+     * @author gtricomi
+     */
+    public String getInternalNetworkID(String dbName,String fedsdnID,String cloudId){
+        DB dataBase = this.getDB(dbName);
+        DBCollection collezione = dataBase.getCollection("netIDMatch");
+        BasicDBObject obj = new BasicDBObject("fedsdnID", fedsdnID);
+        obj.put("cloudId", cloudId);
+        DBObject risultato = collezione.findOne(obj);
+        if(risultato==null)
+            return null;
+        return risultato.get("internalNetworkId").toString();
+    }
+    //</editor-fold>
+    
+    
+    //<editor-fold defaultstate="collapsed" desc="Cidr Information management">
+    /**
+     * 
+     * @param tenantName
+     * @param cidr
+     * @param fednets
+     * @param netsegments
+     * @param cloudId 
+     * @author gtricomi
+     */
+    public void insertcidrInfoes(
+            String tenantName,
+            String cidr,
+            String fednets, 
+            String netsegments,
+            String cloudId
+    ){
+        DB dataBase = this.getDB(tenantName);
+        DBCollection collezione = this.getCollection(dataBase, "cidrInfo");
+        BasicDBObject obj = new BasicDBObject();
+        obj.put("netsegments", netsegments);
+        obj.put("cloudId",cloudId);
+        obj.put("fednets",fednets);
+        obj.put("cidr",cidr);
+        obj.append("insertTimestamp", System.currentTimeMillis());
+        collezione.save(obj);
+        
+    }
+    
+    /**
+     * This function take from Collection "cidrInfo" the element that match with field contained inside hashmap researchParams.
+     * @param tenantName, DbName where the collection is stored
+     * @param researchParams, container for research params
+     * @return JSONObject/null, JSONObject when the criteria match, null object in other cases.
+     * @author gtricomi
+     */
+    public org.json.JSONObject getcidrInfoes(
+            String tenantName,
+            HashMap researchParams
+    ) throws Exception{
+        DB dataBase = this.getDB(tenantName);
+        DBCollection collezione = dataBase.getCollection("cidrInfo");
+        Iterator i=researchParams.keySet().iterator();
+        BasicDBObject obj = new BasicDBObject();
+        while(i.hasNext()){
+            String tmpkey=(String)i.next();
+            obj.put(tmpkey, researchParams.get(tmpkey));
+        }
+        DBObject risultato = collezione.findOne(obj);
+        if(risultato==null)
+            return null;
+        try{
+            return new org.json.JSONObject(risultato.toString());
+        }
+        catch(Exception e){
+            LOGGER.error("Error occurred in DBObject parsing operation for getcidrInfoes.\n"+e.getMessage());
+            throw e;
+        }
+     
+    }
+    
+    //</editor-fold>
 }
-
-

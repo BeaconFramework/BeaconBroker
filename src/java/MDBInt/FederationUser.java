@@ -16,6 +16,7 @@
 package MDBInt;
 
 import java.util.ArrayList;
+import java.util.UUID;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -34,16 +35,22 @@ public class FederationUser {
 //</editor-fold>
     public FederationUser(String user, String password) {
         this.user = user;
-        this.password = password;
+        this.password = utils.staticFunctionality.toMd5(password);
         this.credentials = new ArrayList();
+        
     }
 
     public FederationUser(String user, String password, ArrayList<JSONObject> credentials) {
         this.user = user;
-        this.password = password;
+        this.password = utils.staticFunctionality.toMd5(password);
         this.credentials = credentials;
+        this.token=this.generate_token();
     }
-    
+    /**
+     * Used when FEderation user already exist on MongoDB
+     * @param fromJson
+     * @throws ParseException 
+     */
     public FederationUser(String fromJson) throws ParseException {
         JSONParser parser;
         JSONObject obj;
@@ -55,6 +62,10 @@ public class FederationUser {
         this.user = (String) obj.get("federationUser");
         this.password = (String) obj.get("federationPassword");
         this.credentials = new ArrayList<JSONObject>(array.subList(0, array.size()));
+        if((String) obj.get("token")==null)
+            this.token=this.generate_token();
+        else
+           this.token=(String) obj.get("token");
     }
 
     public void addCredentials(FederatedUser credential){
@@ -70,20 +81,13 @@ public class FederationUser {
         obj.put("federationUser", user);
         obj.put("federationPassword", password);
         obj.put("crediantialList", array);
+        obj.put("token",this.token);
         return obj;
     }
     
     @Override
     public String toString() {
-
-        JSONObject obj = new JSONObject();
-        JSONArray array = new JSONArray();
-
-        array.addAll(this.credentials);
-        obj.put("federationUser", user);
-        obj.put("federationPassword", password);
-        obj.put("crediantialList", array);
-        return obj.toString();
+        return this.toJSON().toString();
     }
     
     public boolean deleteCredential(String cloud) {
@@ -131,7 +135,14 @@ public class FederationUser {
         return null;
     }
 
-    
+     /**
+     * 
+     * @return 
+     * @author gtricomi
+     */
+    private String generate_token(){
+        return UUID.randomUUID().toString();
+    }
     
     
  //<editor-fold defaultstate="collapsed" desc="Variable&Setter/Getter">    
@@ -155,9 +166,13 @@ public class FederationUser {
     public String getPassword() {
         return password;
     }
-
+    /**
+     * Use this function change federation user password. 
+     * Pay attention when use it. 
+     * @param password 
+     */
     public void setPassword(String password) {
-        this.password = password;
+        this.password = utils.staticFunctionality.toMd5(password);
     }
 
     public ArrayList<JSONObject> getCredentials() {

@@ -97,19 +97,17 @@ public class SimpleIDM {
             String tenant,
             String username,
             String password,
-            String cmp_endpoint)
+            String cloudId)
     {
-        String query="";
-        query="{\"username\":\""+username+"\",\"tenant\":\""+tenant+"\",\"cmp_endpoint\":\""+cmp_endpoint+"\"}";
-        String cloudid;
+       /*  String cloudid;
         try {
-            cloudid = this.mdb.getDatacenterIDfrom_cmpEndpoint(tenant, cmp_endpoint);
+            cloudid = this.mdb.getDatacenter(tenant, cloudId);
         } catch (MDBIException ex) {
            LOGGER.error(ex.getMessage());
            LOGGER.error("An exception is generated in Database request by SimpleIDM, in cloudId retrieving");
            return null;
-        }
-        String result=this.mdb.getFederatedCredential(this.dbName, token, cloudid);
+        }*/
+        String result=this.mdb.getFederatedCredential(this.dbName, token, cloudId);
         try{
             JSONObject j=new JSONObject(result);
             return j.toString();
@@ -128,16 +126,13 @@ public class SimpleIDM {
      */
     public FederatedUser retr_infoes_fromfedsdn(
             String token,
-            String cmp_endpoint
+            String cloudId
             )
     {
-        String query="",result="";
-        query="{\"token\":\""+token+"\"}";
-        String tmp=this.mdb.getFederationCredential(dbName, token);
+        String result="";
         try{
-            JSONObject tj=new JSONObject(tmp);
-            String cloudid=this.mdb.getDatacenterIDfrom_cmpEndpoint(tj.getString("federationUser"), cmp_endpoint);
-            result=this.mdb.getFederatedCredential(this.dbName, token, cloudid);
+           //String cloudid=this.mdb.getDatacenterIDfrom_cmpEndpoint(tj.getString("federationUser"), cmp_endpoint);
+            result=this.mdb.getFederatedCredential(this.dbName, token, cloudId);
             JSONObject tmp2=new JSONObject(result);
             return this.createFederatedU(tmp2.getString("federatedUser"), tmp2.getString("federatedCloud"), tmp2.getString("federatedPassword"));
         }
@@ -146,14 +141,18 @@ public class SimpleIDM {
             return null;
         }
     }
-    
+    /**
+     * 
+     * @param token
+     * @param cmp_endpoint,for future use
+     * @return 
+     * @author gtricomi
+     */
     public FederationUser getFederationU(
             String token,
             String cmp_endpoint
             )
     {
-        String query="",result="";
-        query="{\"token\":\""+token+"\"}";
         String tmp=this.mdb.getFederationCredential(dbName, token);
         try{
             JSONObject tj=new JSONObject(tmp);
@@ -169,6 +168,38 @@ public class SimpleIDM {
             return null;
         }
     }
+    
+    /**
+     * 
+     * @param token
+     * @param cmp_endpoint,for future use
+     * @return 
+     * @author gtricomi
+     */
+    public FederatedUser getFederatedU(
+            String token,
+            String cmp_endpoint
+            )
+    {
+       /* String query="",result="";
+        query="{\"token\":\""+token+"\"}";
+        String tmp=this.mdb.getFederationCredential(dbName, token);
+        try{
+            JSONObject tj=new JSONObject(tmp);
+            JSONArray ta=tj.getJSONArray("crediantialList");
+            ArrayList ar=new ArrayList();
+            for(int i =0;i<ta.length();i++){
+                ar.add((JSONObject) ta.get(i));
+            }
+            return this.createFederationU(tj.getString("userFederation"), tj.getString("federationPassword"), ar);
+        }
+        catch(Exception e){
+            LOGGER.error("An exception is generated in Database interrogation by SimpleIDM, in the JSONObject retrived analisys");
+            return null;
+        }*/
+        return null;
+    }
+    
     
     
     /**
@@ -187,18 +218,18 @@ public class SimpleIDM {
             String password,
             String cmp_endpoint)
     {
+        //This function need to be recreated
         JSONObject j=new JSONObject();
-        try{
-            j.put("token", this.generate_token());
-            j.put("username", username);
-            j.put("password", password);
+        /*try{
+            j.put("federatedUser", username);
+            j.put("federationPassword", password);
             j.put("cmp_endpoint", cmp_endpoint);
-            j.put("tenant", tenant);
+            j.put("federationUser", tenant);
         }
         catch(Exception e){
             return null;
         }
-        this.mdb.insert(this.dbName, this.collName, j.toString());
+        this.mdb.insert(this.dbName, "credentials", j.toString());*/
         return j;
     }
     /**
@@ -238,16 +269,27 @@ public class SimpleIDM {
         }
         return cloud_endpoint;
     }
-    
-    
     /**
-     * 
+     * IT returns Federation Token assigne from OSFFM.
+     * @param tenant
+     * @param user
      * @return 
-     * @author gtricomi
      */
-    private String generate_token(){
-        return UUID.randomUUID().toString();
+    public String getFederationToken(
+            String tenant,
+            String user)
+    {
+        String tokenFederation=null;
+        try {
+            tokenFederation = this.mdb.getFederationToken(tenant, user);
+        } catch (MDBIException ex) {
+            LOGGER.error(ex.getMessage());
+            return null;
+        }
+        return tokenFederation;
     }
+    
+   
     
     ////CREATION FEDERATED AND FEDERATION ISTANCE OBJECTS
     /**

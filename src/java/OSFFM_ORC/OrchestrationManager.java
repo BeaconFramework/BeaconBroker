@@ -20,6 +20,7 @@ import JClouds_Adapter.NeutronTest;
 import JClouds_Adapter.NovaTest;
 import JClouds_Adapter.OpenstackInfoContainer;
 import MDBInt.DBMongo;
+import MDBInt.FederationUser;
 import MDBInt.MDBIException;
 import OSFFM_ORC.Utils.Exception.NotFoundGeoRefException;
 import OSFFM_ORC.Utils.MultiPolygon;
@@ -119,8 +120,13 @@ public class OrchestrationManager {
                 System.err.println("A generic Exception is occurred"+e.getMessage());
             }
             //System.out.println("QUI arrivo: "+"./subrepoTemplate/"+tenant+rootName+"_"+(String)obj[index]);
-            this.writeManifestonFile("./subrepoTemplate/"+tenant+rootName+"_"+(String)obj[index], val);
-            //ArrayList<String> tmp=this.globalTOfragmentsManif.get(rootName);
+            String home=System.getProperty("java.home");
+            String fs=System.getProperty("file.separator");
+            //this.writeManifestonFile(home+fs+"subrepoTemplate"+fs+tenant+fs+tenant+rootName+"_"+(String)obj[index], val);
+            this.writeManifestonFile("."+fs+"subrepoTemplate"+fs+tenant+fs+tenant+rootName+"_"+(String)obj[index], val);
+
+
+//ArrayList<String> tmp=this.globalTOfragmentsManif.get(rootName);
             //tmp.add(rootName+"_"+(String)obj[index]);
             //this.globalTOfragmentsManif.put(rootName,tmp);
         }
@@ -551,5 +557,21 @@ public class OrchestrationManager {
         }
     }
 
-
+    
+    //<editor-fold defaultstate="collapsed" desc="Networks Management function">
+    /**
+     * 
+     * @param fu
+     * @param OSF_network_segment_id
+     * @param params
+     * @return 
+     * @author gtricomi
+     */
+    public JSONObject networkSegmentAdd(FederationUser fu,String OSF_network_segment_id,String OSF_cloud,HashMap params) throws Exception{
+      //invocare qui funzioni del FederationActionManager
+        FederationActionManager fam=new FederationActionManager();
+        return fam.networkSegmentAdd(fu, OSF_network_segment_id,OSF_cloud,params);
+    }
+    //</editor-fold>
+    
 }

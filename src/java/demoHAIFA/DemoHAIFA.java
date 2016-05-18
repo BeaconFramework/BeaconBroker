@@ -125,6 +125,7 @@ public class DemoHAIFA {
                 while(stack.equals("")){
                     stack=dh.consoleRequest("Insert stack name(name of submanifest) that we want instatiate","");
                 }
+                String home=System.getProperty("java.home");
                 String template=dh.readFromFile("./subrepoTemplate/"+stack);
                 String stackName=stack.substring(stack.lastIndexOf("_")+1,stack.lastIndexOf(".yaml")>=0?stack.lastIndexOf(".yaml"):stack.length());
                 ArrayList arDC=(ArrayList<ArrayList<String>>)tmpMap.get(stackName);
@@ -219,6 +220,9 @@ public class DemoHAIFA {
             return result;
     }
       private void listSplittedTemplate(){
+        String home=System.getProperty("java.home");
+        String fs=System.getProperty("file.separator");
+        //File folder = new File(home+fs+"subrepoTemplate");
         File folder = new File("./subrepoTemplate");
         File[] listOfFiles = folder.listFiles();
 

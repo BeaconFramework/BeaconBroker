@@ -35,9 +35,9 @@ public class JcloudTest {
         
         //       KeystoneTest key=new KeystoneTest(mongo);
 
-        KeystoneTest key=new KeystoneTest("admin","prova","prova","http://172.17.1.217:5000/v2.0");
+        KeystoneTest key=new KeystoneTest("demo","admin","password","http://172.17.1.217:5000/v2.0");
      //   System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-     //   key.autenticate("admin", "demo", "prova");
+        key.autenticate("demo", "admin", "password");
 //key.serviceGet("test");
    //     key.servicetList();
     //    key.listRole();
@@ -78,16 +78,16 @@ public class JcloudTest {
         
        
         
-     NeutronTest neutron = new NeutronTest("http://172.17.1.217:35357/v2.0","beacon","admin","password","RegionOne");
-      neutron.listNetworks();
+     NeutronTest neutron = new NeutronTest("http://172.17.1.217:35357/v2.0","demo","admin","password","RegionOne");
+     // neutron.listNetworks();
 //neutron.listRegions();
-//neutron.createRouter("prova","RegionOne","f225b4d8-9da8-422f-a637-9427a4f64a7a","62da5ef7-87ed-4e49-8cd7-1bad78257080");
+        neutron.createRouter("prova","RegionOne","f225b4d8-9da8-422f-a637-9427a4f64a7a","62da5ef7-87ed-4e49-8cd7-1bad78257080");
        // neutron.deleteNetworks();
        //neutron.createNetwork();
       // neutron.updateNetwork();
-       //neutron.createNetwork2();
-       
-      // neutron.createSubnet();
+      // neutron.createNetwork2();
+      // neutron.testListRouters();
+   //    neutron.createSubnet();
        
      //  neutron.listNetworks();
      //  neutron.listSubnet();

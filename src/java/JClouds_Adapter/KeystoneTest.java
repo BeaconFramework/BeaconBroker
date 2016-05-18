@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.TypeLiteral;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 import org.apache.log4j.Logger;
@@ -47,6 +48,7 @@ import org.jclouds.openstack.keystone.v2_0.extensions.TenantAdminApi;
 import org.jclouds.openstack.keystone.v2_0.extensions.UserAdminApi;
 import org.jclouds.openstack.keystone.v2_0.features.ServiceApi;
 import org.jclouds.openstack.keystone.v2_0.features.TenantApi;
+import org.jclouds.openstack.keystone.v2_0.features.TokenApi;
 import org.jclouds.openstack.keystone.v2_0.features.UserApi;
 import org.jclouds.openstack.keystone.v2_0.options.CreateTenantOptions;
 import org.jclouds.openstack.keystone.v2_0.options.CreateUserOptions;
@@ -397,31 +399,57 @@ while(i.hasNext()){
       
  }
  
+    public HashMap getToken(String tenantname, String username, String password) {
+        ContextBuilder contextBuilder = ContextBuilder.newBuilder("openstack-nova")
+                .credentials(tenantname + ":" + username, password);
+        contextBuilder.endpoint(this.endpoint);
+        ComputeServiceContext context = contextBuilder.buildView(ComputeServiceContext.class);
+        Function<Credentials, Access> auth = context.utils().injector().getInstance(Key.get(new TypeLiteral<Function<Credentials, Access>>() {
+        }));
+        Access access = auth.apply(new Credentials.Builder<Credentials>().identity(tenantname + ":" + username).credential(password).build());
+        HashMap hm=new HashMap();
+        hm.put("ID", access.getToken().getId());
+        hm.put("Expires",access.getToken().getExpires());
+        return hm;
+    }
+    /**
+     * Validates token
+     * @param tokenToValidate
+     * @return true/false.
+     */
+    public boolean validateToken(String tokenToValidate){
+        TokenApi t=this.keystoneApi.getTokenApi().get();
+        return t.isValid(tokenToValidate);
+    }
+    
  
+ /**
+  * This function need to be modified.
+  * @param tenantname
+  * @param username
+  * @param password
+  * @return 
+  * @author gtricomi
+  */
  public String autenticate(String tenantname,String username, String password){
-     ContextBuilder contextBuilder = ContextBuilder.newBuilder(provider)
+     ContextBuilder contextBuilder = ContextBuilder.newBuilder("openstack-nova")
             .credentials(tenantname+":"+username, password);
 
          contextBuilder.endpoint(this.endpoint);
-         
-         System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&6");
-         System.out.println(this.keystoneApi.getUserApi().get().getByName(username).getName());
-         System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&6");
-         try{
-         System.out.println(this.keystoneApi.getTokenApi().get().get(username).toString());
-         }
-         catch(Exception e){}
-         System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&6");
-         Token t=contextBuilder.buildApi(KeystoneApi.class).getTokenApi().get().get(username);
-         System.out.println(t.getId()+"      "+t.toString());
-         
-      /*ComputeServiceContext context = contextBuilder.buildView(ComputeServiceContext.class);
 
-      Function<Credentials, Access> auth; 
-      auth= context.utils().injector().getInstance(Key.get(new TypeLiteral<Function<Credentials, Access>>(){}));      
-      Access access = auth.apply(new Credentials.Builder<Credentials>().identity(username).credential(credential).build());
-      System.out.println(access.getToken().getTenant().get().getId());
-      return access.getToken().getTenant().get().getId();*/
+         
+         ComputeServiceContext context = contextBuilder.buildView(ComputeServiceContext.class);
+           Function<Credentials, Access> auth = context.utils().injector().getInstance(Key.get(new TypeLiteral<Function<Credentials, Access>>(){}));      
+      Access access = auth.apply(new Credentials.Builder<Credentials>().identity(tenantname+":"+username).credential(password).build());
+      
+      System.out.println(access);      
+      System.out.println("  User Name = " + access.getUser().getName());
+      System.out.println("  User ID = " + access.getUser().getId());
+      System.out.println("  Tenant Name = " + access.getToken().getTenant().get().getName());
+      System.out.println("  Tenant ID = " + access.getToken().getTenant().get().getId());
+      System.out.println("  Token ID = " + access.getToken().getId());
+      System.out.println("  Token Expires = " + access.getToken().getExpires());
+         
          return null;
  }    
      

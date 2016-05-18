@@ -41,7 +41,7 @@ public class FA_client4Sites extends FA_REST_Client{
     public boolean createSiteTable(String TenantId, String faURL,String body)throws WSException{
         boolean result= true;
         HttpBasicAuthFilter auth=new HttpBasicAuthFilter(this.getUserName(), this.getPassword());
-        Response r=this.createInsertingrequest("http://"+faURL+"/net-fa/tenants",body,auth,"put",MediaType.APPLICATION_JSON);
+        Response r=this.createInsertingrequest("http://"+faURL+"/net-fa/tenants/"+TenantId+"/sites",body,auth,"put",MediaType.APPLICATION_JSON);
         
         
         try{
@@ -60,24 +60,41 @@ public class FA_client4Sites extends FA_REST_Client{
      * @return 
      * @author gtricomi
      */
-    public String constructSiteTableJSON(ArrayList<HashMap<String,String>> sites){
+    public String constructSiteTableJSON(ArrayList<HashMap<String,Object>> sites){
         //>>>BEACON this String need to be reviewed
-        String result="{";
+        String result="";
         String tmp="[";
         boolean first=true;
+        JSONArray ja=new JSONArray();
+        try{
         for(HashMap elem:sites){
+            /*
+            [
+            {"tenant_id": "ab6a28b9f3624f4fa46e78247848544e",
+            "name": "site1",
+            "site_proxy": [{"ip": "10.0.0.33", "port": 4789}],
+            "fa_url": "10.0.0.33:4567"},
+            {"tenant_id": "0ce39f6ae8044445b31d5b7f9b34062b",
+            "name": "site2",
+            "site_proxy": [{"ip": "10.0.0.38", "port": 4789}],
+            "fa_url": "10.0.0.38:4567"}]
+            */
             if(!first)
-                tmp=tmp+",";
+                tmp=tmp+", ";
             tmp=tmp+"{";
-            tmp=tmp+("\"Name\" : \""+elem.get("name")+"\",");
-            tmp=tmp+("\"tenant_id\" : \""+elem.get("tenant_id")+"\",");
-            tmp=tmp+("\"fa_url\" : \""+elem.get("fa_url")+"\",");
-            tmp=tmp+("\"site_proxy\" : \""+elem.get("site_proxy")+"\"");
+            tmp=tmp+("\"tenant_id\": \""+elem.get("tenant_id")+"\", ");
+            tmp=tmp+("\"name\": \""+elem.get("name")+"\", ");
+            tmp=tmp+("\"site_proxy\": [{\"ip\": \""+elem.get("site_proxyip")+"\", \"port\": "+elem.get("site_proxyport")+"}], ");
+            tmp=tmp+("\"fa_url\": \""+elem.get("fa_url")+"\"");
             tmp=tmp+"}";
             first=false;
         }
+        }
+        catch(Exception e){
+            
+        }
         tmp=tmp+"]";
-        return result+tmp+"}";    
+        return tmp;    
     }
     
 }

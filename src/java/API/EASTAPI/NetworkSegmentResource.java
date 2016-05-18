@@ -23,7 +23,7 @@ import javax.ws.rs.DELETE;
 
 /**
  * REST Web Service
- *
+ * This class is generated for future use and it will be used to manage the information storing procedure if this is needed(or it will be removed).
  * @author gtricomi
  */
 public class NetworkSegmentResource {
