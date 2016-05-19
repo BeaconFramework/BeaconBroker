@@ -103,7 +103,7 @@ public class Tenant extends EastBrRESTClient{
      * @return
      * @throws WSException 
      */
-    public Response updateNetSeg(JSONObject params,String baseFEDSDNURL,long tenId) throws WSException, JSONException {
+    public Response updateTen(JSONObject params,String baseFEDSDNURL,long tenId) throws WSException, JSONException {
         Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/tenant/"+tenId, this.constructBody(params), "put");
         try{
                 this.checkResponse(r);//as answer we expect a status code 200
@@ -122,7 +122,7 @@ public class Tenant extends EastBrRESTClient{
      * @return
      * @throws WSException 
      */
-    public Response delSite(String baseFEDSDNURL,long tenantId)throws WSException {
+    public Response delTen(String baseFEDSDNURL,long tenantId)throws WSException {
         Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/tenant/"+tenantId, "", "delete");
         try{
                 this.checkResponse(r);//as answer we expect a status code 200
@@ -168,7 +168,7 @@ public class Tenant extends EastBrRESTClient{
      * @return
      * @throws WSException/WSException303 
      */
-    public Response updateFednet(JSONObject params,String tenantname,String baseFEDSDNURL) throws WSException, JSONException {
+    public Response updateTen(JSONObject params,String tenantname,String baseFEDSDNURL) throws WSException, JSONException {
         long id;
         try {
             id = this.searchTenantID(tenantname, baseFEDSDNURL);

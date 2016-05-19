@@ -112,7 +112,7 @@ public class Fednet extends EastBrRESTClient{
     
     
     /**
-     * This function update fednet instance on FEDSDN
+     * This function update fednet instance on FEDSDN.
      * @param fedtobemod_id
      * @param name
      * @param linkType
@@ -122,18 +122,17 @@ public class Fednet extends EastBrRESTClient{
      * @throws WSException 
      */
     public Response updateFednet(long fedtobemod_id,String name,String linkType,String type,String baseFEDSDNURL) throws WSException {
-        
-        Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/"+fedtobemod_id, this.constructBody(name, linkType, type), "put");
-        try{
-                this.checkResponse(r);//as answer we expect a status code 200
-            }
-            catch(WSException wse){
-                LOGGER.error("Exception occurred in createTenantFA method, the web service has answer with bad status!\n"+wse.getMessage());
-                throw wse;
-            }
+        System.out.println(this.constructBody(name, linkType, type));
+        Response r = this.makeSimpleRequest(baseFEDSDNURL + "/fednet/" + fedtobemod_id, this.constructBody(name, linkType, type), "put");
+        try {
+            this.checkResponse(r);//as answer we expect a status code 200
+        } catch (WSException wse) {
+            LOGGER.error("Exception occurred in createTenantFA method, the web service has answer with bad status!\n" + wse.getMessage());
+            throw wse;
+        }
         return r;
     }
-    
+
     /**
      * 
      * @param baseFEDSDNURL

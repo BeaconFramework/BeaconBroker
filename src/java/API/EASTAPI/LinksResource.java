@@ -85,7 +85,7 @@ public class LinksResource {
             //////(probabilemente queste informazioni verranno poi restituite in formato non corretto per
             ////// il FA quindi dovranno essere rielaborate prima di rimandarle al FA
             //////)]
-            //////>>a questo punto il FEDSDN invoca questo WebService
+            //////>>a questo punto il FEDSDN attraverso l'adapter invoca questo WebService
         }
         catch(Exception eg){
             reply.put("returncode", 1); 
