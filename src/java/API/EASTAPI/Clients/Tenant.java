@@ -44,8 +44,7 @@ public class Tenant extends EastBrRESTClient{
      * @throws WSException 
      */
     public Response getAllTenant(String baseFEDSDNURL)throws WSException {
-        body=new JSONObject();
-        Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/tenant", body, "get");
+        Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/tenant", "", "get");
         try{
                 this.checkResponse(r);//as answer we expect a status code 200
             }
@@ -64,8 +63,7 @@ public class Tenant extends EastBrRESTClient{
      * @throws WSException 
      */
     public Response getInofesTenant(String baseFEDSDNURL,long tenId)throws WSException {
-        body=new JSONObject();
-        Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/"+tenId, body, "get");
+        Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/"+tenId, "", "get");
         try{
                 this.checkResponse(r);
             }
@@ -83,9 +81,8 @@ public class Tenant extends EastBrRESTClient{
      * @return
      * @throws WSException 
      */
-    public Response createTen(JSONObject params,String baseFEDSDNURL) throws WSException {
-        body=params;
-        Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/tenant", body, "post");
+    public Response createTen(JSONObject params,String baseFEDSDNURL) throws WSException, JSONException {
+        Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/tenant", this.constructBody(params), "post");
         try{
                 this.checkResponse(r);//as answer we expect a status code 200
             }
@@ -106,9 +103,8 @@ public class Tenant extends EastBrRESTClient{
      * @return
      * @throws WSException 
      */
-    public Response updateNetSeg(JSONObject params,String baseFEDSDNURL,long tenId) throws WSException {
-        body=params;
-        Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/tenant/"+tenId, body, "put");
+    public Response updateNetSeg(JSONObject params,String baseFEDSDNURL,long tenId) throws WSException, JSONException {
+        Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/tenant/"+tenId, this.constructBody(params), "put");
         try{
                 this.checkResponse(r);//as answer we expect a status code 200
             }
@@ -127,8 +123,7 @@ public class Tenant extends EastBrRESTClient{
      * @throws WSException 
      */
     public Response delSite(String baseFEDSDNURL,long tenantId)throws WSException {
-        body=new JSONObject();
-        Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/tenant/"+tenantId, body, "delete");
+        Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/tenant/"+tenantId, "", "delete");
         try{
                 this.checkResponse(r);//as answer we expect a status code 200
             }
@@ -148,15 +143,13 @@ public class Tenant extends EastBrRESTClient{
      * @throws WSException 
      */
     public Response getTenantInfoes(String baseFEDSDNURL,String tenantname)throws WSException {
-        body=new JSONObject();
-        //logic to retrieve tenantid
         long id;
         try {
             id = this.searchTenantID(tenantname, baseFEDSDNURL);
         } catch (Exception ex) {
             throw new WSException303("SEE_OTHER! The action can't be completed");
         }
-        Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/tenant/"+id, body, "get");
+        Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/tenant/"+id, "", "get");
         try{
                 this.checkResponse(r);//as answer we expect a status code 200
             }
@@ -175,16 +168,15 @@ public class Tenant extends EastBrRESTClient{
      * @return
      * @throws WSException/WSException303 
      */
-    public Response updateFednet(JSONObject params,String tenantname,String baseFEDSDNURL) throws WSException {
-        //logic to retrieve ID
+    public Response updateFednet(JSONObject params,String tenantname,String baseFEDSDNURL) throws WSException, JSONException {
         long id;
         try {
             id = this.searchTenantID(tenantname, baseFEDSDNURL);
         } catch (Exception ex) {
             throw new WSException303("SEE_OTHER! The action can't be completed");
         }
-        body=params;
-        Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/tenant/"+id, body, "put");
+        
+        Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/tenant/"+id, this.constructBody(params), "put");
         try{
                 this.checkResponse(r);//as answer we expect a status code 200
             }
@@ -224,9 +216,7 @@ public class Tenant extends EastBrRESTClient{
         throw new Exception("Information retrieved as answer from FEDSDN is not standard. Execution stopped!\n Id not Found!\n"+obj.toString());
     }
     
-    
-    //TO BE COMPLETED 
     private String constructBody(JSONObject params) throws JSONException{
-        return "{\"name\" : \""+params.getString("name")+"\", \"fa_endpoint\" : \""+params.getString("fa_endpoint")+"\", \"network_address\" : \""+params.getString("network_address")+"\", \"network_mask\" : \""+params.getString("network_mask")+"\", \"size\" : \""+params.getString("size")+"\", \"vlan_id\" : \""+params.getString("vlan_id")+"\", \"cmp_net_id\" : \""+params.getString("cmp_net_id")+"\"}";
+        return "{\"name\" : \""+params.getString("name")+"\", \"password\" : \""+params.getString("password")+"\", \"type\" : \""+params.getString("type")+"\", \"valid_sites\" : "+(org.json.JSONArray)params.get("valid_sites")+"}";
     }
 }

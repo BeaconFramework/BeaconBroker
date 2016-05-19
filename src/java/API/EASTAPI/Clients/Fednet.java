@@ -191,8 +191,6 @@ public class Fednet extends EastBrRESTClient{
      * @throws WSException/WSException303
      */
     public Response getNetinfo(String baseFEDSDNURL,String fedtobemod)throws WSException {
-        body=new JSONObject();
-        body.
         long id;
         try {
             id = this.searchfedID(fedtobemod, baseFEDSDNURL);
