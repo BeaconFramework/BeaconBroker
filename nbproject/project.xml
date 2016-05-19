@@ -31,10 +31,6 @@
                     <path-in-war>WEB-INF/lib</path-in-war>
                 </library>
                 <library dirs="200">
-                    <file>${file.reference.gson-2.3.jar}</file>
-                    <path-in-war>WEB-INF/lib</path-in-war>
-                </library>
-                <library dirs="200">
                     <file>${file.reference.guava-16.0.1.jar}</file>
                     <path-in-war>WEB-INF/lib</path-in-war>
                 </library>
@@ -196,10 +192,6 @@
                 </library>
                 <library dirs="200">
                     <file>${file.reference.myOpenstack4jLibrary.jar}</file>
-                </library>
-                <library dirs="200">
-                    <file>${file.reference.Heat.jar}</file>
-                    <path-in-war>WEB-INF/lib</path-in-war>
                 </library>
                 <library dirs="200">
                     <file>${file.reference.log4j.jar}</file>
