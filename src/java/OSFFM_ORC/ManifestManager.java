@@ -333,6 +333,7 @@ public class ManifestManager implements Runnable{
      */
     public String ComposeJSON4element(String serGrName)throws JSONException{
         String joStr="{";
+        
         joStr=joStr+"\"heat_template_version\":\""+this.getTempVers()+"\",";
         joStr=joStr+"\"description\":\""+this.getDescription()+"\",";
         joStr=joStr+this.manageYAMLcreation(serGrName)+"}";

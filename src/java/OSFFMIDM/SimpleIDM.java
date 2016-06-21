@@ -33,13 +33,62 @@ import org.apache.log4j.Logger;
 public class SimpleIDM {
     
     DBMongo mdb=null;
+    DBMongo ident_db=null;
     private static String configFile="../webapps/OSFFM/WEB-INF/configuration_bigDataPlugin.xml";
     private String IDMdbName="simpleIDM";
     private ParserXML parser;
     private String mdbIp;
-    private String dbName;
-    private String collName;
+    private String dbName="beacon";//beacon is the DEFAULT VALUE
+    private String identityDBname; //This is the name of the DB that contains the Credential infos of the Federation Tenant 
     static final Logger LOGGER = Logger.getLogger(SimpleIDM.class);
+
+    public DBMongo getMdb() {
+        return mdb;
+    }
+
+    public void setMdb(DBMongo mdb) {
+        this.mdb = mdb;
+    }
+
+   /* public static String getConfigFile() {
+        return configFile;
+    }
+
+    public static void setConfigFile(String configFile) {
+        SimpleIDM.configFile = configFile;
+    }*/
+
+    public String getIDMdbName() {
+        return IDMdbName;
+    }
+
+    public void setIDMdbName(String IDMdbName) {
+        this.IDMdbName = IDMdbName;
+    }
+
+    public String getMdbIp() {
+        return mdbIp;
+    }
+
+    public void setMdbIp(String mdbIp) {
+        this.mdbIp = mdbIp;
+    }
+
+    public String getDbName() {
+        return dbName;
+    }
+
+    public void setDbName(String dbName) {
+        this.dbName = dbName;
+    }
+
+    public String getCollName() {
+        return identityDBname;
+    }
+
+    public void setCollName(String collName) {
+        this.identityDBname = collName;
+    }
     
     public SimpleIDM() {
         this.init(configFile);
@@ -53,6 +102,9 @@ public class SimpleIDM {
         this.init(cf);
         mdb=new DBMongo();
         mdb.connectLocale(this.mdbIp);
+        this.ident_db=new DBMongo();
+        this.ident_db.setIdentityDB(identityDBname);
+        this.ident_db.connectLocale(this.mdbIp);
     }
     
     private void init(String file){
@@ -61,24 +113,41 @@ public class SimpleIDM {
             parser = new ParserXML(new File(file));
             params = parser.getRootElement().getChild("SimpleIDMParams");
             mdbIp = params.getChildText("serverip");
-            dbName= params.getChildText("dbname");
-            collName= params.getChildText("collname");
+            //dbName= params.getChildText("dbname"); Removed 
+            identityDBname= params.getChildText("IdentityDBname");
         } 
         catch (Exception ex) {
             ex.printStackTrace();
         }
     }
+    
     /**
-     * 
+     * This function is used in order to retrieve the Database name for the Federation Tenant.
+     * @param field, parameter used as research key
+     * @param value, paramenter used as research key value 
+     * @return String
+     */
+    public String retrieve_TenantDB(String field,String value){
+        return this.ident_db.getTenantDBName(field, value);
+    }
+    
+    
+    
+    
+    
+    
+    
+    /**
+     * Function used to Verify credential of a federation user
      * @param token 
      * @return 
      */
-    public boolean verifyCredentials(String token){
+    public boolean verifyCredentials(String tenant,String token,String cloudID){
         //BEACON>>> it will be added token integrity check, the token will be inserted inside request as combination between several field
         ////like timestamp request user and password. This algorithm works like digital signature.
         
       
-        if(this.retr_infoes_fromfedsdn(token, null, null, null, null)==null)
+        if(this.retr_infoes_fromfedsdn(token, tenant, null, null, cloudID)==null)
             return false;
         else
             return true;
@@ -153,7 +222,7 @@ public class SimpleIDM {
             String cmp_endpoint
             )
     {
-        String tmp=this.mdb.getFederationCredential(dbName, token);
+        String tmp=this.mdb.getFederationCredential(this.dbName, token);
         try{
             JSONObject tj=new JSONObject(tmp);
             JSONArray ta=tj.getJSONArray("crediantialList");
@@ -248,7 +317,7 @@ public class SimpleIDM {
         query="{\"username\":\""+username+"\",\"tenant\":\""+tenant+"\",\"cmp_endpoint\":\""+cmp_endpoint+"\"}";
         String cloudid=null;
         try {
-            cloudid = this.mdb.getDatacenterIDfrom_cmpEndpoint(tenant, cmp_endpoint);
+            cloudid = this.mdb.getDatacenterIDfrom_cmpEndpoint(this.dbName, cmp_endpoint);
         } catch (MDBIException ex) {
             LOGGER.error(ex.getMessage());
             return null;
@@ -262,7 +331,7 @@ public class SimpleIDM {
     {
         String cloud_endpoint=null;
         try {
-            cloud_endpoint = this.mdb.getDatacenter(tenant, cloudid);
+            cloud_endpoint = this.mdb.getDatacenter(this.dbName, cloudid);
         } catch (MDBIException ex) {
             LOGGER.error(ex.getMessage());
             return null;
@@ -281,7 +350,7 @@ public class SimpleIDM {
     {
         String tokenFederation=null;
         try {
-            tokenFederation = this.mdb.getFederationToken(tenant, user);
+            tokenFederation = this.mdb.getFederationToken(this.dbName, user);
         } catch (MDBIException ex) {
             LOGGER.error(ex.getMessage());
             return null;

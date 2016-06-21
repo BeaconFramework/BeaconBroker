@@ -47,7 +47,8 @@ public class Templates {
      */
     public Templates() {
        this.m=new DBMongo();
-       this.m.connectLocale();
+       this.m.init();
+       this.m.connectLocale(this.m.getMdbIp());
        this.s=new Splitter(m);
     }
 
@@ -81,7 +82,7 @@ public class Templates {
                 return reply.toJSONString();
             }
         }
-        reply.put("templates", ja.toJSONString());
+        reply.put("templates", ja);
             reply.put("returncode", 0); 
             reply.put("errormesg", "None");
             return reply.toJSONString();

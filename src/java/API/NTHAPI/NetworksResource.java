@@ -134,8 +134,8 @@ public class NetworksResource {
     public String getFednetInfo(@PathParam("fednet_id") String fednet_id) {
         //TODO return proper representation networking
         JSONArray arr=new JSONArray();
-        //while(per ogni sito della federazione){     
-            JSONObject element=new JSONObject();
+        //while(per ogni sito della federazione){     //BEACON>>> INSERT OR CORRECT LOGIC
+            JSONObject element=new JSONObject();    
             element.put("site", "siteId");
             //while( per ogni network di un sito){
                 JSONArray internalarr=new JSONArray();

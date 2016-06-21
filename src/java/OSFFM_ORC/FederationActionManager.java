@@ -35,10 +35,14 @@ public class FederationActionManager {
     
     
     static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(FederationActionManager.class);
-    DBMongo db=new DBMongo();
     
-    public JSONObject networkSegmentAdd(FederationUser fu, String OSF_network_segment_id,String OSF_cloud,HashMap netParameter) throws Exception {
+    
+    public JSONObject networkSegmentAdd(FederationUser fu, String OSF_network_segment_id,String OSF_cloud,HashMap netParameter,String federationTenant) throws Exception {
+        DBMongo db=new DBMongo();
         JSONObject reply = new JSONObject();
+        db.init();
+        db.setDbName(federationTenant);
+        db.connectLocale(db.getMdbIp());
         HashMap fum = this.getAllFederatedCloudCreds(fu);
         JSONObject network_info=new JSONObject(),network_infoGLOBAL=new JSONObject();
         JSONArray ja=new JSONArray();
@@ -49,7 +53,6 @@ public class FederationActionManager {
         Iterator i = s.iterator();
         FederatedUser fed_U = null;
         while (i.hasNext()) {
-            
             try {
                 //Momentaneamente viene implementata una gestione singola del cloud federato.
                 //nel caso in cui si deciderà di gestire globalmente l'insieme dei cloud federati fare come indicato sotto, rimuovendo 
@@ -72,7 +75,7 @@ public class FederationActionManager {
             
             String cidr="";
             boolean found = false,cidrPresent=false;
-            String internalNetId = this.db.getInternalNetworkID(fu.getUser(), OSF_network_segment_id, fed_U.getCloud());
+            String internalNetId = db.getInternalNetworkID(fu.getUser(), OSF_network_segment_id, fed_U.getCloud());
             if (internalNetId != null) 
             {
                 Iterator<Network> iN = neutron.listNetworks();
@@ -92,14 +95,14 @@ public class FederationActionManager {
                     //in alternativa creare le informazioni qui:
                     HashMap th = new HashMap();
                     th.put("netsegments", OSF_network_segment_id);
-                    org.json.JSONObject j = this.db.getcidrInfoes(fu.getUser(), th);
+                    org.json.JSONObject j =db.getcidrInfoes(fu.getUser(), th);
                     if (j != null) {
 //this is the case when a cidr is already defined for this fednet and FederationUser. That would mean that we have to create the 
 ////other netsegments of the fednet with ther same parameters.                         
                         th = new HashMap();
                         th.put("netsegments", OSF_network_segment_id);
                         th.put("cloudId", fed_U.getCloud());
-                        org.json.JSONObject j2 = this.db.getcidrInfoes(fu.getUser(), th);
+                        org.json.JSONObject j2 =db.getcidrInfoes(fu.getUser(), th);
                         if (j2 == null) {
 //on mongo the netsegments searched is not found for this cloud then we will take the federation cidr
                             cidr = (String) j.get("cidr");
@@ -190,8 +193,8 @@ public class FederationActionManager {
             catch(Exception e){
                 LOGGER.error("Exception occurred in network creation operation!");
             }
-            this.db.storeInternalNetworkID(fu.getUser(), OSF_network_segment_id, fed_U.getCloud(), internalNetId);
-            this.db.insertcidrInfoes(fu.getUser(), cidr, fednets, OSF_network_segment_id, fed_U.getCloud());
+            db.storeInternalNetworkID(fu.getUser(), OSF_network_segment_id, fed_U.getCloud(), internalNetId);
+            db.insertcidrInfoes(fu.getUser(), cidr, fednets, OSF_network_segment_id, fed_U.getCloud());
             network_info=new JSONObject();
             network_info.put("cloudId",fed_U.getCloud());
             network_info.put("internalId", internalNetId);

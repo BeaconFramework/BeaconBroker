@@ -50,7 +50,8 @@ public class ManifestcreatesResource {
      */
     public ManifestcreatesResource() {
        this.m=new DBMongo(); 
-       this.m.connectLocale();
+       this.m.init();
+       this.m.connectLocale(this.m.getMdbIp());
        this.s=new Splitter(m);
     }
 
@@ -87,7 +88,7 @@ public class ManifestcreatesResource {
         //TODO return proper representation object
         LOGGER.error("This is a logging statement from log4j");
         try{
-        SimpleIDM si=new SimpleIDM();
+        SimpleIDM si=new SimpleIDM();     //BEACON>>> The logic need to be implemented
         }
         catch(Exception ec){
             LOGGER.error(ec.getMessage());

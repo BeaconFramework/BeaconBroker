@@ -162,8 +162,6 @@ public class RunTimeInfo {
             json.put("region", region);
             json.put("state", state);
             json.put("uuidTemplate", uuidTemplate);
-
-
         } catch (JSONException ex) {
             ex.printStackTrace();
         }

@@ -88,7 +88,7 @@ public class SitesResource {
         //TODO return proper representation object
         JSONArray arr=new JSONArray();
         //while(??){
-        JSONObject element=new JSONObject();
+        JSONObject element=new JSONObject();//BEACON>>> ADD LOGIC HERE
         element.put("uuid", "Value1");
         element.put("name", "Value2");
         element.put("Available4Tenant",true); // or false
@@ -114,7 +114,7 @@ public class SitesResource {
         //TODO return proper representation object
         LOGGER.error("This is a logging statement from log4j");
         try{
-        SimpleIDM si=new SimpleIDM();
+        SimpleIDM si=new SimpleIDM();//BEACON>>> THe logic need to be implemented
         }
         catch(Exception ec){
             LOGGER.error(ec.getMessage());
@@ -143,7 +143,7 @@ public class SitesResource {
         JSONObject j=new JSONObject();
         JSONParser jp=new JSONParser();
         try{
-            j=(JSONObject)jp.parse(value);
+            j=(JSONObject)jp.parse(value); //BEACON>>> THe logic need to be implemented
         }catch(Exception e){}
         
         return j.toJSONString();//questo è lo scheletro và modificato
@@ -161,7 +161,7 @@ public class SitesResource {
     @Produces("application/json")
     public String deleteSite(@PathParam("siteid") String siteid) {
         JSONObject reply=new JSONObject();
-        //something TODO 4 delete Logic
+        //something TODO 4 delete Logic//BEACON>>> THe logic need to be implemented
         reply.put("returncode", 0); // or reply.put("returncode", 1);
         reply.put("errormesg", "None"); //or reply.put("errormesg", "Mesg");
         return reply.toJSONString();

@@ -27,8 +27,8 @@
     <!-- <serverURL>ing-clever-master.me.trigrid.it</serverURL> -->  
   </pluginParams>
   <SimpleIDMParams>
-      <serverip>172.17.3.142</serverip>
+      <serverip>172.17.2.32</serverip>
       <dbname>S_IDMDB</dbname>
-      <collname>S_IDMCollection</collname>  
+      <IdentityDBname>ManagementDB</IdentityDBname>  
   </SimpleIDMParams>
 </root>

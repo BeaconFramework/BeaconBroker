@@ -50,7 +50,7 @@ public class UsersResource {
      * Creates a new instance of UsersResource
      */
     public UsersResource() {
-        sidm=new SimpleIDM();
+        
     }
 
     /**
@@ -72,36 +72,50 @@ public class UsersResource {
         String cloud=null;
         String pass=null;
         String cmp_endpoint=null;
-        String region=null;
+        String region="RegionOne";
         try 
         {
             input=(JSONObject) parser.parse(content);
+            LOGGER.error("INPUT: "+input.toString());
             username=((String)input.get("username")).split("@")[0];
             tenant=((String)input.get("username")).split("@")[1];
-            cloud=((String)input.get("username")).split("@")[2];
-            pass=(String)input.get("password");
-            region=(String)input.get("region");
+            cloud=((String)input.get("username")).split("@")[2]; //FORSE NON DEVO USARE QST...
+            pass=(String)input.get("password"); // NOT USED FOR THE MOMENT
+            //region=(String)input.get("region"); NOT USED FOR THE MOMENT
         }
         catch(ParseException pe)
         {
             //something TODO
-            LOGGER.error("INPUT_JSON_UNPARSABLE: OPERATION ABORTED");
+            LOGGER.error("INPUT_JSON_UNPARSABLE: OPERATION ABORTED"+pe.getLocalizedMessage());
             reply.put("returncode", 1); 
             reply.put("errormesg", "INPUT_JSON_UNPARSABLE: OPERATION ABORTED");
             reply.put("token",null);
             reply.put("tenant_id", null);
             return reply.toJSONString();
+        }catch(Exception e){
+            e.printStackTrace();
+            reply.put("returncode", 1); 
+            reply.put("errormesg", "INPUT_GEN_EXCEPTION: OPERATION ABORTED!"+e.getMessage());
+            reply.put("token",null);
+            reply.put("tenant_id", null);
+            return reply.toJSONString();
         }
+        sidm=new SimpleIDM(); //>>>BEACON: VERIFY THIS POINT
+        String dbName=sidm.retrieve_TenantDB("federationTenant",tenant );
+        //sidm.setDbName(dbname);  >>>BEACON: FOR THE MOMENT OUR TESTING DB IS CALLED beacon
+        sidm.setDbName("beacon");
         cmp_endpoint=sidm.getcmp_endpointFederated(tenant, cloud);
-        OpenstackInfoContainer oic=new OpenstackInfoContainer(cloud,cmp_endpoint,tenant,username,pass,region);
+        // add check for cloud endpoint
+        FederatedUser fu= sidm.retr_infoes_fromfedsdn(tenant, cloud);
+        OpenstackInfoContainer oic=new OpenstackInfoContainer(cloud,cmp_endpoint,tenant,fu.getUser(),fu.getPassword(),fu.getRegion());
         //costruzione oggetto Openstackinfocontainer, e verifica delle credenziali attraverso il modulo di keystone 
         //fornito da jclouds
-        KeystoneTest key=new KeystoneTest(tenant,username,pass,cmp_endpoint);
-        HashMap hm=key.getToken(tenant, username, pass);
+        KeystoneTest key=new KeystoneTest(tenant,fu.getUser(),fu.getPassword(),cmp_endpoint);
+        HashMap hm=key.getToken(tenant, fu.getUser(), fu.getPassword());
         String token=(String)hm.get("ID");
         //When FEDSDN will take in count token expiration date we will use this token as
         ////output parameter that will be returned to it. For the moment we will return a static 
-        //////token taken  from MongoDb 
+        //////token taken from MongoDb 
         token=sidm.getFederationToken(tenant, username);
         if((String)hm.get("ID")==null)
         {
@@ -114,7 +128,7 @@ public class UsersResource {
         }
         else if(token==null)
         {
-            LOGGER.error("It is impossible retrieve token");
+            LOGGER.debug("It is impossible retrieve token");
             reply.put("returncode", 1); 
             reply.put("errormesg", "It is impossible retrieve token: OPERATION ABORTED");
             reply.put("token",null);
@@ -122,8 +136,8 @@ public class UsersResource {
             return reply.toJSONString();
         }
         String tenant_id=key.getTenantId(tenant);
-        reply.put("returncode", 0); // or reply.put("returncode", 1);
-        reply.put("errormesg", "None"); //or reply.put("errormesg", "Mesg");
+        reply.put("returncode", 0); 
+        reply.put("errormesg", "None");
         reply.put("token",token);
         reply.put("tenant_id", tenant_id);
         return reply.toJSONString();

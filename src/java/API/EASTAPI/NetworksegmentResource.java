@@ -86,6 +86,7 @@ public class NetworksegmentResource {
         {
             //retrieve JSON value from REST request
             input=(JSONObject) parser.parse(content);
+            //LOGGER.error("NETWORK::::"+input);
             OSF_user=((String)input.get("username")).split("@")[0];
             OSF_tenant=((String)input.get("username")).split("@")[1];
             OSF_cloud=((String)input.get("username")).split("@")[2];
@@ -105,10 +106,15 @@ public class NetworksegmentResource {
             //verrà restituito l'OSFFM endpoint
             //ricavare dal simple IDM gli elementi che mi mancano ovvero:
             //String endpoint, String tenant, String user, String password, String region
+            sidm=new SimpleIDM(); //>>>BEACON: VERIFY THIS POINT
+            String dbName=sidm.retrieve_TenantDB("federationTenant",OSF_tenant );
+            //sidm.setDbName(dbname);  >>>BEACON: FOR THE MOMENT OUR TESTING DB IS CALLED beacon
+            sidm.setDbName("beacon");
+            
             FederationUser fu=sidm.getFederationU(OSF_token, OSF_cmp_endpoint);//OSF_cmp_endpoint questo non è usato
             
             OrchestrationManager om=new OrchestrationManager();
-            response=om.networkSegmentAdd(fu, OSF_network_segment_id,OSF_cloud, params).toString();
+            response=om.networkSegmentAdd(dbName,fu, OSF_network_segment_id,OSF_cloud, params).toString();
             JSONObject output=(JSONObject) parser.parse(response);
             reply.put("returncode", output.get("returncode"));
             reply.put("errormesg", output.get("errormesg"));

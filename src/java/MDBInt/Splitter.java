@@ -176,7 +176,7 @@ System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n" +
                 version=new Float(0.0);
             else{
                 //System.out.println("Cerchiamo Versione");
-                Float tmpfloat=mongoAdapter.getVersion("beacon", "templateInfo", templateRef);
+                Float tmpfloat=mongoAdapter.getVersion(tenant, "templateInfo", templateRef);
                 version=new Float(tmpfloat.floatValue()+0.1);
             }
            // System.out.println("Inserimento");

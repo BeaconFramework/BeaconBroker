@@ -60,7 +60,36 @@ public class DBMongo {
     private ParserXML parser;
     private MessageDigest messageDigest;
     static final Logger LOGGER = Logger.getLogger(DBMongo.class);
+    private String identityDB;
+    private static String configFile="../webapps/OSFFM/WEB-INF/configuration_bigDataPlugin.xml";
+    private String mdbIp;
 
+    public String getMdbIp() {
+        return mdbIp;
+    }
+
+    public void setMdbIp(String mdbIp) {
+        this.mdbIp = mdbIp;
+    }
+    
+    
+    public String getDbName() {
+        return dbName;
+    }
+
+    public void setDbName(String dbName) {
+        this.dbName = dbName;
+    }
+
+    public String getIdentityDB() {
+        return identityDB;
+    }
+
+    public void setIdentityDB(String identityDB) {
+        this.identityDB = identityDB;
+    }
+   
+    
     public DBMongo() {
 
         map = new HashMap();
@@ -90,7 +119,26 @@ public class DBMongo {
             ex.printStackTrace();
         }
     }
+    
+    public void init() {
+        String file=configFile;
+        Element params;
+        try {
+            parser = new ParserXML(new File(file));
+            params = parser.getRootElement().getChild("pluginParams");
+            dbName = params.getChildText("dbName");
+            user = params.getChildText("user");
+            password = params.getChildText("password");
+            //serverList = params.getChild("serversList");
+            mdbIp = params.getChildText("serverip");
+            
 
+        } 
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
     public String getRunTimeInfo(String dbName, String uuid) {
 
         BasicDBObject first = new BasicDBObject();
@@ -231,7 +279,7 @@ public class DBMongo {
     public void connectLocale() {
 
         try {
-            mongoClient = new MongoClient("172.17.3.142");
+            mongoClient = new MongoClient("172.17.2.32");//("172.17.3.142");
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -649,7 +697,7 @@ public class DBMongo {
         return utils.staticFunctionality.toMd5(original);
     }
 //////////////////////////////////////////////////////////////////////////////////////7
-    //funzioni da eliminare
+    //funzioni da rivedere /eliminare
 
     /**
      * Returns ArrayList with all federatedUser registrated for the
@@ -960,8 +1008,24 @@ public class DBMongo {
         return datacenters;
     }
    
+//<editor-fold defaultstate="collapsed" desc="Federation Tenant Credential Management">
+    /**
+     * Method used for the retrieve Database name for Federation Tenant.
+     * @param field
+     * @param value
+     * @return 
+     */
+    public String getTenantDBName(String field,String value){
+       DB database = this.getDB(this.identityDB);
+       DBCollection collection = database.getCollection("Federation_Credential");
+       BasicDBObject researchField = new BasicDBObject(field, value);
+       DBObject risultato = collection.findOne(researchField);
+       String tenantDbName=(String)risultato.get("dbname");
+       return tenantDbName;
+    }
     
     
+//</editor-fold>    
     //<editor-fold defaultstate="collapsed" desc="NetworkId Management">
     
     /**

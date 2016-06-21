@@ -117,16 +117,16 @@ public class DemoHAIFA {
                 HashMap<String,ArrayList<ArrayList<String>>> tmpMap=om.managementgeoPolygon(manifestName, m, tenant);
 //2.2 richiamo funzione DBMongo.getFederatedCredential restituisce l'oggetto JSON in formato Stringa con 3 campi:
 ////federatedUser,federatedCloud,federatedPassword
-                HashMap<String,ArrayList<ArrayList<OpenstackInfoContainer>>> tmpMapcred=om.managementRetrieveCredential(tmpMap,m,"beacon","userFederation","passwordFederation","RegionOne");//userFederation,passwordFederation
+                HashMap<String,ArrayList<ArrayList<OpenstackInfoContainer>>> tmpMapcred=om.managementRetrieveCredential(tmpMap,m,tenant,"userFederation","passwordFederation","RegionOne");//userFederation,passwordFederation
 //2.3 chiama heat function per deploy of stack, e stampa a video equivalente della chiamata heat
 ////2.4 invocare funzione che lista da heat l'insieme delle risorse nello stack, per ogni risorsa recupera le informazioni sulla rete
 ////// e mette in un hashMap<String,string> (idRisorsa,idRete) e poi le trasferisce salvandole su Mongo DB
-                dh.listSplittedTemplate();
+                dh.listSplittedTemplate(tenant);
                 while(stack.equals("")){
                     stack=dh.consoleRequest("Insert stack name(name of submanifest) that we want instatiate","");
                 }
                 String home=System.getProperty("java.home");
-                String template=dh.readFromFile("./subrepoTemplate/"+stack);
+                String template=dh.readFromFile("./subrepoTemplate/"+tenant+"/"+stack);
                 String stackName=stack.substring(stack.lastIndexOf("_")+1,stack.lastIndexOf(".yaml")>=0?stack.lastIndexOf(".yaml"):stack.length());
                 ArrayList arDC=(ArrayList<ArrayList<String>>)tmpMap.get(stackName);
                 ArrayList arCr=(ArrayList<ArrayList<OpenstackInfoContainer>>)tmpMapcred.get(stackName);
@@ -219,11 +219,11 @@ public class DemoHAIFA {
             }
             return result;
     }
-      private void listSplittedTemplate(){
+      private void listSplittedTemplate(String tenant){
         String home=System.getProperty("java.home");
         String fs=System.getProperty("file.separator");
         //File folder = new File(home+fs+"subrepoTemplate");
-        File folder = new File("./subrepoTemplate");
+        File folder = new File("./subrepoTemplate/"+tenant);
         File[] listOfFiles = folder.listFiles();
 
         for (int i = 0; i < listOfFiles.length; i++) {

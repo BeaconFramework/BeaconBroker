@@ -16,6 +16,7 @@ package OSFFM_ORC;
 
 //<editor-fold defaultstate="collapsed" desc="Import Section">
 //import JClouds_Adapter.Heat;
+import com.edw.rmi.RMIServerInterface;
 import JClouds_Adapter.NeutronTest;
 import JClouds_Adapter.NovaTest;
 import JClouds_Adapter.OpenstackInfoContainer;
@@ -25,12 +26,15 @@ import MDBInt.MDBIException;
 import OSFFM_ORC.Utils.Exception.NotFoundGeoRefException;
 import OSFFM_ORC.Utils.MultiPolygon;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -41,12 +45,14 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jclouds.openstack.neutron.v2.domain.Port;
+import org.jdom2.Element;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.openstack4j.model.heat.Resource;
 import org.openstack4j.model.heat.Stack;
 
 import org.yaml.snakeyaml.Yaml;
+import utils.ParserXML;
 import utils.RunTimeInfo;
 //</editor-fold>
 
@@ -55,14 +61,35 @@ import utils.RunTimeInfo;
  * @author Giuseppe Tricomi
  */
 public class OrchestrationManager {
-    private String ip="172.17.3.142";
-    private int port=33334;
+    
+    //<editor-fold defaultstate="collapsed" desc="Variable Definition Section">
+    private String ip="172.17.3.142";//default value for internal testing
+    private int port=1099;//default value for internal testing
+    private String fileConf="../webapps/OSFFM/WEB-INF/configuration_Orchestrator.xml";
     static HashMap<String,ManifestManager> mapManifestThr=new HashMap<String,ManifestManager>();//mappa che mantiene riferimenti manifest- manifest manager
     HashMap<String,ArrayList> globalTOfragmentsManif;//BEACON>>> this variable need to be used in splitting alghoritm
-     static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(OrchestrationManager.class);
+    static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(OrchestrationManager.class);
+    //</editor-fold>
+    
     public OrchestrationManager() {
         this.globalTOfragmentsManif=new HashMap<String,ArrayList>();
+        //this.init();
     }
+    
+    public void init(){
+        Element params;
+        try {
+            ParserXML parser = new ParserXML(new File(fileConf));
+            params = parser.getRootElement().getChild("pluginParams");
+            ip = params.getChildText("ip");
+            port = Integer.parseInt(params.getChildText("port"));
+        } 
+        catch (Exception ex) {
+            LOGGER.error("Error occurred in configuration ");
+            ex.printStackTrace();
+        }
+    }   
+    
     /**
      * Function called from API when web service is invocated.
      * @param Manifest
@@ -88,7 +115,9 @@ public class OrchestrationManager {
      */
     private void writeManifestonFile(String nameMan,String jobj){
         ManifestManager mm=OrchestrationManager.mapManifestThr.get(nameMan);
-        System.out.println(">>>>>>>>>>"+nameMan);
+        //LOGGER.debug(">>>>>>>>>>"+nameMan);
+        File f=new File(nameMan);
+        f.getParentFile().mkdirs();
         FileWriter w;
         try{
             w=new FileWriter(nameMan);//scegliere oppoortunamente il nome del file per il salvataggio
@@ -96,7 +125,9 @@ public class OrchestrationManager {
             b.write(jobj);
             b.flush();
         }
-        catch(Exception e){}
+        catch(Exception e){
+            e.printStackTrace();
+        }
     }
     
     /**
@@ -114,12 +145,12 @@ public class OrchestrationManager {
                 val=mm.ComposeJSON4element((String)obj[index]);
             }
             catch(JSONException je){
-                System.err.println("A JSONException is occurred"+je.getMessage());
+                LOGGER.error("A JSONException is occurred"+je.getMessage());
             }
             catch(Exception e){
-                System.err.println("A generic Exception is occurred"+e.getMessage());
+                LOGGER.error("A generic Exception is occurred"+e.getMessage());
             }
-            //System.out.println("QUI arrivo: "+"./subrepoTemplate/"+tenant+rootName+"_"+(String)obj[index]);
+            //LOGGER.debug("QUI arrivo: "+"./subrepoTemplate/"+tenant+rootName+"_"+(String)obj[index]);
             String home=System.getProperty("java.home");
             String fs=System.getProperty("file.separator");
             //this.writeManifestonFile(home+fs+"subrepoTemplate"+fs+tenant+fs+tenant+rootName+"_"+(String)obj[index], val);
@@ -155,13 +186,13 @@ public class OrchestrationManager {
      * @param tenant 
      */
     public void manifestinstatiation(String manName,JSONObject manifest,String tenant){
-        //System.out.println("MI 1");
+        //LOGGER.debug("MI 1");
         this.addManifestToWorkf(manName, manifest);
-        //System.out.println("MI 2");
+        //LOGGER.debug("MI 2");
         ManifestManager mm=(ManifestManager)OrchestrationManager.mapManifestThr.get(manName);
-        //System.out.println("MI 3");
+        //LOGGER.debug("MI 3");
         this.manageYAMLcreation(mm, manName,tenant);
-        //System.out.println("MI 4");
+        //LOGGER.debug("MI 4");
         //lancio su heat i comandi per l'istanziazione degli stack.
     }
     
@@ -201,7 +232,7 @@ public class OrchestrationManager {
             try{
                 ar=(ArrayList<MultiPolygon>)mm.geo_man.retrievegeoref(sgm.getGeoreference());
             }catch(NotFoundGeoRefException ngrf){
-                System.err.println("An error is occourred in retrievegeoref. The GeoManager doesn't contain the shape searched.\n"+ngrf.getMessage());
+                LOGGER.error("An error is occourred in retrievegeoref. The GeoManager doesn't contain the shape searched.\n"+ngrf.getMessage());
                 ngrf.printStackTrace();
             }
             ArrayList dcInfoes=new ArrayList();
@@ -214,7 +245,7 @@ public class OrchestrationManager {
                     }
                 }
                 catch(org.json.JSONException je){
-                    System.err.println("An error is occourred in MultiPolygon JSON creation.");
+                    LOGGER.error("An error is occourred in MultiPolygon JSON creation.");
                 }
             }
             tmp.put(serName, dcInfoes);
@@ -254,11 +285,11 @@ public class OrchestrationManager {
                     try{
                         j=new JSONObject((String)tmp3.get(ind_int));
                         jj=new JSONObject(db.getFederatedCredential(tenant, username, password,j.getString("cloudId")));
-                        //System.out.println(">>>>>>>>managementRetrieveCredential"+jj.toString());
+                        //LOGGER.debug(">>>>>>>>managementRetrieveCredential"+jj.toString());
                         credential=new OpenstackInfoContainer(j.getString("cloudId") ,j.getString("idmEndpoint"),tenant,jj.getString("federatedUser"),jj.getString("federatedPassword"),region);
                     }
                     catch(org.json.JSONException je){
-                        System.err.println("An error is occourred in MultiPolygon JSON creation.");
+                        LOGGER.error("An error is occourred in MultiPolygon JSON creation.");
                     }
                     crtmp3.add(credential);
                 }
@@ -381,7 +412,7 @@ public class OrchestrationManager {
             credential=new OpenstackInfoContainer(idClo,endpoint,tenant,credJobj.getString("federatedUser"),credJobj.getString("federatedPassword"),region);
         }
         catch(JSONException je){
-             System.err.println("An error is occourred in JSON crederntial manipulation.");
+             LOGGER.error("An error is occourred in JSON crederntial manipulation.");
         }
         ////spengo la vm
         NovaTest nova=new NovaTest(credential.getEndpoint(),credential.getTenant(), credential.getUser(),credential.getPassword(),credential.getRegion());
@@ -407,20 +438,20 @@ public class OrchestrationManager {
             credential2=new OpenstackInfoContainer(idClo,endpoint,tenant,credJobj.getString("federatedUser"),credJobj.getString("federatedPassword"),region);
         }
         catch(JSONException je){
-             System.err.println("An error is occourred in JSON crederntial manipulation.");
+             LOGGER.error("An error is occourred in JSON crederntial manipulation.");
         }
         //accensione vm idenitificata
         nova=new NovaTest(credential2.getEndpoint(),credential2.getTenant(), credential2.getUser(),credential2.getPassword(),credential2.getRegion());
         nova.startVm(twinUUID);
         //restituzione dettagli vm spenta- rete, vm accesa- rete
-        System.out.println("Network infoes of the shutted down VM(identified by UUID:"+vm+"):");
+        LOGGER.debug("Network infoes of the shutted down VM(identified by UUID:"+vm+"):");
         Iterator it_tmpar=m.getportinfoes(tenant, vm).iterator();
         while(it_tmpar.hasNext())
-            System.out.println((String)it_tmpar.next());
-        System.out.println("Network infoes of the twin VM started(identified by UUID:"+twinUUID+"):");
+            LOGGER.debug((String)it_tmpar.next());
+        LOGGER.debug("Network infoes of the twin VM started(identified by UUID:"+twinUUID+"):");
         it_tmpar=m.getportinfoes(tenant, twinUUID).iterator();
         while(it_tmpar.hasNext())
-            System.out.println((String)it_tmpar.next());
+            LOGGER.debug((String)it_tmpar.next());
     }
             
     
@@ -447,43 +478,26 @@ public class OrchestrationManager {
      */
     public boolean stackInstantiate(String template, OpenstackInfoContainer credential, DBMongo m, String templateId) {
         try {
-            /*Socket socket = new Socket(ip, port);
-            boolean risposta;
+            //System.out.println("axv"); 
+            Registry myRegistry = LocateRegistry.getRegistry(ip, port);
+            //System.out.println("asxx");
+            boolean result;
+            //System.out.println(" ccccc");
+            RMIServerInterface impl = (RMIServerInterface) myRegistry.lookup("myMessage");
 
-            InputStream socketInput = socket.getInputStream();
-            Scanner socketInputScanner = new Scanner(socketInput);
-            //creazione stream di scrittura
-            OutputStream socketOutput = socket.getOutputStream();
-            PrintWriter socketOutputWriter = new PrintWriter(socketOutput, true);
-            String a="Afantoculu\nstronzo\nciao ";
-            byte[] b = a.getBytes();//template.getBytes();
-           // System.out.println("lenght Template:"+a.length());
-            socketOutputWriter.println(1);
-            socketOutputWriter.println(credential.getEndpoint());
-            socketOutputWriter.println(credential.getUser());
-            socketOutputWriter.println(credential.getTenant());
-            socketOutputWriter.println(credential.getPassword());
-            socketOutputWriter.println(a.length());
-            socketOutputWriter.write(a, 0, a.length());
-            socketOutputWriter.flush();
-           // System.out.println("ouuuuuuuuuuuuuuuuuuuuuuuuuu");
-           // System.out.println(new String (b));
-            socketOutputWriter.println("");
-            socketOutputWriter.println(templateId);
-            socketOutputWriter.println(credential.getRegion());
-            socketOutputWriter.println(credential.getIdCloud());
-            risposta = Boolean.valueOf(socketInputScanner.nextLine());
-            socket.close();*/
-            
-            return true;
+          //  System.out.println("aaax"+template);
+            // result=impl.stackInstantiate(template, "idid", "http://172.17.1.217:5000/v2.0", "admin", "beacon", "password", "RegionOne", "UME");
+            //System.out.println(credential.getEndpoint());
+            result = impl.stackInstantiate(template, templateId, credential.getEndpoint(), credential.getUser(), credential.getTenant(), credential.getPassword(), credential.getRegion(), credential.getIdCloud());
+            System.out.println(credential.getEndpoint());
+
+            return result;
 
         } catch (Exception e) {
             LOGGER.error("An error is occurred in stack creation phase.");
             e.printStackTrace();
             return false;
         }
-
-       
     }
     
     /**
@@ -501,9 +515,35 @@ public class OrchestrationManager {
     public HashMap<String, ArrayList<Port>> sendShutSignalStack4DeployAction(String stackName, OpenstackInfoContainer credential,
             boolean first, DBMongo m) {
         try {
-            
-            Socket socket = new Socket(ip, port);
+            Registry myRegistry = LocateRegistry.getRegistry(ip,port);
+            RMIServerInterface impl = (RMIServerInterface) myRegistry.lookup("myMessage");
+            ArrayList resources =impl.getListResource(credential.getEndpoint(), credential.getUser(), credential.getTenant(),credential.getPassword(), stackName);
             boolean continua=true;
+            NovaTest nova = new NovaTest(credential.getEndpoint(), credential.getTenant(), credential.getUser(), credential.getPassword(), credential.getRegion());
+            NeutronTest neutron = new NeutronTest(credential.getEndpoint(), credential.getTenant(), credential.getUser(), credential.getPassword(), credential.getRegion());
+            HashMap<String, ArrayList<Port>> mapResNet = new HashMap<String, ArrayList<Port>>();
+            Iterator it_res = resources.iterator();
+            while (it_res.hasNext()) {
+                          String id_res = (String) it_res.next();
+                          LOGGER.debug("nome risorsaa "+id_res);
+                    if (!first) {
+                        nova.stopVm(id_res);
+                        m.updateStateRunTimeInfo(credential.getTenant(), id_res, first);
+                    }
+                    ArrayList<Port> arPort = neutron.getPortFromDeviceId(id_res);
+                    //inserire in quest'array la lista delle porte di quella VM
+                    mapResNet.put(id_res, arPort);
+                    Iterator it_po = arPort.iterator();
+                    while (it_po.hasNext()) {
+                        LOGGER.debug("insert port");
+                        m.insertPortInfo(credential.getTenant(), neutron.portToString((Port) it_po.next()));
+                    }
+                }
+            System.out.println("map res "+mapResNet.size());
+            return mapResNet;
+/*
+            Socket socket = new Socket(ip, port);
+            
 
             InputStream socketInput = socket.getInputStream();
             Scanner socketInputScanner = new Scanner(socketInput);
@@ -549,6 +589,7 @@ public class OrchestrationManager {
                 }
             }
             return mapResNet;
+                    */
         } catch (Exception e) {
 
             LOGGER.error("An error is occurred in stack creation phase.");
@@ -567,10 +608,10 @@ public class OrchestrationManager {
      * @return 
      * @author gtricomi
      */
-    public JSONObject networkSegmentAdd(FederationUser fu,String OSF_network_segment_id,String OSF_cloud,HashMap params) throws Exception{
+    public JSONObject networkSegmentAdd(String federationTenant,FederationUser fu,String OSF_network_segment_id,String OSF_cloud,HashMap params) throws Exception{
       //invocare qui funzioni del FederationActionManager
         FederationActionManager fam=new FederationActionManager();
-        return fam.networkSegmentAdd(fu, OSF_network_segment_id,OSF_cloud,params);
+        return fam.networkSegmentAdd(fu, OSF_network_segment_id,OSF_cloud,params,federationTenant);
     }
     //</editor-fold>
     

@@ -15,7 +15,7 @@
 package OSFFM_ORC;
 
 //<editor-fold defaultstate="collapsed" desc="Import Section">
-import MDBInt.DBMongo;
+//import MDBInt.DBMongo;
 import OSFFM_ORC.Utils.Exception.NotFoundGeoRefException;
 import OSFFM_ORC.Utils.MultiPolygon;
 import com.google.common.base.Function;
