@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <writeOnCfgFolder>yes</writeOnCfgFolder> 
+  <moduleName>Orchestrator</moduleName>
+  <pluginParams>
+      <ip>172.17.3.142</ip>
+      <port>1099</port>
+  </pluginParams>
+</root>
