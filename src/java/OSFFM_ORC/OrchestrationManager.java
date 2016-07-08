@@ -90,12 +90,131 @@ public class OrchestrationManager {
         }
     }   
     
+   
+    
+    
+    
+    /**
+     * 
+     * @param tenant
+     * @param template
+     * @param endpoint
+     * @param user
+     * @param psw
+     * @return 
+     */
+   /* public boolean OLDstackInstantiate(String template,OpenstackInfoContainer credential,DBMongo m,String templateId){
+        Heat h=new Heat(credential.getEndpoint(), credential.getUser(),credential.getTenant(),credential.getPassword());
+        try{
+            Stack s=h.createStack(templateId, template);//restituirà un oggetto di tipo stack che all'interno possiede
+                    // lo stato ottenuto , verificare se lo status (getStatus) è di tipo "CREATE_COMPLETE" o "CREATE_FAILED"
+            List lr=h.getResource(s.getId());
+            for(Object r : lr){
+               RunTimeInfo rti=new RunTimeInfo();
+               rti.setStackName(s.getName());
+               rti.setStackUuid(s.getId());
+               rti.setRegion(credential.getRegion());
+               rti.setIdCloud(credential.getIdCloud()); 
+               rti.setLocalResourceName(((Resource)r).getLocalReourceId());
+               rti.setPhisicalResourceId(((Resource)r).getPhysicalResourceId());
+               rti.setType(((Resource)r).getType());
+               rti.setResourceName(((Resource)r).getResourceName());
+               rti.setState(true);
+               rti.setUuidTemplate(templateId);
+               m.insertRuntimeInfo(credential.getTenant(), rti.toString());
+            }
+            if(s.getStatus().equals("CREATE_FAILED")){
+                LOGGER.error("An error is occurred in stack creation phase.Verify Federated Openstack state.\n"
+                        + " Stack creation Operation har returned CREATE_FAILED");
+                return false;
+            }
+                
+        }
+        catch(Exception e){
+            LOGGER.error("An error is occurred in stack creation phase.");
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+    */
+    /**
+     * 
+     * @param stackName
+     * @param endpoint
+     * @param tenant
+     * @param user
+     * @param password
+     * @param region
+     * @param first
+     * @param m
+     * @return 
+     */
+   /* public HashMap<String,ArrayList<Port>> OLDsendShutSignalStack4DeployAction(String stackName,OpenstackInfoContainer credential,
+            boolean first,DBMongo m)
+    {
+        try {
+            NovaTest nova = new NovaTest(credential.getEndpoint(), credential.getTenant(), credential.getUser(), credential.getPassword(), credential.getRegion());
+            NeutronTest neutron = new NeutronTest(credential.getEndpoint(), credential.getTenant(), credential.getUser(), credential.getPassword(), credential.getRegion());
+            Heat heat = new Heat(credential.getEndpoint(), credential.getUser(), credential.getTenant(), credential.getPassword());
+            HashMap<String, ArrayList<Port>> mapResNet = new HashMap<String, ArrayList<Port>>();
+            List<? extends Resource> l = heat.getResource(stackName);
+            Iterator it_res = l.iterator();
+            while (it_res.hasNext()) {
+                Resource r = (Resource) it_res.next();
+                String id_res = r.getPhysicalResourceId();
+                if (!first) {
+                    nova.stopVm(id_res);
+                    m.updateStateRunTimeInfo(credential.getTenant(), id_res, first);
+                }
+                ArrayList<Port> arPort = neutron.getPortFromDeviceId(id_res);
+                //inserire in quest'array la lista delle porte di quella VM
+                mapResNet.put(id_res, arPort);
+                Iterator it_po = arPort.iterator();
+                while (it_po.hasNext()) {
+                    m.insertPortInfo(credential.getTenant(), neutron.portToString((Port) it_po.next()));
+                }
+            }
+            return mapResNet;
+        } catch (Exception e) {
+
+            LOGGER.error("An error is occurred in stack creation phase.");
+            e.printStackTrace();
+            return null;
+        }
+    }
+    */
+    
+    
+            
+    
+    
+    /**
+     * Testing function for analyzing Manifest and trasforming it in YAML.
+     * @param mnam
+     * @param root 
+     
+    public void test(String mnam,String root){
+        ManifestManager mm=(ManifestManager)OrchestrationManager.mapManifestThr.get(mnam);
+        this.manageYAMLcreation(mm, root);
+    }
+    */
+   
+   
+    //<editor-fold defaultstate="collapsed" desc="Utility functions for orchestration">
+    
+    
     /**
      * Function called from API when web service is invocated.
      * @param Manifest
      */
     public void addManifestToWorkf(String nameMan,JSONObject manifest){
-        ManifestManager mm=new ManifestManager(nameMan,manifest);
+        ManifestManager mm=null;
+        try {
+            mm = new ManifestManager(nameMan,manifest);
+        } catch (JSONException ex) {
+            LOGGER.error(ex.getMessage());
+        }
         mm.run();
     }
     
@@ -163,38 +282,6 @@ public class OrchestrationManager {
         }
     }
     
-    /**
-     * 
-     * @param manName uuid manifest passed from dashboard
-     */
-    public void manifestinstatiation(String manName,String tenant){
-        //for the moment this function is incomplete. To use it, programmer have to retrieve from mongoDb the right manifest.
-
-        //retrieve Manifest from MongoDB, it is JSONObject.
-        JSONObject manifest=null;
-        //verifica della versione del manifest rimandata al futuro, per adesso lo rielaboro
-        this.addManifestToWorkf(manName, manifest);
-        ManifestManager mm=(ManifestManager)OrchestrationManager.mapManifestThr.get(manName);
-        this.manageYAMLcreation(mm, manName,tenant);
-        //lancio su heat i comandi per l'istanziazione degli stack.
-    }
-    
-    /**
-     * 
-     * @param manName
-     * @param manifest
-     * @param tenant 
-     */
-    public void manifestinstatiation(String manName,JSONObject manifest,String tenant){
-        //LOGGER.debug("MI 1");
-        this.addManifestToWorkf(manName, manifest);
-        //LOGGER.debug("MI 2");
-        ManifestManager mm=(ManifestManager)OrchestrationManager.mapManifestThr.get(manName);
-        //LOGGER.debug("MI 3");
-        this.manageYAMLcreation(mm, manName,tenant);
-        //LOGGER.debug("MI 4");
-        //lancio su heat i comandi per l'istanziazione degli stack.
-    }
     
     /**
      * This function split the global federation Manifest in single Manifest for each stack 
@@ -206,6 +293,7 @@ public class OrchestrationManager {
         ManifestManager mm=(ManifestManager)OrchestrationManager.mapManifestThr.get(manName);
         this.manageYAMLcreation(mm, manName, tenant);
     }   
+    
     
     /**
      * It returns an HashMap that correlate ServiceGroup name with the ArrayList that contains 
@@ -299,97 +387,58 @@ public class OrchestrationManager {
         }
         return tmp;
     }
+    //</editor-fold>
+    
+    //<editor-fold defaultstate="collapsed" desc="Management function for orchestration activity">
     
     /**
      * 
-     * @param tenant
-     * @param template
-     * @param endpoint
-     * @param user
-     * @param psw
-     * @return 
+     * @param manName uuid manifest passed from dashboard
      */
-   /* public boolean OLDstackInstantiate(String template,OpenstackInfoContainer credential,DBMongo m,String templateId){
-        Heat h=new Heat(credential.getEndpoint(), credential.getUser(),credential.getTenant(),credential.getPassword());
-        try{
-            Stack s=h.createStack(templateId, template);//restituirà un oggetto di tipo stack che all'interno possiede
-                    // lo stato ottenuto , verificare se lo status (getStatus) è di tipo "CREATE_COMPLETE" o "CREATE_FAILED"
-            List lr=h.getResource(s.getId());
-            for(Object r : lr){
-               RunTimeInfo rti=new RunTimeInfo();
-               rti.setStackName(s.getName());
-               rti.setStackUuid(s.getId());
-               rti.setRegion(credential.getRegion());
-               rti.setIdCloud(credential.getIdCloud()); 
-               rti.setLocalResourceName(((Resource)r).getLocalReourceId());
-               rti.setPhisicalResourceId(((Resource)r).getPhysicalResourceId());
-               rti.setType(((Resource)r).getType());
-               rti.setResourceName(((Resource)r).getResourceName());
-               rti.setState(true);
-               rti.setUuidTemplate(templateId);
-               m.insertRuntimeInfo(credential.getTenant(), rti.toString());
-            }
-            if(s.getStatus().equals("CREATE_FAILED")){
-                LOGGER.error("An error is occurred in stack creation phase.Verify Federated Openstack state.\n"
-                        + " Stack creation Operation har returned CREATE_FAILED");
-                return false;
-            }
-                
-        }
-        catch(Exception e){
-            LOGGER.error("An error is occurred in stack creation phase.");
-            e.printStackTrace();
-            return false;
-        }
-        return true;
+    public void manifestinstatiation(String manName,String tenant){
+        //for the moment this function is incomplete. To use it, programmer have to retrieve from mongoDb the right manifest.
+
+        //retrieve Manifest from MongoDB, it is JSONObject.
+        JSONObject manifest=null;
+        //verifica della versione del manifest rimandata al futuro, per adesso lo rielaboro
+        this.addManifestToWorkf(manName, manifest);
+        ManifestManager mm=(ManifestManager)OrchestrationManager.mapManifestThr.get(manName);
+        this.manageYAMLcreation(mm, manName,tenant);
+        //lancio su heat i comandi per l'istanziazione degli stack.
     }
-    */
+    
     /**
      * 
-     * @param stackName
-     * @param endpoint
-     * @param tenant
-     * @param user
-     * @param password
-     * @param region
-     * @param first
-     * @param m
-     * @return 
+     * @param manName
+     * @param manifest
+     * @param tenant 
      */
-   /* public HashMap<String,ArrayList<Port>> OLDsendShutSignalStack4DeployAction(String stackName,OpenstackInfoContainer credential,
-            boolean first,DBMongo m)
-    {
-        try {
-            NovaTest nova = new NovaTest(credential.getEndpoint(), credential.getTenant(), credential.getUser(), credential.getPassword(), credential.getRegion());
-            NeutronTest neutron = new NeutronTest(credential.getEndpoint(), credential.getTenant(), credential.getUser(), credential.getPassword(), credential.getRegion());
-            Heat heat = new Heat(credential.getEndpoint(), credential.getUser(), credential.getTenant(), credential.getPassword());
-            HashMap<String, ArrayList<Port>> mapResNet = new HashMap<String, ArrayList<Port>>();
-            List<? extends Resource> l = heat.getResource(stackName);
-            Iterator it_res = l.iterator();
-            while (it_res.hasNext()) {
-                Resource r = (Resource) it_res.next();
-                String id_res = r.getPhysicalResourceId();
-                if (!first) {
-                    nova.stopVm(id_res);
-                    m.updateStateRunTimeInfo(credential.getTenant(), id_res, first);
-                }
-                ArrayList<Port> arPort = neutron.getPortFromDeviceId(id_res);
-                //inserire in quest'array la lista delle porte di quella VM
-                mapResNet.put(id_res, arPort);
-                Iterator it_po = arPort.iterator();
-                while (it_po.hasNext()) {
-                    m.insertPortInfo(credential.getTenant(), neutron.portToString((Port) it_po.next()));
-                }
-            }
-            return mapResNet;
-        } catch (Exception e) {
-
-            LOGGER.error("An error is occurred in stack creation phase.");
-            e.printStackTrace();
-            return null;
-        }
+    public void manifestinstatiation(String manName,JSONObject manifest,String tenant){
+        //LOGGER.debug("MI 1");
+        this.addManifestToWorkf(manName, manifest);
+        //LOGGER.debug("MI 2");
+        ManifestManager mm=(ManifestManager)OrchestrationManager.mapManifestThr.get(manName);
+        //LOGGER.debug("MI 3");
+        this.manageYAMLcreation(mm, manName,tenant);
+        //LOGGER.debug("MI 4");
+        //lancio su heat i comandi per l'istanziazione degli stack.
     }
-    */
+    
+    
+    /**
+     * Function invocated when an elasticity action have to be started; this function 
+     * shutdown the VM with some problem and start one of the Twin VM of that.
+     * This function could be improved with a better twin VM search algorithm, and to do this is needed 
+     * modify this: "m.findResourceMate".
+     * @param vm
+     * @param tenant
+     * @param userFederation
+     * @param pswFederation
+     * @param m
+     * @param element
+     * @param region
+     * @author gtricomi
+     */
     public void sufferingProcedure(String vm,String tenant,String userFederation,String pswFederation,DBMongo m,int element,String region){
         //spegnimento vm
         ////recupero runtimeinfo
@@ -453,28 +502,17 @@ public class OrchestrationManager {
         while(it_tmpar.hasNext())
             LOGGER.debug((String)it_tmpar.next());
     }
-            
-    
-    
-    /**
-     * Testing function for analyzing Manifest and trasforming it in YAML.
-     * @param mnam
-     * @param root 
      
-    public void test(String mnam,String root){
-        ManifestManager mm=(ManifestManager)OrchestrationManager.mapManifestThr.get(mnam);
-        this.manageYAMLcreation(mm, root);
-    }
-    */
-    
-        /**
+    /**
      * 
      * @param tenant
      * @param template
      * @param endpoint
      * @param user
      * @param psw
-     * @return 
+     * @return
+     * 
+     * @author gtricomi
      */
     public boolean stackInstantiate(String template, OpenstackInfoContainer credential, DBMongo m, String templateId) {
         try {
@@ -510,7 +548,9 @@ public class OrchestrationManager {
      * @param region
      * @param first
      * @param m
-     * @return 
+     * @return
+     * 
+     * @author gtricomi
      */
     public HashMap<String, ArrayList<Port>> sendShutSignalStack4DeployAction(String stackName, OpenstackInfoContainer credential,
             boolean first, DBMongo m) {
@@ -597,7 +637,72 @@ public class OrchestrationManager {
             return null;
         }
     }
+    /**
+     * Function invoked in order to istantiate a stack from a manifest in all the federated cloud involved in federation for tenant deployer.
+     * @param template
+     * @param stack
+     * @param tmpMapcred
+     * @param tmpMap
+     * @param m
+     * @return 
+     * @author gtricomi
+     */
+    public ArrayList<ArrayList<HashMap<String, ArrayList<Port>>>> deployManifest(
+            String template,
+            String stack,
+            HashMap<String, ArrayList<ArrayList<OpenstackInfoContainer>>> tmpMapcred,
+            HashMap<String,ArrayList<ArrayList<String>>> tmpMap,
+            DBMongo m
+    ){
+        String stackName = stack.substring(stack.lastIndexOf("_") + 1 > 0 ? stack.lastIndexOf("_") + 1 : 0, stack.lastIndexOf(".yaml") >= 0 ? stack.lastIndexOf(".yaml") : stack.length());
+        ArrayList arDC = (ArrayList<ArrayList<String>>) tmpMap.get(stackName);
+        ArrayList arCr = (ArrayList<ArrayList<OpenstackInfoContainer>>) tmpMapcred.get(stackName);
+        ArrayList<ArrayList<HashMap<String, ArrayList<Port>>>> arMapRes = new ArrayList<>();
 
+        boolean skip = false, first = true;
+        int arindex = 0;
+        while (!skip) {
+            ArrayList tmpArDC = (ArrayList<String>) arDC.get(arindex);
+            ArrayList tmpArCr = (ArrayList<OpenstackInfoContainer>) arCr.get(arindex);
+            ArrayList<HashMap<String, ArrayList<Port>>> arRes = new ArrayList<HashMap<String, ArrayList<Port>>>();
+            //System.out.println("&&&&&&&&&&&&&&&&&&&&&"+tmpArCr.size());
+            for (Object tmpArCrob : tmpArCr) {
+                LOGGER.info("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\nISTANTION PHASE FOR THE CLOUD:" + ((OpenstackInfoContainer) tmpArCrob).getIdCloud() + "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+                boolean result = this.stackInstantiate(template, (OpenstackInfoContainer) tmpArCrob, m, "federation");//BEACON>>> in final version of OSFFM 
+                LOGGER.debug("TEMPLATE ISTANTIATED ON CLOUD:" + ((OpenstackInfoContainer) tmpArCrob).getIdCloud());
+                //we will use variable result to understand if the stack is deployed inside the federated cloud
+
+                String region = "RegionOne";
+                ((OpenstackInfoContainer) tmpArCrob).setRegion(region);
+                HashMap<String, ArrayList<Port>> map_res_port = this.sendShutSignalStack4DeployAction(stackName, (OpenstackInfoContainer) tmpArCrob, first, m);
+                if (true) {//result) {
+                    first = false;//if first stack creation is successfully completed, the other stacks instantiated are not the First
+                }                        //and need different treatment.
+                arRes.add(map_res_port);
+            }
+            arindex++;
+            arMapRes.add(arRes);
+            if (arindex > tmpArCr.size()) {
+                skip = true;
+            }
+        }
+        return arMapRes;
+    }
+    
+    //</editor-fold>
+    //<editor-fold defaultstate="collapsed" desc="Management function for ServiceGroup">
+    /**
+     * This function returns the set of ServiceGroup(stack) name described inside manifest
+     * and stored inside ManifestManager.
+     * @param manifestName
+     * @return Set, set of stack name described inside manifest. 
+     */
+    public Set<String> getSGList(String manifestName){
+        ManifestManager mm=(ManifestManager)OrchestrationManager.mapManifestThr.get(manifestName);
+        Set s=mm.serGr_table.keySet();
+        return s;
+    }
+    //</editor-fold>
     
     //<editor-fold defaultstate="collapsed" desc="Networks Management function">
     /**
@@ -613,6 +718,15 @@ public class OrchestrationManager {
         FederationActionManager fam=new FederationActionManager();
         return fam.networkSegmentAdd(fu, OSF_network_segment_id,OSF_cloud,params,federationTenant);
     }
+    
+    public void link(){
+        
+    }
     //</editor-fold>
     
 }
+
+
+/*
+
+*/

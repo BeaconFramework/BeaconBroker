@@ -18,12 +18,14 @@ package OSFFM_ORC;
 import MDBInt.Splitter;
 import OSFFM_ORC.SerGrManager;
 import OSFFM_ORC.Utils.Exception.NotFoundGeoRefException;
+import OSFFM_ORC.Utils.FednetsLink;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -43,8 +45,9 @@ public class ManifestManager implements Runnable{
     LinkedHashMap<String,LinkedHashMap> table_resourceset;
     GeoManager geo_man;
     HashMap<String,Object> georef_table,serGr_table;
-     String tempVers="2014-10-16",description="empty_descr";
-    static final Logger LOGGER = Logger.getLogger(ManifestManager.class);
+    String tempVers="2014-10-16",description="empty_descr";
+    FednetsLink fnl;
+    static Logger LOGGER = Logger.getLogger(ManifestManager.class);
     //</editor-fold>
  //<editor-fold defaultstate="collapsed" desc="Getter&Setter">   
     public String getTempVers() {
@@ -64,10 +67,10 @@ public class ManifestManager implements Runnable{
     }
     //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Constructor">
-    public ManifestManager(String name,JSONObject manifest){
+    public ManifestManager(String name,JSONObject manifest)throws JSONException{
         this.manifest=manifest;
         this.nameSetRes=name;
-        this.table_resourceset=new LinkedHashMap<String,LinkedHashMap>();
+        this.table_resourceset=new LinkedHashMap<>();
         this.table_resourceset.put("OS::Beacon::ServiceGroupManagement",new LinkedHashMap<String,JSONObject>());
         this.table_resourceset.put("OS::Beacon::fedNetManagement",new LinkedHashMap<String,JSONObject>());
         this.table_resourceset.put("OS::Beacon::PoliciesAccManagement",new LinkedHashMap<String,JSONObject>());
@@ -75,7 +78,8 @@ public class ManifestManager implements Runnable{
         this.table_resourceset.put("OS::Beacon::ScalingPolicy",new LinkedHashMap<String,JSONObject>());
         this.table_resourceset.put("OS::Beacon::Georeferenced_deploy",new LinkedHashMap<String,JSONObject>());
         this.geo_man=new GeoManager();
-        this.serGr_table=new HashMap<String,Object>();
+        this.serGr_table=new HashMap<>();
+        this.fnl=new FednetsLink();
     }
     //</editor-fold>
     /**
@@ -99,6 +103,9 @@ public class ManifestManager implements Runnable{
             this.elaborateSerGr(sgObj,(JSONObject)this.table_resourceset.get("OS::Beacon::ServiceGroupManagement").get(resName), resName);
             this.serGr_table.put(resName, sgObj);
         }
+        //fedNetManagement Analisys
+        this.prepareFednetLinkMap();
+        
         //BEACON>>> verificare se sono state richiamate tutte le funzioni
     }
     
@@ -122,7 +129,7 @@ public class ManifestManager implements Runnable{
                     this.table_resourceset.get("OS::Beacon::ServiceGroupManagement").put(key, tmp);
                     break;
                 }
-                case "OS::Beacon::fedNetManagement":{//BEACON>>> questo deve essere gestito anche per febbraio? NO
+                case "OS::Beacon::fedNetManagement":{
                     this.table_resourceset.get("OS::Beacon::fedNetManagement").put(key, tmp);
                     break;
                 }
@@ -148,6 +155,69 @@ public class ManifestManager implements Runnable{
                 }
             }
         } 
+    }
+//</editor-fold>
+
+//<editor-fold defaultstate="collapsed" desc="FedNet management Functions"> 
+    /**
+     * This function prepares the object FednetsLink that contains all reference to the VM 
+     * created in actual stack and that need to be interconnected.
+     * Pay attention because the "this.table_resourceset" is referred to the Manifest analized from
+     * ManifestManager instance.
+     */
+    public void prepareFednetLinkMap(){
+        
+        LinkedHashMap map=(LinkedHashMap)this.table_resourceset.get("OS::Beacon::fedNetManagement");
+        Set<String> s=map.keySet();
+        for(String key : s){
+            JSONObject j=(JSONObject) map.get(key);
+            try {
+                String monitored_Group=j.getJSONObject("properties").getString("monitored_Group");
+                JSONArray connected_VM=(JSONArray)j.getJSONObject("properties").get("connected_VM");
+                for(int i=0;i<=connected_VM.length();i++){
+                    this.fnl.createLinkedVMs(monitored_Group, key, connected_VM.getString(i));
+                }
+            } catch (JSONException ex) {
+                LOGGER.error(ex.getMessage());
+            }
+        }
+        
+    }
+    
+    
+    
+    /**
+     * It will be prepared for next step!
+     * @param fednetsLink 
+     */
+    public void linkcreator(LinkedHashMap fednetsLink, String groupName){//BEACON: SPOSTARE QUESTA FUNZIONE NEL MODULO ORCHESTRATOR
+        if(groupName!=null)
+        {
+            
+            //1 analizza la mappa alla ricerca del gruppo corretto(analisi attraverso monitored_group che
+            ////corrisponde al service group Management; può esserci più di un elemento)
+        }
+        else{
+            //1 analizza la mappa alla ricerca ddi tutte le liste di VM connesse, ordinandole per 
+            ////gruppo (analisi realizzata attraverso monitored_group che
+            ////corrisponde al service group Management; può esserci più di un elemento)
+        }
+        //2 recupera la lista delle VM che devono essere connesse
+        
+        //3 cerca la lista delle tabelle presenti (se presenti) per i Federation Agent
+        
+        //4 compone la network table per la funzione di Link 
+        
+        //5 invoca la funzione di Link
+        
+        //6 aggiorna lo stato delle FA netTable in memoria 
+    }
+    /**
+     * 
+     */
+    public void simpleLinkCreator(){
+        //recuperare id cloud su cui viene istanziato lo stack e poi creare la ptabella conformemente a 
+        //quanto realizzato innel test del southbridge api
     }
 //</editor-fold>
     

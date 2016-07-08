@@ -224,6 +224,30 @@ public class FA_REST_Client {
         return plainAnswer;
     }
     
+    protected Response getElement(String url,HttpBasicAuthFilter auth){
+        ClientConfig config = new ClientConfig();
+        Client client = ClientBuilder.newClient(config);
+        WebTarget target;
+        target = client.target(getBaseURI(url));
+        target.register(auth);
+        Invocation.Builder invocationBuilder =target.request(MediaType.APPLICATION_JSON);
+        Response plainAnswer=null;
+        plainAnswer=invocationBuilder.get();
+        return plainAnswer;
+    }
+    
+    protected Response deleteElement(String url,HttpBasicAuthFilter auth){
+        ClientConfig config = new ClientConfig();
+        Client client = ClientBuilder.newClient(config);
+        WebTarget target;
+        target = client.target(getBaseURI(url));
+        target.register(auth);
+        Invocation.Builder invocationBuilder =target.request();
+        Response plainAnswer=null;
+        plainAnswer=invocationBuilder.delete();
+        return plainAnswer;
+    }
+    
     /**
      * Uri contructor.
      * @param targetURI

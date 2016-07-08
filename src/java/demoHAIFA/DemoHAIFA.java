@@ -15,11 +15,16 @@
 
 package demoHAIFA;
 
+import JClouds_Adapter.OpenstackInfoContainer;
 import MDBInt.DBMongo;
+import MDBInt.MDBIException;
 import MDBInt.Splitter;
 import OSFFM_ELA.ElasticityManagerSimple;
 import OSFFM_ORC.OrchestrationManager;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -29,15 +34,12 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jclouds.openstack.neutron.v2.domain.Port;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.yaml.snakeyaml.Yaml;
-import JClouds_Adapter.OpenstackInfoContainer;
-import MDBInt.MDBIException;
-import java.io.File;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -219,7 +221,8 @@ public class DemoHAIFA {
             }
             return result;
     }
-      private void listSplittedTemplate(String tenant){
+    
+    private void listSplittedTemplate(String tenant){
         String home=System.getProperty("java.home");
         String fs=System.getProperty("file.separator");
         //File folder = new File(home+fs+"subrepoTemplate");
@@ -234,4 +237,7 @@ public class DemoHAIFA {
           }
         }
     }
+      
+    
+      
 }

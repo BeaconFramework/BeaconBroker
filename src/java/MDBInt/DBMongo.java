@@ -1161,4 +1161,42 @@ public class DBMongo {
     }
     
     //</editor-fold>
+    
+    
+    
+    /*
+    This function it will be used in order to verify if the Network infos passed to construct the Fa table are corrected
+    public String getNetTables(String tableName,String site_UUID_VM,String remote_UUID_VM,String tenant,DBMongo m){
+        //HomeVM information retrieving
+        BasicDBObject queryRunTime=new BasicDBObject("deviceId", site_UUID_VM);
+        DBObject partial_RunTime_Result_H=m.find(tenant,"runTimeInfo" , queryRunTime);
+        BasicDBObject queryPortInfo=new BasicDBObject("phisicalResourceId", site_UUID_VM);
+        DBObject partial_PortInfo_Result_H=m.find(tenant,"runTimeInfo" , queryPortInfo);
+        //RemoteVM information retrieving
+        queryRunTime=new BasicDBObject("deviceId", remote_UUID_VM);
+        DBObject partial_RunTime_Result_R=m.find(tenant,"runTimeInfo" , queryRunTime);
+        queryPortInfo=new BasicDBObject("phisicalResourceId", remote_UUID_VM);
+        DBObject partial_PortInfo_Result_R=m.find(tenant,"runTimeInfo" , queryPortInfo);
+        
+        
+        BasicDBObject netTables_Object=new BasicDBObject(),netTable_Object=new BasicDBObject();
+        
+        if((tableName.equals(""))||(tableName==null))
+            tableName=java.util.UUID.randomUUID().toString();
+        
+        //verificare presenza pregressa Table in tal caso recuperare versione
+        ////serve nome collezione per questo elemento
+        
+        netTable_Object.put("Name",tableName);
+        //inserire validazione per le stringe passate sotto????
+        netTable_Object.put((String)partial_RunTime_Result_H.get("idCloud"),(String)partial_PortInfo_Result_H.get("networkId"));
+        netTable_Object.put((String)partial_RunTime_Result_R.get("idCloud"),(String)partial_PortInfo_Result_R.get("networkId"));
+        
+        
+    } */ 
+    
+    public boolean insertNetTable(String tenant,String jsonTable){
+//        this.insert(tenant, "NetTablesInfo", jsonTable);
+        return true;
+    }
 }

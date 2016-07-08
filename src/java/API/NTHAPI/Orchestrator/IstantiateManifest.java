@@ -29,6 +29,7 @@ import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Set;
 import java.util.logging.Level;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -145,9 +146,8 @@ public class IstantiateManifest {
         //retrieve from MongoDb federation password for federation user
         if(tmpMap==null)
         {
-            LOGGER.info("Any Datacenters are found to istantiate the manifest.\n");
-            reply.put("returncode", 1); 
-            reply.put("errormesg", "Any Datacenters are found to istantiate the manifest");
+            LOGGER.info("No one Datacenter is found for manifest instantiation.\n");
+            reply=this.createErrorAnswer("No one Datacenter is found for manifest instantiation");
             return reply.toJSONString();
         }
         String tmp=this.m.getFederationCredential(tenant, "userFederation","federationUser");
@@ -157,45 +157,24 @@ public class IstantiateManifest {
         } catch (JSONException ex) {
             LOGGER.error("Error occurred in manifest istantiation; OPERATION ABORTED."+ex.getMessage());
             ex.printStackTrace();
+            reply=this.createErrorAnswer("Error occurred in manifest istantiation; OPERATION ABORTED."+ex.getMessage());
+            return reply.toJSONString();
         }
+        
         HashMap<String, ArrayList<ArrayList<OpenstackInfoContainer>>> tmpMapcred = om.managementRetrieveCredential(tmpMap, m, tenant, "userFederation", "passwordFederation", "RegionOne");
         //////////////////////////////////////////////////////////////////////////////////
         //+tenant+rootName+"_"+(String)obj[index]
-        String stack = "federation2";//BEACON>>> this step it will be substitude by a function that analize the manifest and retireve the ServiceManagementGroups 
-        //stored inside global manifest
-        FileFunction ff=new FileFunction();
-        System.out.println("2£$");
-        String template = ff.readFromFile(prepath+"/"+tenant+manifestName+"_"+stack);
-        String stackName = stack.substring(stack.lastIndexOf("_")+1>0?stack.lastIndexOf("_")+1:0, stack.lastIndexOf(".yaml")>=0?stack.lastIndexOf(".yaml"):stack.length());
-        ArrayList arDC = (ArrayList<ArrayList<String>>) tmpMap.get(stackName);
-        ArrayList arCr = (ArrayList<ArrayList<OpenstackInfoContainer>>) tmpMapcred.get(stackName);
-        ArrayList<ArrayList<HashMap<String, ArrayList<Port>>>> arMapRes = new ArrayList<ArrayList<HashMap<String, ArrayList<Port>>>>();
-        boolean skip = false, first = true;
-        int arindex = 0;
-        while (!skip) {
-            ArrayList tmpArDC = (ArrayList<String>) arDC.get(arindex);
-            ArrayList tmpArCr = (ArrayList<OpenstackInfoContainer>) arCr.get(arindex);
-            ArrayList<HashMap<String, ArrayList<Port>>> arRes = new ArrayList<HashMap<String, ArrayList<Port>>>();
-            //System.out.println("&&&&&&&&&&&&&&&&&&&&&"+tmpArCr.size());
-            for (Object tmpArCrob : tmpArCr) {
-                System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\nISTANTION PHASE FOR THE CLOUD:"+((OpenstackInfoContainer) tmpArCrob).getIdCloud()+ "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-         ////// FINE 1° video      
-                boolean result = om.stackInstantiate(template, (OpenstackInfoContainer) tmpArCrob,this.m,"federation");//BEACON>>> in final version of OSFFM 
-                System.out.println("TEMPLATE ISTANTIATED ON CLOUD:"+((OpenstackInfoContainer) tmpArCrob).getIdCloud());
-                //we will use variable result to understand if the stack is deployed inside the federated cloud
-                
-                /*String region = "RegionOne";
-                ((OpenstackInfoContainer) tmpArCrob).setRegion(region);
-                HashMap<String, ArrayList<Port>> map_res_port = om.sendShutSignalStack4DeployAction(stackName, (OpenstackInfoContainer) tmpArCrob, first, m);
-                if (true){//result) {
-                    first = false;//if first stack creation is successfully completed, the other stacks instantiated are not the First
-                }                        //and need different treatment.
-                arRes.add(map_res_port);*/
-            }
-            arindex++;
-           // arMapRes.add(arRes);
-            if(arindex>tmpArCr.size())
-                skip=true;
+        
+        Set<String> setStack = om.getSGList(manifestName);
+        for (String stack : setStack) {
+
+            ///String stack = "federation2";//BEACON>>> this step it will be substitude by a function that analize the manifest and retireve the ServiceManagementGroups 
+            //stored inside global manifest
+            FileFunction ff = new FileFunction();
+            //System.out.println("2£$");
+            String template = ff.readFromFile(prepath + "/" + tenant + manifestName + "_" + stack);
+            ArrayList<ArrayList<HashMap<String, ArrayList<Port>>>> arMapRes =om.deployManifest(template, stack, tmpMapcred, tmpMap, this.m);
+            //BEACON:>>> It is needed decide what do with the info returned from om.deployManifest inside strucure arMapRes
         }
         
 
@@ -204,13 +183,19 @@ public class IstantiateManifest {
             File currentFile = new File(f.getPath(),s);
             currentFile.delete();
         }
-        f.delete();//infine 
+        f.delete();//in fine 
         reply.put("returncode", 0);
         reply.put("errormesg", "");
         return reply.toJSONString();
     }
     
-    
+    private JSONObject createErrorAnswer(String errrorMesg){
+        JSONObject reply=new JSONObject();
+        reply.put("returncode", 1);
+        reply.put("errormesg", errrorMesg);
+        reply.put("templateuuid", null); 
+        return reply;
+    }
     
     
 }

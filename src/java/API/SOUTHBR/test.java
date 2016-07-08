@@ -7,6 +7,7 @@
 package API.SOUTHBR;
 
 import JClouds_Adapter.NeutronTest;
+import MDBInt.DBMongo;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -41,7 +42,9 @@ public class test {
             boolean res=fat1.createTenantFA(t1Id, "10.9.240.21:4567");
             System.out.println("Result of tenant 1 inserting operation on FA is: "+res);
             res=fat2.createTenantFA(t2Id, "10.9.240.7:4567");
+            
             System.out.println("Result of tenant 2 inserting operation on FA is: "+res);
+            System.out.println(fat1.getTenantList("10.9.240.21:4567").toString());
         }
         catch(Exception e ){
             System.out.println("Error1");
@@ -146,6 +149,14 @@ public class test {
         matchingNets.add(network2);
         networks.add(matchingNets);
         String body=fan1.constructNetworkTableJSON(networks, 111);
+        //prima di passare le tabelle al FA si potrebbero scrivere su Mongo in modo da capire se sono correttamente aggiornate
+        DBMongo m=new DBMongo();
+        m.init();
+        m.connectLocale(m.getMdbIp());
+        //qui si stà condividendo la stessa table con entrambe le cloud quindi si dovrà memorizzare la stessa tabella per entrambe le cloud federate. 
+        ////Il caso genericon prevede che si inserisca per ogni sito una tabella diversa che può ontenere anche riferimenti precedentemente presenti riferiti a link verso altre cloud
+        m.insertNetTable(t1name, body);
+        m.insertNetTable(t2name, body);
             System.out.println(body);
         Response r=fan1.createNetTable(t1Id, "10.9.240.21:4567", body);
             System.out.println(r.toString());

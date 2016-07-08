@@ -83,9 +83,9 @@ public class Templates {
             }
         }
         reply.put("templates", ja);
-            reply.put("returncode", 0); 
-            reply.put("errormesg", "None");
-            return reply.toJSONString();
+        reply.put("returncode", 0); 
+        reply.put("errormesg", "None");
+        return reply.toJSONString();
         
     }
     
