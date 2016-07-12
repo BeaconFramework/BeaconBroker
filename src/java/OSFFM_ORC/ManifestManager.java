@@ -164,6 +164,7 @@ public class ManifestManager implements Runnable{
      * created in actual stack and that need to be interconnected.
      * Pay attention because the "this.table_resourceset" is referred to the Manifest analized from
      * ManifestManager instance.
+     * This function will be used in next works.
      */
     public void prepareFednetLinkMap(){
         
@@ -213,11 +214,14 @@ public class ManifestManager implements Runnable{
         //6 aggiorna lo stato delle FA netTable in memoria 
     }
     /**
-     * 
+     * This function create a simple bridge between all cloud involved in fednet.
      */
     public void simpleLinkCreator(){
-        //recuperare id cloud su cui viene istanziato lo stack e poi creare la ptabella conformemente a 
-        //quanto realizzato innel test del southbridge api
+        //recuperare id cloud su cui viene istanziato lo stack e poi creare la tabella conformemente a 
+        //quanto realizzato nel test del southbridge api
+        
+        
+        
     }
 //</editor-fold>
     

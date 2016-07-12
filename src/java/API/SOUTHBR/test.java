@@ -26,7 +26,6 @@ public class test {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        
         //testing activity use hardcoded parameter that could be retrieved from federated Cloud
         String t1name,t1Id,t2name,t2Id;
         t1name ="demo";

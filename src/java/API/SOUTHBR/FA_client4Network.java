@@ -82,7 +82,7 @@ public class FA_client4Network extends FA_REST_Client{
      * @author gtricomi
      */
     public String constructNetworkTableJSON(ArrayList<ArrayList<HashMap<String,Object>>> networks,int version){
-        //>>>BEACON this String need to be reviewed
+        //>>>BEACON this returned type need to be reviewed
         String result="";
         String tmp="{\"table\": [";
         boolean infirst=true,first=true;
@@ -95,7 +95,7 @@ public class FA_client4Network extends FA_REST_Client{
                     }
                 tmp=tmp+"[";
                 for (HashMap elem : superiorelem) {
-                    /*
+                    /* //table structure used for test
                      {"table": 
                      [
                      [

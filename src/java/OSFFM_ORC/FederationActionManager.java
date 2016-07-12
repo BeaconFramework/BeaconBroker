@@ -15,11 +15,15 @@
 
 package OSFFM_ORC;
 
+import API.SOUTHBR.FA_client4Sites;
+import API.SOUTHBR.FA_client4Tenant;
 import JClouds_Adapter.FunctionResponseContainer;
+import JClouds_Adapter.KeystoneTest;
 import JClouds_Adapter.NeutronTest;
 import JClouds_Adapter.OpenstackInfoContainer;
 import MDBInt.DBMongo;
 import MDBInt.FederatedUser;
+import MDBInt.FederationAgentInfo;
 import MDBInt.FederationUser;
 import OSFFM_ORC.Utils.FednetsLink;
 import java.util.ArrayList;
@@ -36,6 +40,7 @@ import org.jclouds.openstack.neutron.v2.domain.Network;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import utils.Exception.WSException;
 
 /**
  * All action that will be done on each federated cloud is Managed inside this
@@ -305,13 +310,13 @@ public class FederationActionManager {
                 .append(tokens[3])
                 .toString();
     }
-    
     /**
-     * 
-     * @param fednetsLink 
+     * For future usage.
+     * @param fednetsLink
+     * @param groupName 
      */
-    public void linkcreator(FednetsLink fednetsLink, String groupName){//BEACON: SPOSTARE QUESTA FUNZIONE NEL MODULO ORCHESTRATOR
-        //1 Non più necessario!
+    public void prepareNetTablesCustom(FednetsLink fednetsLink, String groupName){
+    //1 Non più necessario!
         
         //2 recupera la lista delle netTable presenti (se presenti) per i Federation Agent
         
@@ -330,4 +335,126 @@ public class FederationActionManager {
     }
     
     
+    /**
+     * 
+     * @param netTablesVersionforDC, mappa stack Nettable
+     * @param tmpMapcred, mappa stack arraylist(di arrayList di OpenStack Container)
+     * @param m 
+     */
+    public void prepareNetTables4completeSharing(
+            String tenantname,
+            LinkedHashMap<String,JSONObject>  netTablesVersionforDC,
+            HashMap<String, ArrayList<ArrayList<OpenstackInfoContainer>>> tmpMapcred,
+            DBMongo m)
+    {
+        //1 Non più necessario!
+          //&&&&&&&&&&&&&& REPLICARE COMPORTAMENTO test.java SOUTHBRIDGEAPI.
+        FednetsLink fe=this.createCredMapwithoutDuplicate(tmpMapcred);
+        Set<String> s=netTablesVersionforDC.keySet();
+        LinkedHashMap<String,FederationAgentInfo> fa4cloud=new LinkedHashMap<>();
+        for(String idcloud: s){
+            try{
+                String endpoint=fe.getCloudId_To_OIC().get(idcloud).getEndpoint();
+                fa4cloud.put(endpoint, new FederationAgentInfo(m.getFAInfo(tenantname,idcloud )));
+            }catch(JSONException e){
+                LOGGER.error("Exception occurred in Parsing JSON retrieved from MongoDB in FAInfo Retrieve for Datacenter "+idcloud+"!"+"\nException message:"+e.getMessage() );
+            }
+        }
+        fe.setEndpoint_To_FAInfo(fa4cloud);
+        
+        
+        //4 invoca la funzione di Link
+        ////4.1 le tabelle saranno passate dalla funzione dell'orchestrator prepareNetTables4completeSharing
+        ////4.2 invoca la funzione createNetTable della classe FA_client4Network
+        
+        //5 aggiorna lo stato delle FA netTable in memoria
+        ////5.1 salva la nuova netTable incrementando la versione su mongo
+        ////5.2 salva la versione aggirnata della cloudlinkstatus su mongo
+    }
+    
+    /**
+     * 
+     * @param tmpMapcred
+     * @return 
+     */
+    private FednetsLink createCredMapwithoutDuplicate(HashMap<String, ArrayList<ArrayList<OpenstackInfoContainer>>> tmpMapcred){
+        LinkedHashMap<String,OpenstackInfoContainer>cleanMap= new LinkedHashMap<>();
+        Set<String> s=tmpMapcred.keySet();
+        for(String st:s){
+            ArrayList<ArrayList<OpenstackInfoContainer>> tmpar=tmpMapcred.get(st);
+            for(ArrayList<OpenstackInfoContainer> at:tmpar){
+                for(OpenstackInfoContainer oic:at){
+                    if(!cleanMap.containsKey(oic.getIdCloud()))
+                        cleanMap.put(oic.getIdCloud(), oic);
+                }
+            }
+        }
+        FednetsLink f=new FednetsLink();
+        f.setCloudId_To_OIC(cleanMap);
+        return f;
+    }
+    
+    /**
+     * Create LinkedHashMap with KeystoneManager for each site.
+     * @param cleanMap
+     * @return 
+     * @author gtricomi
+     */
+    private FednetsLink prepareKeystoneMap(FednetsLink fednetContainer){
+        Set<String> s=fednetContainer.getCloudId_To_OIC().keySet();
+        LinkedHashMap<String,KeystoneTest> tmp=new LinkedHashMap<>();
+        for(String idcloud: s){
+            OpenstackInfoContainer oictmp=fednetContainer.getCloudId_To_OIC().get(idcloud);
+            tmp.put(idcloud, new KeystoneTest(oictmp.getTenant(),oictmp.getUser(),oictmp.getPassword(),oictmp.getEndpoint()));
+        }
+        fednetContainer.setkMcloudId_To_Keystone(tmp);
+        return fednetContainer;
+    }
+    
+    private void prepareTables4link(FednetsLink fednetContainer){
+        KeystoneTest[] kar=(KeystoneTest[])fednetContainer.getkMcloudId_To_Keystone().values().toArray();
+        
+        for(int i=0;i<kar.length;i++){
+            for(int j=i+1;j<kar.length;j++){
+                FA_client4Tenant fat1=new FA_client4Tenant(kar[i].getVarEndpoint(),kar[i].getTenantId(kar[i].getVarIdentity().split(":")[0]),kar[i].getVarIdentity().split(":")[1],kar[i].getVarCredential());
+                FA_client4Tenant fat2=new FA_client4Tenant(kar[j].getVarEndpoint(),kar[j].getTenantId(kar[j].getVarIdentity().split(":")[0]),kar[j].getVarIdentity().split(":")[1],kar[j].getVarCredential());
+                FederationAgentInfo fai1=fednetContainer.getEndpoint_To_FAInfo().get(kar[i].getVarEndpoint());
+                FederationAgentInfo fai2=fednetContainer.getEndpoint_To_FAInfo().get(kar[j].getVarEndpoint());
+                try{
+                    fat1.createTenantFA(kar[i].getTenantId(kar[i].getVarIdentity().split(":")[0]),fai1.getIp()+":"+fai1.getPort() );
+                    }
+                catch(WSException wse){
+                    LOGGER.error("Exception occurred in Create Tenant Table on FA:<"+fai1.getIp()+":"+fai1.getPort()+">\n"+wse.getMessage());
+                    //invoke function that mark this link as not working
+                }
+                try{
+                    fat2.createTenantFA(kar[j].getTenantId(kar[j].getVarIdentity().split(":")[0]), fai2.getIp()+":"+fai2.getPort() );
+                    }
+                catch(WSException wse){
+                    LOGGER.error("Exception occurred in Create Tenant Table on FA:<"+fai2.getIp()+":"+fai2.getPort()+">\n"+wse.getMessage());
+                    //invoke function that mark this link as not working
+                }
+                FA_client4Sites fas1=new FA_client4Sites(kar[i].getVarEndpoint(),kar[i].getTenantId(kar[i].getVarIdentity().split(":")[0]),kar[i].getVarIdentity().split(":")[1],kar[i].getVarCredential());
+                FA_client4Sites fas2=new FA_client4Sites(kar[j].getVarEndpoint(),kar[j].getTenantId(kar[j].getVarIdentity().split(":")[0]),kar[j].getVarIdentity().split(":")[1],kar[j].getVarCredential());
+                
+                try{
+                    //preparare la tabella confrontando le entri della precedente con le entry da aggiungere per la attuale, facendo attenzione a memorizzare le entry sulla nuova tabella temporanea di lavoro 
+                    //che verrà salvata sempre dentro FednetsLink. Dopodichè invovcare al createSiteTable
+                    fas1.createTenantFA(kar[i].getTenantId(kar[i].getVarIdentity().split(":")[0]),fai1.getIp()+":"+fai1.getPort() );
+                    }
+                catch(WSException wse){
+                    LOGGER.error("Exception occurred in Create Tenant Table on FA:<"+fai1.getIp()+":"+fai1.getPort()+">\n"+wse.getMessage());
+                    //invoke function that mark this link as not working
+                }
+                try{
+                    fas2.createTenantFA(kar[j].getTenantId(kar[j].getVarIdentity().split(":")[0]), fai2.getIp()+":"+fai2.getPort() );
+                    }
+                catch(WSException wse){
+                    LOGGER.error("Exception occurred in Create Tenant Table on FA:<"+fai2.getIp()+":"+fai2.getPort()+">\n"+wse.getMessage());
+                    //invoke function that mark this link as not working
+                }
+                //BEACON>>>: manca gestione eventuali problemi qui dopo la creazione di entrambe le informazioni
+            }
+        }
+    }
 }

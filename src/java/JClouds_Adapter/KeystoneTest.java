@@ -71,6 +71,20 @@ public class KeystoneTest {
     private final KeystoneApi keystoneApi;
     private String provider ="openstack-keystone";
     private String endpoint,identity,credential;
+
+    public String getVarEndpoint() {
+        return endpoint;
+    }
+
+    public String getVarIdentity() {
+        return identity;
+    }
+
+    public String getVarCredential() {
+        return credential;
+    }
+
+  
     static final Logger LOGGER = Logger.getLogger(KeystoneTest.class);
      public KeystoneTest(DBMongo mongo) {
         Iterable<Module> modules = ImmutableSet.<Module>of( new SLF4JLoggingModule());

@@ -138,6 +138,94 @@ public class DBMongo {
             ex.printStackTrace();
         }
     }
+    /**
+     * 
+     * @param collection
+     * @param resQuery
+     * @param sortQuery
+     * @return 
+     * @author agalletta
+     */
+    private String conditionedResearch(DBCollection collection,BasicDBObject resQuery,BasicDBObject sortQuery){
+        DBCursor b= collection.find(resQuery).sort(sortQuery).limit(1);
+       return b.next().toString();
+    }
+    //<editor-fold defaultstate="collapsed" desc="FAInfo Management Functions">
+    /**
+     * 
+     * @param tenantName
+     * @param faSite
+     * @param faIP
+     * @param faPort
+     * @return 
+     * @author gtricomi
+     */
+    public String getFAInfo(String tenantName, String faSite) {
+        DB database = this.getDB(tenantName);
+        DBCollection collection = database.getCollection("faInfo");
+        BasicDBObject first = new BasicDBObject();
+        first.put("SiteName", faSite);
+        DBObject obj = null;
+        obj = collection.findOne(first);
+        return obj.toString();
+    }
+    /**
+     * 
+     * @param tenantName
+     * @param faSite
+     * @param faIP
+     * @param faPort 
+     * @author gtricomi
+     */
+    public void insertFAInfo(String tenantName, String faSite,String faIP,String faPort) {
+
+        DB dataBase = this.getDB(tenantName);
+        DBCollection collezione = this.getCollection(dataBase, "faInfo");
+        BasicDBObject obj = new BasicDBObject();
+        obj.append("SiteName", faSite);
+        obj.append("Ip", faIP);
+        obj.append("Port", faPort);
+        collezione.save(obj);
+    }
+    
+    //</editor-fold>
+//<editor-fold defaultstate="collapsed" desc="NetTables Management Functions">
+    /**
+     * 
+     * @param dbName
+     * @param faSite
+     * @return 
+     * @author gtricomi
+     */
+    public String getNetTables(String dbName, String faSite) {
+
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("netTables");
+        
+        BasicDBObject resQuery=new BasicDBObject("referenceSite",faSite);
+        BasicDBObject sortQuery=new BasicDBObject("version",-1);
+        return this.conditionedResearch(collection,resQuery,sortQuery);
+
+    }
+    
+    /**
+     * This update Federation User with element. 
+     * @param dbName
+     * @param tableName
+     * @param docJSON 
+     * @author gtricomi
+     */
+    public void insertNetTables(String dbName,String tableName,String faSite, String docJSON) {
+
+        DB dataBase = this.getDB(dbName);
+        DBCollection collezione = this.getCollection(dataBase, "netTables");
+        BasicDBObject obj = (BasicDBObject) JSON.parse(docJSON);
+        obj.append("TableUUID", tableName);
+        obj.append("referenceSite", faSite);
+        obj.append("insertTimestamp", System.currentTimeMillis());
+        collezione.save(obj);
+    }
+     //</editor-fold>
     
     public String getRunTimeInfo(String dbName, String uuid) {
 

@@ -581,55 +581,7 @@ public class OrchestrationManager {
                 }
             System.out.println("map res "+mapResNet.size());
             return mapResNet;
-/*
-            Socket socket = new Socket(ip, port);
-            
 
-            InputStream socketInput = socket.getInputStream();
-            Scanner socketInputScanner = new Scanner(socketInput);
-            //creazione stream di scrittura
-            OutputStream socketOutput = socket.getOutputStream();
-            PrintWriter socketOutputWriter = new PrintWriter(socketOutput, true);
-
-            NovaTest nova = new NovaTest(credential.getEndpoint(), credential.getTenant(), credential.getUser(), credential.getPassword(), credential.getRegion());
-            NeutronTest neutron = new NeutronTest(credential.getEndpoint(), credential.getTenant(), credential.getUser(), credential.getPassword(), credential.getRegion());
-            //  Heat heat = new Heat(credential.getEndpoint(), credential.getUser(), credential.getTenant(), credential.getPassword());
-            HashMap<String, ArrayList<Port>> mapResNet = new HashMap<String, ArrayList<Port>>();
-            // List<? extends Resource> l = heat.getResource(stackName);
-            //Iterator it_res = l.iterator();
-
-            socketOutputWriter.println(2);
-            socketOutputWriter.println(credential.getEndpoint());
-            socketOutputWriter.println(credential.getUser());
-            socketOutputWriter.println(credential.getTenant());
-            socketOutputWriter.println(credential.getPassword());
-            socketOutputWriter.println(stackName);
-            
-            while (continua) {
-                String id_res = socketInputScanner.nextLine();
-                if (id_res.equals("1@@@")) {
-                    continua = false;
-                    socket.close();
-                } else {
-
-          //  while (it_res.hasNext()) {
-                    //      Resource r = (Resource) it_res.next();
-                    //      String id_res = r.getPhysicalResourceId();
-                    if (!first) {
-                        nova.stopVm(id_res);
-                        m.updateStateRunTimeInfo(credential.getTenant(), id_res, first);
-                    }
-                    ArrayList<Port> arPort = neutron.getPortFromDeviceId(id_res);
-                    //inserire in quest'array la lista delle porte di quella VM
-                    mapResNet.put(id_res, arPort);
-                    Iterator it_po = arPort.iterator();
-                    while (it_po.hasNext()) {
-                        m.insertPortInfo(credential.getTenant(), neutron.portToString((Port) it_po.next()));
-                    }
-                }
-            }
-            return mapResNet;
-                    */
         } catch (Exception e) {
 
             LOGGER.error("An error is occurred in stack creation phase.");
@@ -671,7 +623,7 @@ public class OrchestrationManager {
                 boolean result = this.stackInstantiate(template, (OpenstackInfoContainer) tmpArCrob, m, "federation");//BEACON>>> in final version of OSFFM 
                 LOGGER.debug("TEMPLATE ISTANTIATED ON CLOUD:" + ((OpenstackInfoContainer) tmpArCrob).getIdCloud());
                 //we will use variable result to understand if the stack is deployed inside the federated cloud
-
+                
                 String region = "RegionOne";
                 ((OpenstackInfoContainer) tmpArCrob).setRegion(region);
                 HashMap<String, ArrayList<Port>> map_res_port = this.sendShutSignalStack4DeployAction(stackName, (OpenstackInfoContainer) tmpArCrob, first, m);
@@ -719,8 +671,54 @@ public class OrchestrationManager {
         return fam.networkSegmentAdd(fu, OSF_network_segment_id,OSF_cloud,params,federationTenant);
     }
     
-    public void link(){
+    public void prepareNetTables4completeSharing(
+            String tenantname,
+            String template,
+            HashMap<String, ArrayList<ArrayList<OpenstackInfoContainer>>> tmpMapcred,
+            DBMongo m
+    ){
         
+        //1 Retrieve NetMap version from Mongo for each DC and create LinkedHashMap for FederationActionManager
+        LinkedHashMap<String,JSONObject> netTablesMap=this.retrieveNetTablesStored(tenantname,tmpMapcred,m);
+        //2 create new NetTables throught ?????? >>>>>>>>this action is forwarded to FederactionActionManager
+        FederationActionManager fam=new FederationActionManager();
+        fam.prepareNetTables4completeSharing( tenantname,netTablesMap,tmpMapcred,m);
+    }
+    
+    /**
+     * This function retrieve NetTablesStored for all Datacenter involved. 
+     * @param tenantname
+     * @param tmpMapcred
+     * @param m
+     * @return 
+     * @author gtricomi
+     */
+    private LinkedHashMap<String,JSONObject> retrieveNetTablesStored(
+            String tenantname,
+            HashMap<String, ArrayList<ArrayList<OpenstackInfoContainer>>> tmpMapcred,
+            DBMongo m){
+        LinkedHashMap<String,JSONObject> netTablesMap= new LinkedHashMap<>();
+        Set<String> s=tmpMapcred.keySet();
+        for(String stack : s){
+            ArrayList arCr = (ArrayList<ArrayList<OpenstackInfoContainer>>) tmpMapcred.get(stack);
+            boolean skip = false;
+            int arindex = 0;
+            while (!skip) {
+                ArrayList<OpenstackInfoContainer> tmpArCr = (ArrayList<OpenstackInfoContainer>) arCr.get(arindex);
+                for (OpenstackInfoContainer tmpArCrob : tmpArCr) {
+                    if((!netTablesMap.containsKey(tmpArCrob.getIdCloud()))||(netTablesMap.get(tmpArCrob.getIdCloud())==null))
+                    {
+                        try {
+                            netTablesMap.put(tmpArCrob.getIdCloud(),new JSONObject(m.getNetTables(tenantname,tmpArCrob.getIdCloud())));
+                        } catch (JSONException ex) {
+                            LOGGER.error("Impossible parse NetTables for cloud :"+tmpArCrob.getIdCloud()+".\nException obtained:"+ex.getMessage());
+                            netTablesMap.put(tmpArCrob.getIdCloud(),null);
+                        }
+                    }
+                }
+            }
+        }
+        return netTablesMap;
     }
     //</editor-fold>
     

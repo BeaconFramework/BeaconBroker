@@ -19,6 +19,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -291,8 +293,12 @@ public class test {
         HashMap<String,Object> al=new HashMap<String,Object>();
         t.table_resourceset.put("OS::Beacon::Georeferenced_deploy",new LinkedHashMap<String,org.json.JSONObject>());
         t.table_resourceset.put("OS::Beacon::ServiceGroupManagement",new LinkedHashMap<String,org.json.JSONObject>());
-        //geo_man.consume_georeference("document", list);
-        ManifestManager mm=new ManifestManager("document",t.resource);
+        try {
+            //geo_man.consume_georeference("document", list);
+            ManifestManager mm=new ManifestManager("document",t.resource);
+        } catch (JSONException ex) {
+            Logger.getLogger(test.class.getName()).log(Level.SEVERE, null, ex);
+        }
         OrchestrationManager om=new OrchestrationManager();
         try{
       //  t.extractResourcefromManifest(t.resource, t.table_resourceset);

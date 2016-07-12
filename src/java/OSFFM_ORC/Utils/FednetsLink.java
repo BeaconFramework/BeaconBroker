@@ -15,9 +15,13 @@
 
 package OSFFM_ORC.Utils;
 
+import JClouds_Adapter.KeystoneTest;
+import JClouds_Adapter.OpenstackInfoContainer;
+import MDBInt.FederationAgentInfo;
 import java.util.LinkedHashMap;
-import java.util.TreeSet;
+import java.util.LinkedHashSet;
 import java.util.SortedSet;
+import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 /**
@@ -25,10 +29,48 @@ import org.apache.log4j.Logger;
  * @author Giuseppe Tricomi
  */
 public class FednetsLink {
-    private LinkedHashMap<String, LinkedHashMap<String,SortedSet<String>>> linkedVMs;
+    private LinkedHashMap<String, LinkedHashMap<String,SortedSet<String>>> linkedVMs; //structure prepared for next works
+    private LinkedHashSet<String> dcInFednet;
+    private LinkedHashMap<String,KeystoneTest> kMcloudId_To_Keystone;
+    private LinkedHashMap<String,OpenstackInfoContainer>cloudId_To_OIC;
+    private LinkedHashMap<String,FederationAgentInfo>endpoint_To_FAInfo;
     Logger LOGGER = Logger.getLogger(FednetsLink.class);
     
-    public LinkedHashMap<String,  LinkedHashMap<String,SortedSet<String>>> getLinkedVMs() {
+    
+    //<editor-fold defaultstate="collapsed" desc="KeystoneInfo Maanagement Functions">
+    public LinkedHashMap<String, KeystoneTest> getkMcloudId_To_Keystone() {
+        return kMcloudId_To_Keystone;
+    }
+
+    public void setkMcloudId_To_Keystone(LinkedHashMap<String, KeystoneTest> kMcloudId_To_Keystone) {
+        this.kMcloudId_To_Keystone = kMcloudId_To_Keystone;
+    }
+    //</editor-fold>
+    
+    //<editor-fold defaultstate="collapsed" desc="OpenstackInfoContainer Management Functions">
+    public LinkedHashMap<String, OpenstackInfoContainer> getCloudId_To_OIC() {
+        return cloudId_To_OIC;
+    }
+
+    public void setCloudId_To_OIC(LinkedHashMap<String, OpenstackInfoContainer> cloudId_To_OIC) {
+        this.cloudId_To_OIC = cloudId_To_OIC;
+    }
+    //</editor-fold>
+    
+    //<editor-fold defaultstate="collapsed" desc="FederationAgentInfo Maanagement Functions">
+    public LinkedHashMap<String, FederationAgentInfo> getEndpoint_To_FAInfo() {
+        return endpoint_To_FAInfo;
+    }
+
+    public void setEndpoint_To_FAInfo(LinkedHashMap<String, FederationAgentInfo> endpoint_To_FAInfo) {
+        this.endpoint_To_FAInfo = endpoint_To_FAInfo;
+    }
+    //</editor-fold>
+    
+    //<editor-fold defaultstate="collapsed" desc="LinkedVMs Management Functions">
+    public LinkedHashMap<String,  LinkedHashMap<String,SortedSet<String>>> getLinkedVMs() throws NullPointerException{
+        if(this.linkedVMs==null)
+            throw new NullPointerException();
         return linkedVMs;
     }
     
@@ -41,6 +83,8 @@ public class FednetsLink {
      * @return 
      */
     public boolean createLinkedVMs(String stack, String set,String linkedVM){
+        if(this.linkedVMs==null)
+            this.linkedVMs=new LinkedHashMap<>();
         try{
             if(this.linkedVMs.containsKey(stack))
             {
@@ -77,9 +121,26 @@ public class FednetsLink {
     private void addNewItem(String stack,String set,String linkedVM){
         this.linkedVMs.get(stack).get(set).add(linkedVM);
     }
+    //</editor-fold>
+    
+    //<editor-fold defaultstate="collapsed" desc="DatacenterTree Maanagement Functions">
+    public LinkedHashSet<String> getDcInFednet()throws NullPointerException {
+        if(this.dcInFednet==null)
+            throw new NullPointerException();
+        return dcInFednet;
+    }
+    
+    public void addDcInFednet(String dc){
+        if(this.dcInFednet==null)
+            this.dcInFednet=new LinkedHashSet<>();
+        this.dcInFednet.add(dc);
+    }
+    
+    //</editor-fold>
     
     public FednetsLink() {
-        this.linkedVMs = new LinkedHashMap<String,LinkedHashMap<String,SortedSet<String>>>();
+        this.linkedVMs = null;
+        this.dcInFednet= null;
     }
     
 }

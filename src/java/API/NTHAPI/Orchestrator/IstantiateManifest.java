@@ -77,7 +77,7 @@ public class IstantiateManifest {
     }
     
     /**
-     * 
+     * This function Istantiate all Stack described inside global Manifest.
      * @param tenant
      * @param jsonInput
      * @return 
@@ -176,8 +176,7 @@ public class IstantiateManifest {
             ArrayList<ArrayList<HashMap<String, ArrayList<Port>>>> arMapRes =om.deployManifest(template, stack, tmpMapcred, tmpMap, this.m);
             //BEACON:>>> It is needed decide what do with the info returned from om.deployManifest inside strucure arMapRes
         }
-        
-
+        om.prepareNetTables4completeSharing(tenant, manifestName, tmpMapcred, m);
         String[]entries = f.list();
         for(String s: entries){
             File currentFile = new File(f.getPath(),s);
