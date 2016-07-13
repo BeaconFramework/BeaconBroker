@@ -16,7 +16,6 @@ package OSFFM_ORC;
 
 //<editor-fold defaultstate="collapsed" desc="Import Section">
 //import JClouds_Adapter.Heat;
-import com.edw.rmi.RMIServerInterface;
 import JClouds_Adapter.NeutronTest;
 import JClouds_Adapter.NovaTest;
 import JClouds_Adapter.OpenstackInfoContainer;
@@ -24,7 +23,9 @@ import MDBInt.DBMongo;
 import MDBInt.FederationUser;
 import MDBInt.MDBIException;
 import OSFFM_ORC.Utils.Exception.NotFoundGeoRefException;
+import OSFFM_ORC.Utils.FednetsLink;
 import OSFFM_ORC.Utils.MultiPolygon;
+import com.edw.rmi.RMIServerInterface;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -679,10 +680,10 @@ public class OrchestrationManager {
     ){
         
         //1 Retrieve NetMap version from Mongo for each DC and create LinkedHashMap for FederationActionManager
-        LinkedHashMap<String,JSONObject> netTablesMap=this.retrieveNetTablesStored(tenantname,tmpMapcred,m);
+        FednetsLink mapcontainer=this.retrieveTablesStored(tenantname,tmpMapcred,m);
         //2 create new NetTables throught ?????? >>>>>>>>this action is forwarded to FederactionActionManager
         FederationActionManager fam=new FederationActionManager();
-        fam.prepareNetTables4completeSharing( tenantname,netTablesMap,tmpMapcred,m);
+        fam.prepareNetTables4completeSharing( tenantname,mapcontainer,tmpMapcred,m);
     }
     
     /**
@@ -693,11 +694,13 @@ public class OrchestrationManager {
      * @return 
      * @author gtricomi
      */
-    private LinkedHashMap<String,JSONObject> retrieveNetTablesStored(
+    private FednetsLink retrieveTablesStored(
             String tenantname,
             HashMap<String, ArrayList<ArrayList<OpenstackInfoContainer>>> tmpMapcred,
             DBMongo m){
         LinkedHashMap<String,JSONObject> netTablesMap= new LinkedHashMap<>();
+        LinkedHashMap<String,JSONObject> siteTablesMap= new LinkedHashMap<>();
+        LinkedHashMap<String,JSONObject> tenantTablesMap= new LinkedHashMap<>();
         Set<String> s=tmpMapcred.keySet();
         for(String stack : s){
             ArrayList arCr = (ArrayList<ArrayList<OpenstackInfoContainer>>) tmpMapcred.get(stack);
@@ -710,15 +713,41 @@ public class OrchestrationManager {
                     {
                         try {
                             netTablesMap.put(tmpArCrob.getIdCloud(),new JSONObject(m.getNetTables(tenantname,tmpArCrob.getIdCloud())));
+                            
                         } catch (JSONException ex) {
                             LOGGER.error("Impossible parse NetTables for cloud :"+tmpArCrob.getIdCloud()+".\nException obtained:"+ex.getMessage());
                             netTablesMap.put(tmpArCrob.getIdCloud(),null);
                         }
                     }
+                    if((!siteTablesMap.containsKey(tmpArCrob.getIdCloud()))||(siteTablesMap.get(tmpArCrob.getIdCloud())==null))
+                    {
+                        try {
+                            siteTablesMap.put(tmpArCrob.getIdCloud(),new JSONObject(m.getSiteTables(tenantname,tmpArCrob.getIdCloud())));
+                            
+                        } catch (JSONException ex) {
+                            LOGGER.error("Impossible parse SiteTables for cloud :"+tmpArCrob.getIdCloud()+".\nException obtained:"+ex.getMessage());
+                            siteTablesMap.put(tmpArCrob.getIdCloud(),null);
+                        }
+                    }
+                    if((!tenantTablesMap.containsKey(tmpArCrob.getIdCloud()))||(tenantTablesMap.get(tmpArCrob.getIdCloud())==null))
+                    {
+                        try {
+                            tenantTablesMap.put(tmpArCrob.getIdCloud(),new JSONObject(m.getTenantTables(tenantname,tmpArCrob.getIdCloud())));
+                            
+                        } catch (JSONException ex) {
+                            LOGGER.error("Impossible parse tenantTables for cloud :"+tmpArCrob.getIdCloud()+".\nException obtained:"+ex.getMessage());
+                            tenantTablesMap.put(tmpArCrob.getIdCloud(),null);
+                        }
+                    }
                 }
             }
         }
-        return netTablesMap;
+        FednetsLink f=new FednetsLink();
+        f.setOldtenantTablesMap(tenantTablesMap);
+        f.setOldsiteTablesMap(siteTablesMap);
+        f.setOldnetTablesMap(netTablesMap);
+        
+        return f;
     }
     //</editor-fold>
     

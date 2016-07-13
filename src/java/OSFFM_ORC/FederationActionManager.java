@@ -343,14 +343,14 @@ public class FederationActionManager {
      */
     public void prepareNetTables4completeSharing(
             String tenantname,
-            LinkedHashMap<String,JSONObject>  netTablesVersionforDC,
+            FednetsLink  mapContainer,
             HashMap<String, ArrayList<ArrayList<OpenstackInfoContainer>>> tmpMapcred,
             DBMongo m)
     {
         //1 Non più necessario!
           //&&&&&&&&&&&&&& REPLICARE COMPORTAMENTO test.java SOUTHBRIDGEAPI.
-        FednetsLink fe=this.createCredMapwithoutDuplicate(tmpMapcred);
-        Set<String> s=netTablesVersionforDC.keySet();
+        FednetsLink fe=this.createCredMapwithoutDuplicate(tmpMapcred,mapContainer);
+        Set<String> s=mapContainer.getOldnetTablesMap().keySet();
         LinkedHashMap<String,FederationAgentInfo> fa4cloud=new LinkedHashMap<>();
         for(String idcloud: s){
             try{
@@ -361,7 +361,7 @@ public class FederationActionManager {
             }
         }
         fe.setEndpoint_To_FAInfo(fa4cloud);
-        
+        fe=this.prepareKeystoneMap(fe);//prepareTables4link deve partire sempre dopo 
         
         //4 invoca la funzione di Link
         ////4.1 le tabelle saranno passate dalla funzione dell'orchestrator prepareNetTables4completeSharing
@@ -377,7 +377,7 @@ public class FederationActionManager {
      * @param tmpMapcred
      * @return 
      */
-    private FednetsLink createCredMapwithoutDuplicate(HashMap<String, ArrayList<ArrayList<OpenstackInfoContainer>>> tmpMapcred){
+    private FednetsLink createCredMapwithoutDuplicate(HashMap<String, ArrayList<ArrayList<OpenstackInfoContainer>>> tmpMapcred,FednetsLink fe){
         LinkedHashMap<String,OpenstackInfoContainer>cleanMap= new LinkedHashMap<>();
         Set<String> s=tmpMapcred.keySet();
         for(String st:s){
@@ -385,13 +385,16 @@ public class FederationActionManager {
             for(ArrayList<OpenstackInfoContainer> at:tmpar){
                 for(OpenstackInfoContainer oic:at){
                     if(!cleanMap.containsKey(oic.getIdCloud()))
+                    {
                         cleanMap.put(oic.getIdCloud(), oic);
+                        fe.addDcInFednet(oic.getIdCloud());
+                    }
                 }
             }
         }
-        FednetsLink f=new FednetsLink();
-        f.setCloudId_To_OIC(cleanMap);
-        return f;
+        
+        fe.setCloudId_To_OIC(cleanMap);
+        return fe;
     }
     
     /**
@@ -403,21 +406,53 @@ public class FederationActionManager {
     private FednetsLink prepareKeystoneMap(FednetsLink fednetContainer){
         Set<String> s=fednetContainer.getCloudId_To_OIC().keySet();
         LinkedHashMap<String,KeystoneTest> tmp=new LinkedHashMap<>();
+        LinkedHashMap<String,String> endpoint_to_tenantid= new LinkedHashMap<>();
+        
         for(String idcloud: s){
             OpenstackInfoContainer oictmp=fednetContainer.getCloudId_To_OIC().get(idcloud);
-            tmp.put(idcloud, new KeystoneTest(oictmp.getTenant(),oictmp.getUser(),oictmp.getPassword(),oictmp.getEndpoint()));
+            KeystoneTest kt =new KeystoneTest(oictmp.getTenant(),oictmp.getUser(),oictmp.getPassword(),oictmp.getEndpoint());
+            tmp.put(idcloud, kt);
+            endpoint_to_tenantid.put(oictmp.getEndpoint(),kt.getTenantId(oictmp.getTenant()));
         }
         fednetContainer.setkMcloudId_To_Keystone(tmp);
+        fednetContainer.setEndpoint_to_tenantid(endpoint_to_tenantid);
         return fednetContainer;
     }
     
-    private void prepareTables4link(FednetsLink fednetContainer){
+    private void prepareTables4link(FednetsLink fednetContainer,DBMongo m){//tutta da rivedere eliminare il doppio ciclo for
         KeystoneTest[] kar=(KeystoneTest[])fednetContainer.getkMcloudId_To_Keystone().values().toArray();
+        ArrayList<String> tmpListupdatingSite= new ArrayList<>();
+        ArrayList<String> tmpListupdatingNet= new ArrayList<>();
+        Set<String> s=fednetContainer.getCloudId_To_OIC().keySet();
         
+        for(String cloudID: s){//aggiungere gestione nettables?
+            String ten=fednetContainer.getCloudId_To_OIC().get(s).getTenant();
+           /* Boolean answer=m.checkSiteTables(ten, cloudID, "name",fednetContainer.getDcInFednet() );
+            if(answer==null)
+            {
+                tmpListupdatingSite.add(cloudID);
+            }
+            else if(!answer){
+                
+            }*/
+            Boolean answer=m.checkNetTables(ten, cloudID, "site_name",fednetContainer.getDcInFednet() );
+            if(answer==null)
+            {
+                tmpListupdatingNet.add(cloudID);
+            }
+            else if(!answer){
+                //funzione che controlla tutte le cloud in federazione per segnare quelle mancanti per questo sito.
+            }
+            //funzione che aggiorna le tabelle di NetTables e le mette nel container
+        }
+        //funzione che invia ad ogni cloud la propria tables aggiornata e poi la scrive su Mongo nella collezione corretta aggiornando la versione
+        
+        
+        /*TO BE DELETE
         for(int i=0;i<kar.length;i++){
             for(int j=i+1;j<kar.length;j++){
-                FA_client4Tenant fat1=new FA_client4Tenant(kar[i].getVarEndpoint(),kar[i].getTenantId(kar[i].getVarIdentity().split(":")[0]),kar[i].getVarIdentity().split(":")[1],kar[i].getVarCredential());
-                FA_client4Tenant fat2=new FA_client4Tenant(kar[j].getVarEndpoint(),kar[j].getTenantId(kar[j].getVarIdentity().split(":")[0]),kar[j].getVarIdentity().split(":")[1],kar[j].getVarCredential());
+                FA_client4Tenant fat1=new FA_client4Tenant(kar[i].getVarEndpoint(),fednetContainer.getEndpoint_to_tenantid().get(kar[i].getVarEndpoint()),kar[i].getVarIdentity().split(":")[1],kar[i].getVarCredential());
+                FA_client4Tenant fat2=new FA_client4Tenant(kar[j].getVarEndpoint(),fednetContainer.getEndpoint_to_tenantid().get(kar[j].getVarEndpoint()),kar[j].getVarIdentity().split(":")[1],kar[j].getVarCredential());
                 FederationAgentInfo fai1=fednetContainer.getEndpoint_To_FAInfo().get(kar[i].getVarEndpoint());
                 FederationAgentInfo fai2=fednetContainer.getEndpoint_To_FAInfo().get(kar[j].getVarEndpoint());
                 try{
@@ -434,11 +469,11 @@ public class FederationActionManager {
                     LOGGER.error("Exception occurred in Create Tenant Table on FA:<"+fai2.getIp()+":"+fai2.getPort()+">\n"+wse.getMessage());
                     //invoke function that mark this link as not working
                 }
-                FA_client4Sites fas1=new FA_client4Sites(kar[i].getVarEndpoint(),kar[i].getTenantId(kar[i].getVarIdentity().split(":")[0]),kar[i].getVarIdentity().split(":")[1],kar[i].getVarCredential());
-                FA_client4Sites fas2=new FA_client4Sites(kar[j].getVarEndpoint(),kar[j].getTenantId(kar[j].getVarIdentity().split(":")[0]),kar[j].getVarIdentity().split(":")[1],kar[j].getVarCredential());
+                FA_client4Sites fas1=new FA_client4Sites(kar[i].getVarEndpoint(),fednetContainer.getEndpoint_to_tenantid().get(kar[i].getVarEndpoint()),kar[i].getVarIdentity().split(":")[1],kar[i].getVarCredential());
+                FA_client4Sites fas2=new FA_client4Sites(kar[j].getVarEndpoint(),fednetContainer.getEndpoint_to_tenantid().get(kar[j].getVarEndpoint()),kar[j].getVarIdentity().split(":")[1],kar[j].getVarCredential());
                 
                 try{
-                    //preparare la tabella confrontando le entri della precedente con le entry da aggiungere per la attuale, facendo attenzione a memorizzare le entry sulla nuova tabella temporanea di lavoro 
+                    //preparare la tabella confrontando le entry della precedente con le entry da aggiungere per la attuale, facendo attenzione a memorizzare le entry sulla nuova tabella temporanea di lavoro 
                     //che verrà salvata sempre dentro FednetsLink. Dopodichè invovcare al createSiteTable
                     fas1.createTenantFA(kar[i].getTenantId(kar[i].getVarIdentity().split(":")[0]),fai1.getIp()+":"+fai1.getPort() );
                     }
@@ -455,6 +490,17 @@ public class FederationActionManager {
                 }
                 //BEACON>>>: manca gestione eventuali problemi qui dopo la creazione di entrambe le informazioni
             }
-        }
+        }*/
     }
+    /*
+    private FednetsLink prepareSiteTable(FednetsLink fe){
+        LinkedHashMap<String,JSONObject> old= fe.getOldsiteTablesMap();
+        LinkedHashMap<String,String> nerRef= fe.getEndpoint_to_tenantid();
+        //LinkedHashMap endRef= fe.getCloudId_To_OIC();
+        Set<String> s=nerRef.keySet();
+        for(String end:s){
+            String ten_id=nerRef.get(end);
+        }
+        //TO BE Complete
+    }*/
 }

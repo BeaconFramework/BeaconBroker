@@ -23,6 +23,7 @@ import java.util.LinkedHashSet;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 
 /**
  *
@@ -34,9 +35,54 @@ public class FednetsLink {
     private LinkedHashMap<String,KeystoneTest> kMcloudId_To_Keystone;
     private LinkedHashMap<String,OpenstackInfoContainer>cloudId_To_OIC;
     private LinkedHashMap<String,FederationAgentInfo>endpoint_To_FAInfo;
+    private LinkedHashMap<String,String> endpoint_to_tenantid;
+    
+    private LinkedHashMap<String,JSONObject> OldnetTablesMap;
+    private LinkedHashMap<String,JSONObject> OldsiteTablesMap;
+    private LinkedHashMap<String,JSONObject> OldtenantTablesMap;
+    
     Logger LOGGER = Logger.getLogger(FednetsLink.class);
     
+    //<editor-fold defaultstate="collapsed" desc="OldnetTablesMap Maanagement Functions">
+    public LinkedHashMap<String, JSONObject> getOldnetTablesMap() {
+        return OldnetTablesMap;
+    }
+
+    public void setOldnetTablesMap(LinkedHashMap<String, JSONObject> OldnetTablesMap) {
+        this.OldnetTablesMap = OldnetTablesMap;
+    }
+    //</editor-fold>
+    //<editor-fold defaultstate="collapsed" desc="OldsiteTablesMap Maanagement Functions">
+    public LinkedHashMap<String, JSONObject> getOldsiteTablesMap() {
+        return OldsiteTablesMap;
+    }
+
+    public void setOldsiteTablesMap(LinkedHashMap<String, JSONObject> OldsiteTablesMap) {
+        this.OldsiteTablesMap = OldsiteTablesMap;
+    }
+    //</editor-fold>
+    //<editor-fold defaultstate="collapsed" desc="OldtenantTablesMap Maanagement Functions">
+    public LinkedHashMap<String, JSONObject> getOldtenantTablesMap() {
+        return OldtenantTablesMap;
+    }
+
+    public void setOldtenantTablesMap(LinkedHashMap<String, JSONObject> OldtenantTablesMap) {
+        this.OldtenantTablesMap = OldtenantTablesMap;
+    }
+    //</editor-fold>
     
+    
+    
+    
+    //<editor-fold defaultstate="collapsed" desc="endpoint_to_tenantid Management Functions">
+    public LinkedHashMap<String, String> getEndpoint_to_tenantid() {
+        return endpoint_to_tenantid;
+    }
+
+    public void setEndpoint_to_tenantid(LinkedHashMap<String, String> endpoint_to_tenantid) {
+        this.endpoint_to_tenantid = endpoint_to_tenantid;
+    }
+    //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="KeystoneInfo Maanagement Functions">
     public LinkedHashMap<String, KeystoneTest> getkMcloudId_To_Keystone() {
         return kMcloudId_To_Keystone;

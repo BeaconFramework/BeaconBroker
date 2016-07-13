@@ -38,6 +38,7 @@ import utils.*;
 import MDBInt.MDBIException;
 import com.mongodb.AggregationOutput;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import org.apache.log4j.Logger;
 
@@ -193,7 +194,7 @@ public class DBMongo {
     /**
      * 
      * @param dbName
-     * @param faSite
+     * @param faSite, this is the cloud Id
      * @return 
      * @author gtricomi
      */
@@ -207,11 +208,64 @@ public class DBMongo {
         return this.conditionedResearch(collection,resQuery,sortQuery);
 
     }
+    /**
+     * 
+     * @param dbName
+     * @param faSite
+     * @param key
+     * @param list
+     * @return 
+     * @author agalletta
+     */
+    public Boolean checkNetTables(String dbName, String faSite, String key, LinkedHashSet<String> list) {
+
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("netTables");
+        //DBCollection collection = database.getCollection("testIn");
+
+        BasicDBObject tableQuery, andQuery;
+        BasicDBList and;
+        double version;
+        BasicDBObject resQuery = new BasicDBObject("referenceSite", faSite);
+        BasicDBObject sortQuery = new BasicDBObject("version", -1);
+        DBCursor b = collection.find(resQuery).sort(sortQuery).limit(1);
+        Iterator<String> it;
+        if (!b.hasNext()) {
+            //System.out.println("tabella non trovata");
+            return null;
+        } else {
+            version = (double) b.next().get("version");
+            //System.out.println(version);
+
+            //andQuery=new BasicDBObject("referenceSite",faSite);
+            and= new BasicDBList();
+            and.add(resQuery);
+            and.add(new BasicDBObject("version", version));
+            it = list.iterator();
+            while (it.hasNext()) {
+               // resQuery.append("table." + key, it.next());
+                and.add(new BasicDBObject("table." + key, it.next()));
+            }
+            andQuery=new BasicDBObject("$and",and);
+            //System.out.println("query:" + andQuery);
+            b = collection.find(andQuery);
+            if (!b.hasNext()) {
+              //  System.out.println("tabella incompleta");
+                return false;
+            } else {
+                return true;
+
+            }
+
+            
+        }
+    }
     
     /**
      * This update Federation User with element. 
      * @param dbName
      * @param tableName
+     * @param faSite, this is the cloud Id
      * @param docJSON 
      * @author gtricomi
      */
@@ -219,6 +273,137 @@ public class DBMongo {
 
         DB dataBase = this.getDB(dbName);
         DBCollection collezione = this.getCollection(dataBase, "netTables");
+        BasicDBObject obj = (BasicDBObject) JSON.parse(docJSON);
+        obj.append("TableUUID", tableName);
+        obj.append("referenceSite", faSite);
+        obj.append("insertTimestamp", System.currentTimeMillis());
+        collezione.save(obj);
+    }
+     //</editor-fold>
+    
+    //<editor-fold defaultstate="collapsed" desc="siteTables Management Functions">
+    /**
+     * 
+     * @param dbName
+     * @param faSite, this is the cloud Id
+     * @return 
+     * @author gtricomi
+     */
+    public String getSiteTables(String dbName, String faSite) {
+
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("siteTables");
+        
+        BasicDBObject resQuery=new BasicDBObject("referenceSite",faSite);
+        BasicDBObject sortQuery=new BasicDBObject("version",-1);
+        return this.conditionedResearch(collection,resQuery,sortQuery);
+
+    }
+    
+    /**
+     * 
+     * @param dbName
+     * @param faSite
+     * @param key
+     * @param list
+     * @return 
+     * @author agalletta
+     */
+    public Boolean checkSiteTables(String dbName, String faSite, String key, LinkedHashSet<String> list) {
+
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("siteTables");
+        //DBCollection collection = database.getCollection("testIn");
+
+        BasicDBObject tableQuery, andQuery;
+        BasicDBList and;
+        double version;
+        BasicDBObject resQuery = new BasicDBObject("referenceSite", faSite);
+        BasicDBObject sortQuery = new BasicDBObject("version", -1);
+        DBCursor b = collection.find(resQuery).sort(sortQuery).limit(1);
+        Iterator<String> it;
+        if (!b.hasNext()) {
+           // System.out.println("tabella non trovata");
+            return null;
+        } else {
+            version = (double) b.next().get("version");
+           // System.out.println(version);
+
+            //andQuery=new BasicDBObject("referenceSite",faSite);
+            and= new BasicDBList();
+            and.add(resQuery);
+            and.add(new BasicDBObject("version", version));
+            it = list.iterator();
+            while (it.hasNext()) {
+               // resQuery.append("table." + key, it.next());
+                and.add(new BasicDBObject("table." + key, it.next()));
+            }
+            andQuery=new BasicDBObject("$and",and);
+           // System.out.println("query:" + andQuery);
+            b = collection.find(andQuery);
+            if (!b.hasNext()) {
+             //   System.out.println("tabella incompleta");
+                return false;
+            } else {
+                return true;
+
+            }
+
+            
+        }
+    }
+    
+    /**
+     * This update Federation User with element. 
+     * @param dbName
+     * @param tableName
+     * @param faSite, this is the cloud Id
+     * @param docJSON 
+     * @author gtricomi
+     */
+    public void insertSiteTables(String dbName,String tableName,String faSite, String docJSON) {
+
+        DB dataBase = this.getDB(dbName);
+        DBCollection collezione = this.getCollection(dataBase, "siteTables");
+        BasicDBObject obj = (BasicDBObject) JSON.parse(docJSON);
+        obj.append("TableUUID", tableName);
+        obj.append("referenceSite", faSite);
+        obj.append("insertTimestamp", System.currentTimeMillis());
+        collezione.save(obj);
+    }
+     //</editor-fold>
+    
+    //<editor-fold defaultstate="collapsed" desc="TenantTables Management Functions">
+    /**
+     * 
+     * @param dbName
+     * @param faSite, this is the cloud Id
+     * @return 
+     * @author gtricomi
+     */
+    public String getTenantTables(String dbName, String faSite) {
+
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("TenantTables");
+        
+        BasicDBObject resQuery=new BasicDBObject("referenceSite",faSite);
+        BasicDBObject sortQuery=new BasicDBObject("version",-1);
+        return this.conditionedResearch(collection,resQuery,sortQuery);
+
+    }
+    
+    /**
+     * This update Federation User with element. 
+     * @param dbName
+     * @param tableName
+     * @param faSite, this is the cloud Id
+     * @param docJSON 
+     * @author gtricomi
+     */
+    public void insertTenantTables(String dbName,String tableName,String faSite, String docJSON) {
+
+        DB dataBase = this.getDB(dbName);
+        DBCollection collezione = this.getCollection(dataBase, "TenantTables");
         BasicDBObject obj = (BasicDBObject) JSON.parse(docJSON);
         obj.append("TableUUID", tableName);
         obj.append("referenceSite", faSite);

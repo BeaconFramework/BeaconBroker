@@ -86,7 +86,8 @@ public class FA_client4Sites extends FA_REST_Client{
             {"tenant_id": "0ce39f6ae8044445b31d5b7f9b34062b",
             "name": "site2",
             "site_proxy": [{"ip": "10.0.0.38", "port": 4789}],
-            "fa_url": "10.0.0.38:4567"}]
+            "fa_url": "10.0.0.38:4567"}
+            ]
             */
             if(!first)
                 tmp=tmp+", ";
