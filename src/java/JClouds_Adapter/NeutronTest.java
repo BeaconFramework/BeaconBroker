@@ -190,7 +190,7 @@ public class NeutronTest {
      */
     public Iterator<Network> listNetworks() {
 
-        NetworkApi networkApi = neutronApi.getNetworkApi("RegionOne");
+        NetworkApi networkApi = neutronApi.getNetworkApi(this.regionName);
         Networks it2 = networkApi.list(new PaginationOptions());
         Iterator iter = it2.iterator();
         if (iter.hasNext()) {
@@ -198,6 +198,24 @@ public class NeutronTest {
         } else {
             return null;
         }
+    }
+    /**
+     * 
+     * @param Name
+     * @return 
+     * @gtricomi
+     */
+    public Network getNetwork(String Name) {
+
+        NetworkApi networkApi = neutronApi.getNetworkApi(this.regionName);
+        Networks it2 = networkApi.list(new PaginationOptions());
+        Iterator iter = it2.iterator();
+        while(iter.hasNext()) {
+            Network n=(Network)iter.next();
+            if(n.getName().equalsIgnoreCase(Name))
+                return n;
+        }
+        return null;
     }
     
   public void deleteNetworks(){//ok

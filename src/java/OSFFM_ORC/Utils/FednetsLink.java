@@ -52,6 +52,7 @@ public class FednetsLink {
         this.OldnetTablesMap = OldnetTablesMap;
     }
     //</editor-fold>
+    
     //<editor-fold defaultstate="collapsed" desc="OldsiteTablesMap Maanagement Functions">
     public LinkedHashMap<String, JSONObject> getOldsiteTablesMap() {
         return OldsiteTablesMap;
@@ -61,6 +62,7 @@ public class FednetsLink {
         this.OldsiteTablesMap = OldsiteTablesMap;
     }
     //</editor-fold>
+    
     //<editor-fold defaultstate="collapsed" desc="OldtenantTablesMap Maanagement Functions">
     public LinkedHashMap<String, JSONObject> getOldtenantTablesMap() {
         return OldtenantTablesMap;
@@ -71,9 +73,6 @@ public class FednetsLink {
     }
     //</editor-fold>
     
-    
-    
-    
     //<editor-fold defaultstate="collapsed" desc="endpoint_to_tenantid Management Functions">
     public LinkedHashMap<String, String> getEndpoint_to_tenantid() {
         return endpoint_to_tenantid;
@@ -83,6 +82,7 @@ public class FednetsLink {
         this.endpoint_to_tenantid = endpoint_to_tenantid;
     }
     //</editor-fold>
+    
     //<editor-fold defaultstate="collapsed" desc="KeystoneInfo Maanagement Functions">
     public LinkedHashMap<String, KeystoneTest> getkMcloudId_To_Keystone() {
         return kMcloudId_To_Keystone;
@@ -169,7 +169,7 @@ public class FednetsLink {
     }
     //</editor-fold>
     
-    //<editor-fold defaultstate="collapsed" desc="DatacenterTree Maanagement Functions">
+    //<editor-fold defaultstate="collapsed" desc="DatacenterSet Maanagement Functions">
     public LinkedHashSet<String> getDcInFednet()throws NullPointerException {
         if(this.dcInFednet==null)
             throw new NullPointerException();

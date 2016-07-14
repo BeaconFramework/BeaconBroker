@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
@@ -419,31 +420,55 @@ public class FederationActionManager {
         return fednetContainer;
     }
     
-    private void prepareTables4link(FednetsLink fednetContainer,DBMongo m){//tutta da rivedere eliminare il doppio ciclo for
+    private void prepareTables4link(FednetsLink fednetContainer,DBMongo m){//aggiungere gestione delle tabelle dei siti
         KeystoneTest[] kar=(KeystoneTest[])fednetContainer.getkMcloudId_To_Keystone().values().toArray();
-        ArrayList<String> tmpListupdatingSite= new ArrayList<>();
         ArrayList<String> tmpListupdatingNet= new ArrayList<>();
         Set<String> s=fednetContainer.getCloudId_To_OIC().keySet();
         
-        for(String cloudID: s){//aggiungere gestione nettables?
-            String ten=fednetContainer.getCloudId_To_OIC().get(s).getTenant();
-           /* Boolean answer=m.checkSiteTables(ten, cloudID, "name",fednetContainer.getDcInFednet() );
-            if(answer==null)
-            {
-                tmpListupdatingSite.add(cloudID);
-            }
-            else if(!answer){
-                
-            }*/
-            Boolean answer=m.checkNetTables(ten, cloudID, "site_name",fednetContainer.getDcInFednet() );
-            if(answer==null)
-            {
-                tmpListupdatingNet.add(cloudID);
-            }
-            else if(!answer){
-                //funzione che controlla tutte le cloud in federazione per segnare quelle mancanti per questo sito.
-            }
-            //funzione che aggiorna le tabelle di NetTables e le mette nel container
+        for(String cloudID: s){//scorre il set per selezionare la home
+            String ten=fednetContainer.getCloudId_To_OIC().get(cloudID).getTenant();
+            NeutronTest neutronhome=new NeutronTest(
+                    fednetContainer.getCloudId_To_OIC().get(cloudID).getEndpoint(),
+                    fednetContainer.getCloudId_To_OIC().get(cloudID).getTenant(),
+                    fednetContainer.getCloudId_To_OIC().get(cloudID).getUser(),
+                    fednetContainer.getCloudId_To_OIC().get(cloudID).getPassword(),
+                    fednetContainer.getCloudId_To_OIC().get(cloudID).getRegion());
+                    
+                for(String cloudID2: s){//scorre il set per la creazione tabella
+                    JSONObject updatedNetTable=fednetContainer.getOldnetTablesMap().get(cloudID);
+                    if(!cloudID2.equals(cloudID))
+                    {
+                        NeutronTest neutron=new NeutronTest(
+                                fednetContainer.getCloudId_To_OIC().get(cloudID2).getEndpoint(),
+                                fednetContainer.getCloudId_To_OIC().get(cloudID2).getTenant(),
+                                fednetContainer.getCloudId_To_OIC().get(cloudID2).getUser(),
+                                fednetContainer.getCloudId_To_OIC().get(cloudID2).getPassword(),
+                                fednetContainer.getCloudId_To_OIC().get(cloudID2).getRegion());
+                        Iterator<Network> itNet=neutron.listNetworks();
+                        
+                        while(itNet.hasNext()){//per ogni network del sito 
+                            Network n=itNet.next();
+                            Network nHome=neutronhome.getNetwork(n.getName());
+                            if(nHome==null)
+                                LOGGER.error("Something is going wrong in preparation JSONObject for cloud "+cloudID+". It's impossible found the Network Named "+n.getName());
+                            String entryCreated=this.createNetTableEntry(cloudID2,n.getTenantId(), n.getName(), n.getId());
+                            String entryHome="";
+                            if(nHome!=null)
+                                entryHome=this.createNetTableEntry(cloudID2,nHome.getTenantId(), nHome.getName(), nHome.getId());
+                            try{
+                                JSONObject j=new JSONObject(entryCreated);
+                                JSONArray ja=updatedNetTable.getJSONArray("table");
+                                ja=this.insertEntry_in_NetTable(ja, j,new JSONObject(entryHome));
+                            }
+                            catch(JSONException je){
+                                
+                            }
+                        }
+                    }
+                }
+            //}
+            //funzione che aggiorna le tabelle di NetTables,verifica le site tables per quella cloud aggiornandola se serve e le mette nel container
+            
         }
         //funzione che invia ad ogni cloud la propria tables aggiornata e poi la scrive su Mongo nella collezione corretta aggiornando la versione
         
@@ -492,6 +517,63 @@ public class FederationActionManager {
             }
         }*/
     }
+        
+    private JSONArray insertEntry_in_NetTable(JSONArray ja,JSONObject entry,JSONObject homeEntry)throws JSONException{
+        try {
+            boolean foundElem = false;
+            boolean foundArray = false;
+            for (int i = 0; i < ja.length(); i++) {
+                JSONArray int_ja = ja.getJSONArray(i);
+
+                for (int j = 0; j < ja.length(); j++) {
+                    JSONObject tmpjo = (JSONObject) int_ja.get(j);
+                    if (((String) tmpjo.get("name")).equals(entry.get("name"))) {
+                        foundArray = true;
+                    } else {
+                        break;
+                    }
+                    if ((((String) tmpjo.get("site_name")).equals(entry.get("site_name")))) {
+                        foundElem = true;
+                        break;
+                    }
+                }
+                if (!foundElem && foundArray) {
+                    int_ja.put(entry);
+                    ja.put(i, int_ja);
+                    return ja;
+                }
+                if (foundElem) {
+                    return ja;
+                }
+            }
+            if(!foundElem && !foundArray){
+                JSONArray int_ja =new JSONArray();
+                int_ja.put(homeEntry);
+                int_ja.put(entry);
+                ja.put(int_ja);
+                return ja;
+            }
+            return ja; 
+        } catch (JSONException je) {
+            LOGGER.error("Exception Occurred in Updating NetTables process");
+            throw je;
+            
+        }
+    }
+        
+    private String createNetTableEntry(String site_name, String tenant_id, String name, String vnid) {
+        String tmp = "{";
+        tmp = tmp + ("\"tenant_id\": \"" + tenant_id + "\", ");
+        tmp = tmp + ("\"site_name\": \"" + site_name + "\", ");
+        tmp = tmp + ("\"name\": \"" + name + "\", ");
+        tmp = tmp + ("\"vnid\": \"" + vnid + "\"");
+        tmp = tmp + "}";
+        return tmp;
+        
+    }
+        
+        
+        
     /*
     private FednetsLink prepareSiteTable(FednetsLink fe){
         LinkedHashMap<String,JSONObject> old= fe.getOldsiteTablesMap();
