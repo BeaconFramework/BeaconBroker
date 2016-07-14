@@ -15,6 +15,7 @@
 
 package OSFFM_ORC;
 
+import API.SOUTHBR.FA_client4Network;
 import API.SOUTHBR.FA_client4Sites;
 import API.SOUTHBR.FA_client4Tenant;
 import JClouds_Adapter.FunctionResponseContainer;
@@ -420,7 +421,7 @@ public class FederationActionManager {
         return fednetContainer;
     }
     
-    private void prepareTables4link(FednetsLink fednetContainer,DBMongo m){//aggiungere gestione delle tabelle dei siti
+    private void prepareTables4link(FednetsLink fednetContainer,DBMongo m) throws JSONException{//aggiungere gestione delle tabelle dei siti
         KeystoneTest[] kar=(KeystoneTest[])fednetContainer.getkMcloudId_To_Keystone().values().toArray();
         ArrayList<String> tmpListupdatingNet= new ArrayList<>();
         Set<String> s=fednetContainer.getCloudId_To_OIC().keySet();
@@ -433,9 +434,9 @@ public class FederationActionManager {
                     fednetContainer.getCloudId_To_OIC().get(cloudID).getUser(),
                     fednetContainer.getCloudId_To_OIC().get(cloudID).getPassword(),
                     fednetContainer.getCloudId_To_OIC().get(cloudID).getRegion());
-                    
+            JSONObject updatedNetTable=fednetContainer.getOldnetTablesMap().get(cloudID);
+            JSONArray updatedTable=updatedNetTable.getJSONArray("table");        
                 for(String cloudID2: s){//scorre il set per la creazione tabella
-                    JSONObject updatedNetTable=fednetContainer.getOldnetTablesMap().get(cloudID);
                     if(!cloudID2.equals(cloudID))
                     {
                         NeutronTest neutron=new NeutronTest(
@@ -457,7 +458,7 @@ public class FederationActionManager {
                                 entryHome=this.createNetTableEntry(cloudID2,nHome.getTenantId(), nHome.getName(), nHome.getId());
                             try{
                                 JSONObject j=new JSONObject(entryCreated);
-                                JSONArray ja=updatedNetTable.getJSONArray("table");
+                                JSONArray ja=updatedTable;
                                 ja=this.insertEntry_in_NetTable(ja, j,new JSONObject(entryHome));
                             }
                             catch(JSONException je){
@@ -466,6 +467,18 @@ public class FederationActionManager {
                         }
                     }
                 }
+                KeystoneTest homeKey=(KeystoneTest)fednetContainer.getkMcloudId_To_Keystone().get(cloudID);
+                FA_client4Network fan1=new FA_client4Network(homeKey.getVarEndpoint(),fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint()),homeKey.getVarIdentity().split(":")[1],homeKey.getVarCredential());
+                String body=fan1.constructNetworkTableJSON(updatedTable, (updatedNetTable.getInt("version"))+1);
+                FederationAgentInfo fai1=fednetContainer.getEndpoint_To_FAInfo().get(fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint()));
+                try{
+                    fan1.createNetTable(fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint()), fai1.getIp()+":"+fai1.getPort(), body);
+                }
+                catch(WSException wse){
+                    //something here
+                    
+                }
+                m.insertNetTables(homeKey.getVarIdentity().split(":")[0], ten, ten, ten);
             //}
             //funzione che aggiorna le tabelle di NetTables,verifica le site tables per quella cloud aggiornandola se serve e le mette nel container
             

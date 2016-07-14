@@ -73,7 +73,10 @@ public class FA_client4Network extends FA_REST_Client{
     /*
     
             */
-    
+    public String constructNetworkTableJSON(JSONArray ja,int version){
+        String tmp="{\"table\":"+ja.toString()+", \"version\": "+version+"}";
+        return tmp;
+    }
     
     /**
      * This function prepare the object for FA Create Network Table function.
