@@ -36,6 +36,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.ws.rs.core.Response;
 import org.apache.commons.net.util.SubnetUtils;
 import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import org.jclouds.openstack.neutron.v2.domain.Network;
@@ -420,10 +421,16 @@ public class FederationActionManager {
         fednetContainer.setEndpoint_to_tenantid(endpoint_to_tenantid);
         return fednetContainer;
     }
-    
+    /**
+     * 
+     * @param fednetContainer
+     * @param m
+     * @throws JSONException 
+     * @author gtricomi
+     */
     private void prepareTables4link(FednetsLink fednetContainer,DBMongo m) throws JSONException{//aggiungere gestione delle tabelle dei siti
         KeystoneTest[] kar=(KeystoneTest[])fednetContainer.getkMcloudId_To_Keystone().values().toArray();
-        ArrayList<String> tmpListupdatingNet= new ArrayList<>();
+        ArrayList<String> Site= new ArrayList<>();
         Set<String> s=fednetContainer.getCloudId_To_OIC().keySet();
         
         for(String cloudID: s){//scorre il set per selezionare la home
@@ -433,9 +440,21 @@ public class FederationActionManager {
                     fednetContainer.getCloudId_To_OIC().get(cloudID).getTenant(),
                     fednetContainer.getCloudId_To_OIC().get(cloudID).getUser(),
                     fednetContainer.getCloudId_To_OIC().get(cloudID).getPassword(),
-                    fednetContainer.getCloudId_To_OIC().get(cloudID).getRegion());
+                    fednetContainer.getCloudId_To_OIC().get(cloudID).getRegion()
+            );
+            JSONObject updatedSiteTable=fednetContainer.getOldsiteTablesMap().get(cloudID);
+            JSONArray siteUpdatedTable=updatedSiteTable.getJSONArray("table");  
             JSONObject updatedNetTable=fednetContainer.getOldnetTablesMap().get(cloudID);
-            JSONArray updatedTable=updatedNetTable.getJSONArray("table");        
+            JSONArray netUpdatedTable=updatedNetTable.getJSONArray("table");
+            FederationAgentInfo fah=fednetContainer.getEndpoint_To_FAInfo().get(fednetContainer.getCloudId_To_OIC().get(cloudID).getEndpoint());
+            String siteEntryhome=this.createSiteTableEntry(
+                    cloudID,
+                    fednetContainer.getEndpoint_to_tenantid().get(fednetContainer.getCloudId_To_OIC().get(cloudID).getEndpoint()),
+                    fah.getSite_proxyip(),
+                    fah.getIp()+":"+fah.getPort(),
+                    fah.getSite_proxyport()
+            );
+            siteUpdatedTable=this.insertEntry_in_SiteTable(siteUpdatedTable,new JSONObject(siteEntryhome));
                 for(String cloudID2: s){//scorre il set per la creazione tabella
                     if(!cloudID2.equals(cloudID))
                     {
@@ -444,7 +463,8 @@ public class FederationActionManager {
                                 fednetContainer.getCloudId_To_OIC().get(cloudID2).getTenant(),
                                 fednetContainer.getCloudId_To_OIC().get(cloudID2).getUser(),
                                 fednetContainer.getCloudId_To_OIC().get(cloudID2).getPassword(),
-                                fednetContainer.getCloudId_To_OIC().get(cloudID2).getRegion());
+                                fednetContainer.getCloudId_To_OIC().get(cloudID2).getRegion()
+                        );
                         Iterator<Network> itNet=neutron.listNetworks();
                         
                         while(itNet.hasNext()){//per ogni network del sito 
@@ -452,14 +472,19 @@ public class FederationActionManager {
                             Network nHome=neutronhome.getNetwork(n.getName());
                             if(nHome==null)
                                 LOGGER.error("Something is going wrong in preparation JSONObject for cloud "+cloudID+". It's impossible found the Network Named "+n.getName());
-                            String entryCreated=this.createNetTableEntry(cloudID2,n.getTenantId(), n.getName(), n.getId());
-                            String entryHome="";
+                            String tenIdForeign=n.getTenantId();
+                            String entryCreated=this.createNetTableEntry(cloudID2,tenIdForeign, n.getName(), n.getId());
+                            String entryHome=null;
                             if(nHome!=null)
                                 entryHome=this.createNetTableEntry(cloudID2,nHome.getTenantId(), nHome.getName(), nHome.getId());
                             try{
                                 JSONObject j=new JSONObject(entryCreated);
-                                JSONArray ja=updatedTable;
-                                ja=this.insertEntry_in_NetTable(ja, j,new JSONObject(entryHome));
+                                //JSONArray ja=netUpdatedTable;
+                                netUpdatedTable=this.insertEntry_in_NetTable(netUpdatedTable, j,new JSONObject(entryHome));
+                                //JSONArray ja=netUpdatedTable;
+                                FederationAgentInfo fa=fednetContainer.getEndpoint_To_FAInfo().get(fednetContainer.getCloudId_To_OIC().get(cloudID2).getEndpoint());
+                                String siteEntry=this.createSiteTableEntry(cloudID2, tenIdForeign, fa.getSite_proxyip(), fa.getIp()+":"+fa.getPort(), fa.getSite_proxyport());  
+                                siteUpdatedTable=this.insertEntry_in_SiteTable(siteUpdatedTable,new JSONObject(siteEntry));//rimuovere home entry da qui e mettere all'inizio?
                             }
                             catch(JSONException je){
                                 
@@ -468,69 +493,49 @@ public class FederationActionManager {
                     }
                 }
                 KeystoneTest homeKey=(KeystoneTest)fednetContainer.getkMcloudId_To_Keystone().get(cloudID);
-                FA_client4Network fan1=new FA_client4Network(homeKey.getVarEndpoint(),fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint()),homeKey.getVarIdentity().split(":")[1],homeKey.getVarCredential());
-                String body=fan1.constructNetworkTableJSON(updatedTable, (updatedNetTable.getInt("version"))+1);
-                FederationAgentInfo fai1=fednetContainer.getEndpoint_To_FAInfo().get(fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint()));
+                FA_client4Sites fas=new FA_client4Sites(homeKey.getVarEndpoint(),fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint()),"admin","password");
+                FA_client4Network fan=new FA_client4Network(
+                        homeKey.getVarEndpoint(),
+                        fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint()),
+                        homeKey.getVarIdentity().split(":")[1],
+                        homeKey.getVarCredential()
+                );
+                String body=fas.constructSiteTableJSON(siteUpdatedTable);
+                //FederationAgentInfo fai=fednetContainer.getEndpoint_To_FAInfo(siteUpdatedTable).get(fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint()));
                 try{
-                    fan1.createNetTable(fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint()), fai1.getIp()+":"+fai1.getPort(), body);
+                    fas.createSiteTable(fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint()), fah.getIp()+":"+fah.getPort(), body);
+                    m.insertSiteTables(homeKey.getVarIdentity().split(":")[0], cloudID, updatedSiteTable.put("table", siteUpdatedTable).toString());
+                    
                 }
                 catch(WSException wse){
                     //something here
                     
                 }
-                m.insertNetTables(homeKey.getVarIdentity().split(":")[0], ten, ten, ten);
-            //}
-            //funzione che aggiorna le tabelle di NetTables,verifica le site tables per quella cloud aggiornandola se serve e le mette nel container
+                 body=fan.constructNetworkTableJSON(netUpdatedTable, (updatedNetTable.getDouble("version"))+1);
+                try{
+                    Response r=fan.createNetTable(fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint()), fah.getIp()+":"+fah.getPort(), body);
+                    JSONObject answer=r.readEntity(JSONObject.class);
+                    m.insertNetTables(homeKey.getVarIdentity().split(":")[0], cloudID, updatedNetTable.put("table", netUpdatedTable).toString(),(double)answer.get("version"));//rivedere entrambe
+                }
+                catch(WSException wse){
+                    //something here
+                    
+                }
+                //BEACON>>>Add Management of structure to update fedsdn information
+           
             
         }
-        //funzione che invia ad ogni cloud la propria tables aggiornata e poi la scrive su Mongo nella collezione corretta aggiornando la versione
         
-        
-        /*TO BE DELETE
-        for(int i=0;i<kar.length;i++){
-            for(int j=i+1;j<kar.length;j++){
-                FA_client4Tenant fat1=new FA_client4Tenant(kar[i].getVarEndpoint(),fednetContainer.getEndpoint_to_tenantid().get(kar[i].getVarEndpoint()),kar[i].getVarIdentity().split(":")[1],kar[i].getVarCredential());
-                FA_client4Tenant fat2=new FA_client4Tenant(kar[j].getVarEndpoint(),fednetContainer.getEndpoint_to_tenantid().get(kar[j].getVarEndpoint()),kar[j].getVarIdentity().split(":")[1],kar[j].getVarCredential());
-                FederationAgentInfo fai1=fednetContainer.getEndpoint_To_FAInfo().get(kar[i].getVarEndpoint());
-                FederationAgentInfo fai2=fednetContainer.getEndpoint_To_FAInfo().get(kar[j].getVarEndpoint());
-                try{
-                    fat1.createTenantFA(kar[i].getTenantId(kar[i].getVarIdentity().split(":")[0]),fai1.getIp()+":"+fai1.getPort() );
-                    }
-                catch(WSException wse){
-                    LOGGER.error("Exception occurred in Create Tenant Table on FA:<"+fai1.getIp()+":"+fai1.getPort()+">\n"+wse.getMessage());
-                    //invoke function that mark this link as not working
-                }
-                try{
-                    fat2.createTenantFA(kar[j].getTenantId(kar[j].getVarIdentity().split(":")[0]), fai2.getIp()+":"+fai2.getPort() );
-                    }
-                catch(WSException wse){
-                    LOGGER.error("Exception occurred in Create Tenant Table on FA:<"+fai2.getIp()+":"+fai2.getPort()+">\n"+wse.getMessage());
-                    //invoke function that mark this link as not working
-                }
-                FA_client4Sites fas1=new FA_client4Sites(kar[i].getVarEndpoint(),fednetContainer.getEndpoint_to_tenantid().get(kar[i].getVarEndpoint()),kar[i].getVarIdentity().split(":")[1],kar[i].getVarCredential());
-                FA_client4Sites fas2=new FA_client4Sites(kar[j].getVarEndpoint(),fednetContainer.getEndpoint_to_tenantid().get(kar[j].getVarEndpoint()),kar[j].getVarIdentity().split(":")[1],kar[j].getVarCredential());
-                
-                try{
-                    //preparare la tabella confrontando le entry della precedente con le entry da aggiungere per la attuale, facendo attenzione a memorizzare le entry sulla nuova tabella temporanea di lavoro 
-                    //che verrà salvata sempre dentro FednetsLink. Dopodichè invovcare al createSiteTable
-                    fas1.createTenantFA(kar[i].getTenantId(kar[i].getVarIdentity().split(":")[0]),fai1.getIp()+":"+fai1.getPort() );
-                    }
-                catch(WSException wse){
-                    LOGGER.error("Exception occurred in Create Tenant Table on FA:<"+fai1.getIp()+":"+fai1.getPort()+">\n"+wse.getMessage());
-                    //invoke function that mark this link as not working
-                }
-                try{
-                    fas2.createTenantFA(kar[j].getTenantId(kar[j].getVarIdentity().split(":")[0]), fai2.getIp()+":"+fai2.getPort() );
-                    }
-                catch(WSException wse){
-                    LOGGER.error("Exception occurred in Create Tenant Table on FA:<"+fai2.getIp()+":"+fai2.getPort()+">\n"+wse.getMessage());
-                    //invoke function that mark this link as not working
-                }
-                //BEACON>>>: manca gestione eventuali problemi qui dopo la creazione di entrambe le informazioni
-            }
-        }*/
     }
-        
+    /**
+     * 
+     * @param ja
+     * @param entry
+     * @param homeEntry
+     * @return
+     * @throws JSONException
+     * @author gtricomi
+     */    
     private JSONArray insertEntry_in_NetTable(JSONArray ja,JSONObject entry,JSONObject homeEntry)throws JSONException{
         try {
             boolean foundElem = false;
@@ -573,6 +578,31 @@ public class FederationActionManager {
             
         }
     }
+    
+    private JSONArray insertEntry_in_SiteTable(JSONArray ja,JSONObject entry)throws JSONException{
+        try {
+            boolean foundElem = false;
+            boolean foundArray = false;
+            for (int i = 0; i < ja.length(); i++) {
+                //JSONArray int_ja = ja.getJSONArray(i);
+                JSONObject tmpjo = (JSONObject) ja.get(i);
+                if (((String) tmpjo.get("name")).equals(entry.get("name"))) {
+                    foundElem = true;
+                    break;
+                }
+            }
+            if (!foundElem) {
+                ja.put(entry);
+                    return ja;
+                }
+            return ja;
+        } catch (JSONException je) {
+            LOGGER.error("Exception Occurred in Updating NetTables process");
+            throw je;
+            
+        }
+    }        
+     
         
     private String createNetTableEntry(String site_name, String tenant_id, String name, String vnid) {
         String tmp = "{";
@@ -585,9 +615,28 @@ public class FederationActionManager {
         
     }
         
+    private String createSiteTableEntry(String site_name, String tenant_id, String ip, String fa_url,String port) {
+        String tmp = "{";
+        tmp = tmp + ("\"tenant_id\": \"" + tenant_id + "\", ");
+        tmp = tmp + ("\"name\": \"" + site_name + "\", ");
+        tmp = tmp + ("\"site_proxy\": [{\"ip\":\"" + ip + "\",\"port\": "+port+"}],");
+        tmp = tmp + ("\"fa_url\": \"" + fa_url + "\"");
+        tmp = tmp + "}";
+        return tmp;
         
+    }    
         
     /*
+    
+    tenant_id": "ab6a28b9f3624f4fa46e78247848544e",
+            "name": "site1",
+            "site_proxy": [{"ip": "10.0.0.33", "port": 4789}],
+            "fa_url": "10.0.0.33:4567"
+    
+    
+    
+    
+    
     private FednetsLink prepareSiteTable(FednetsLink fe){
         LinkedHashMap<String,JSONObject> old= fe.getOldsiteTablesMap();
         LinkedHashMap<String,String> nerRef= fe.getEndpoint_to_tenantid();

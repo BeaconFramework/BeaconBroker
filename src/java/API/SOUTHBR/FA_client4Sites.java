@@ -47,7 +47,7 @@ public class FA_client4Sites extends FA_REST_Client{
      * @throws WSException
      * @author gtricomi
      */
-    public boolean createSiteTable(String TenantId, String faURL,String body)throws WSException{
+    public Response createSiteTable(String TenantId, String faURL,String body)throws WSException{
         boolean result= true;
         HttpBasicAuthFilter auth=new HttpBasicAuthFilter(this.getUserName(), this.getPassword());
         Response r=this.createInsertingrequest("http://"+faURL+"/net-fa/tenants/"+TenantId+"/sites",body,auth,"put",MediaType.APPLICATION_JSON);
@@ -61,8 +61,22 @@ public class FA_client4Sites extends FA_REST_Client{
             result=false;
             throw wse;
         }
-        return result;
+        return r;
     }
+    
+    /**
+     * If we have a JSONArray this function is a wrapper to retrieve JSONArray.tostring(). 
+     * @param ja
+     * @param version
+     * @return
+     * @author gtricomi
+     */
+    public String constructSiteTableJSON(JSONArray ja){
+        String tmp=ja.toString();
+        return tmp;
+    }
+    
+    
     /**
      * This function prepare the object for FA Create Site Table function.
      * @param sites
@@ -74,7 +88,7 @@ public class FA_client4Sites extends FA_REST_Client{
         String result="";
         String tmp="[";
         boolean first=true;
-        JSONArray ja=new JSONArray();
+        //JSONArray ja=new JSONArray();
         try{
         for(HashMap elem:sites){
             /*

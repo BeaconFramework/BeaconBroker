@@ -269,14 +269,14 @@ public class DBMongo {
      * @param docJSON 
      * @author gtricomi
      */
-    public void insertNetTables(String dbName,String tableName,String faSite, String docJSON) {
+    public void insertNetTables(String dbName,String faSite, String docJSON,double version) {
 
         DB dataBase = this.getDB(dbName);
         DBCollection collezione = this.getCollection(dataBase, "netTables");
         BasicDBObject obj = (BasicDBObject) JSON.parse(docJSON);
-        obj.append("TableUUID", tableName);
         obj.append("referenceSite", faSite);
         obj.append("insertTimestamp", System.currentTimeMillis());
+        obj.append("version", version);
         collezione.save(obj);
     }
      //</editor-fold>
@@ -336,7 +336,7 @@ public class DBMongo {
             it = list.iterator();
             while (it.hasNext()) {
                // resQuery.append("table." + key, it.next());
-                and.add(new BasicDBObject("table." + key, it.next()));
+                and.add(new BasicDBObject("table" + key, it.next()));
             }
             andQuery=new BasicDBObject("$and",and);
            // System.out.println("query:" + andQuery);
@@ -356,23 +356,21 @@ public class DBMongo {
     /**
      * This update Federation User with element. 
      * @param dbName
-     * @param tableName
      * @param faSite, this is the cloud Id
      * @param docJSON 
      * @author gtricomi
      */
-    public void insertSiteTables(String dbName,String tableName,String faSite, String docJSON) {
+    public void insertSiteTables(String dbName,String faSite, String docJSON) {
 
         DB dataBase = this.getDB(dbName);
         DBCollection collezione = this.getCollection(dataBase, "siteTables");
         BasicDBObject obj = (BasicDBObject) JSON.parse(docJSON);
-        obj.append("TableUUID", tableName);
         obj.append("referenceSite", faSite);
         obj.append("insertTimestamp", System.currentTimeMillis());
         collezione.save(obj);
     }
      //</editor-fold>
-    
+    //BEACON>>>> Valutare se mantenere questa parte di informazioni su MongoDB
     //<editor-fold defaultstate="collapsed" desc="TenantTables Management Functions">
     /**
      * 
@@ -405,7 +403,6 @@ public class DBMongo {
         DB dataBase = this.getDB(dbName);
         DBCollection collezione = this.getCollection(dataBase, "TenantTables");
         BasicDBObject obj = (BasicDBObject) JSON.parse(docJSON);
-        obj.append("TableUUID", tableName);
         obj.append("referenceSite", faSite);
         obj.append("insertTimestamp", System.currentTimeMillis());
         collezione.save(obj);

@@ -79,7 +79,7 @@ public class test {
         
             String body=fas1.constructSiteTableJSON(sites);
             System.out.println(body);
-            boolean res=fas1.createSiteTable(t1Id, "10.9.240.21:4567", body);
+            Response res=fas1.createSiteTable(t1Id, "10.9.240.21:4567", body);
             System.out.println("Result of sites 1 inserting operation on FA is: "+res);
             //res=fat2.createTenantFA(t2Id, "10.9.240.7:4567");
             res=fas2.createSiteTable(t2Id, "10.9.240.7:4567", body);

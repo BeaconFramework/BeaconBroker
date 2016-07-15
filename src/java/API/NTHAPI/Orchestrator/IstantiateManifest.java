@@ -133,7 +133,6 @@ public class IstantiateManifest {
                 LOGGER.error("It's impossible create TMP file for manifest istantiation; OPERATION ABORTED.");
                 reply.put("returncode", 1); 
                 reply.put("errormesg", "It's impossible create TMP file for manifest istantiation; OPERATION ABORTED.");
-                
                 return reply.toJSONString();
             }
         }

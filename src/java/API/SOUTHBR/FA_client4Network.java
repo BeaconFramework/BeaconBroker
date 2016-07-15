@@ -73,7 +73,7 @@ public class FA_client4Network extends FA_REST_Client{
     /*
     
             */
-    public String constructNetworkTableJSON(JSONArray ja,int version){
+    public String constructNetworkTableJSON(JSONArray ja,double version){
         String tmp="{\"table\":"+ja.toString()+", \"version\": "+version+"}";
         return tmp;
     }
