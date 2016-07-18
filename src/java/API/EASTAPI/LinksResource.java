@@ -78,7 +78,7 @@ public class LinksResource {
         
         try{
             //operation needed to complete link requests!
-            ////ritrovare la lista di tutte le cloud in federazione per il tenant
+            ////LA FUNZIONE DELL'ORCHESTRATOR DOVRA': ritrovare la lista di tutte le cloud in federazione per il tenant
             ////Per ogni Cloud:
             //////>>richiamare funzione che richiede network table da neutron
             //////[questo perchè il flow prevede che sia inviata la network table al FEDSDN attraverso una chiamata PUT /fednet/ID_FEDNET con action=link

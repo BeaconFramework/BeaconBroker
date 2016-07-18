@@ -15,6 +15,8 @@
 
 package OSFFM_ORC;
 
+import API.EASTAPI.Clients.EastBrRESTClient;
+import API.EASTAPI.Clients.Site;
 import API.SOUTHBR.FA_client4Network;
 import API.SOUTHBR.FA_client4Sites;
 import API.SOUTHBR.FA_client4Tenant;
@@ -54,7 +56,19 @@ import utils.Exception.WSException;
 public class FederationActionManager {
 
     static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(FederationActionManager.class);
-
+    
+    
+    
+    /**
+     * This function is prepared for future usage it has the scope to add a network segment inside Openstack in order to absolve at a FEDSDN calls.
+     * @param fu
+     * @param OSF_network_segment_id
+     * @param OSF_cloud
+     * @param netParameter
+     * @param federationTenant
+     * @return
+     * @throws Exception 
+     */
     public JSONObject networkSegmentAdd(FederationUser fu, String OSF_network_segment_id, String OSF_cloud, HashMap netParameter, String federationTenant) throws Exception {
         DBMongo db = new DBMongo();
         JSONObject reply = new JSONObject();
@@ -350,8 +364,6 @@ public class FederationActionManager {
             HashMap<String, ArrayList<ArrayList<OpenstackInfoContainer>>> tmpMapcred,
             DBMongo m)
     {
-        //1 Non più necessario!
-          //&&&&&&&&&&&&&& REPLICARE COMPORTAMENTO test.java SOUTHBRIDGEAPI.
         FednetsLink fe=this.createCredMapwithoutDuplicate(tmpMapcred,mapContainer);
         Set<String> s=mapContainer.getOldnetTablesMap().keySet();
         LinkedHashMap<String,FederationAgentInfo> fa4cloud=new LinkedHashMap<>();
@@ -364,17 +376,107 @@ public class FederationActionManager {
             }
         }
         fe.setEndpoint_To_FAInfo(fa4cloud);
-        fe=this.prepareKeystoneMap(fe);//prepareTables4link deve partire sempre dopo 
-        
-        //4 invoca la funzione di Link
-        ////4.1 le tabelle saranno passate dalla funzione dell'orchestrator prepareNetTables4completeSharing
-        ////4.2 invoca la funzione createNetTable della classe FA_client4Network
-        
-        //5 aggiorna lo stato delle FA netTable in memoria
-        ////5.1 salva la nuova netTable incrementando la versione su mongo
-        ////5.2 salva la versione aggirnata della cloudlinkstatus su mongo
+        fe=this.prepareKeystoneMap(fe);
+        try{
+           this.prepareTables4link(fe, m);
+        }
+        catch(Exception e){
+            LOGGER.error("Exception occurred in the function prepareTables4link");
+        }
+        this.updatestateOnFEDSDN(fe, m);
     }
     
+    /**
+     * 
+     * @param mapContainer
+     * @param m 
+     */
+    public void updatestateOnFEDSDN(FednetsLink  mapContainer,DBMongo m){
+        String fedsdnURL="http://10.9.0.14:6121";//QUESTO DEVE ESSERE PRESO DA MONGODB
+        Site sClient= new Site("root","fedsdn");
+        try {
+            this.checkSiteFEDSDN(mapContainer, sClient, fedsdnURL);
+        } catch (WSException ex) {
+            LOGGER.error("Exception is occurred in checkSiteFEDSDN! \n" + ex);
+        } catch (JSONException ex) {
+            LOGGER.error("Exception is occurred in checkSiteFEDSDN! \n" + ex);
+        }
+        
+    }
+    
+    private boolean checkNetSegmentFEDSDN(FednetsLink  mapContainer,Site sClient,String fedsdnURL)throws WSException, JSONException{
+        Response r=sClient.getAllSite(fedsdnURL);
+        JSONArray ja=new JSONArray(r.readEntity(String.class));
+        for(int i = 0; i < ja.length(); i++) {
+            JSONObject jo = (JSONObject) ja.get(i);
+            String siteNameToCheck = (String) jo.get("name");
+            NeutronTest neutron = new NeutronTest(
+                    mapContainer.getCloudId_To_OIC().get(siteNameToCheck).getEndpoint(),
+                    mapContainer.getCloudId_To_OIC().get(siteNameToCheck).getTenant(),
+                    mapContainer.getCloudId_To_OIC().get(siteNameToCheck).getUser(),
+                    mapContainer.getCloudId_To_OIC().get(siteNameToCheck).getPassword(),
+                    mapContainer.getCloudId_To_OIC().get(siteNameToCheck).getRegion()
+            );
+            Iterator<Network> itNet = neutron.listNetworks();
+            while(itNet.hasNext()){
+                Network n=itNet.next();
+                
+            }
+        }
+    }
+   
+    private boolean addNetSegOnFedSDN(){
+        
+    }
+    
+    /**
+     * 
+     * @param mapContainer
+     * @param sClient
+     * @param fedsdnURL
+     * @return
+     * @throws WSException
+     * @throws JSONException 
+     */
+    private boolean checkSiteFEDSDN(FednetsLink  mapContainer,Site sClient,String fedsdnURL) throws WSException, JSONException{
+        Response r=sClient.getAllSite(fedsdnURL);
+        JSONArray ja=new JSONArray(r.readEntity(String.class));
+        LinkedHashMap<String,OpenstackInfoContainer> CloudId_To_OIC=mapContainer.getCloudId_To_OIC();
+        for(int i=0;i<ja.length();i++){
+            JSONObject jo=(JSONObject)ja.get(i);
+            String siteNameToCheck=(String)jo.get("name");
+            if(!CloudId_To_OIC.containsKey(siteNameToCheck)){
+                int k=0;
+                while((k<3) && (!this.addSiteOnFedSDN(siteNameToCheck,sClient,fedsdnURL)))
+                    k++;
+                if(k==3)
+                    LOGGER.error("Something going wrong! It's Impossible add site on FEDSDN"); 
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * 
+     * @param siteName
+     * @param sClient
+     * @param fedsdnURL
+     * @return 
+     */
+    private boolean addSiteOnFedSDN(String siteName,Site sClient,String fedsdnURL){
+        String type = "openstack";//BEACON>>>for future use this info could be managed via MongoDB
+        String cmp_endpoint = "OSFFMENDPOINT";//QUESTO DEVE ESSERE PRESO DA MONGODB
+        try {
+            Response r = sClient.createSite(siteName, cmp_endpoint, type, fedsdnURL);
+        } catch (WSException ex) {
+            LOGGER.error("Exception is occurred in addSiteOnFedSDN for site: " + siteName + "\n" + ex);
+            
+            return false;
+        }
+        return true;
+    }
+    
+    //<editor-fold defaultstate="collapsed" desc="Openstack Federation Agent Tables Management & Elaboration Functions">  
     /**
      * 
      * @param tmpMapcred
@@ -421,6 +523,7 @@ public class FederationActionManager {
         fednetContainer.setEndpoint_to_tenantid(endpoint_to_tenantid);
         return fednetContainer;
     }
+    
     /**
      * 
      * @param fednetContainer
@@ -506,27 +609,31 @@ public class FederationActionManager {
                     fas.createSiteTable(fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint()), fah.getIp()+":"+fah.getPort(), body);
                     m.insertSiteTables(homeKey.getVarIdentity().split(":")[0], cloudID, updatedSiteTable.put("table", siteUpdatedTable).toString());
                     
+                    
                 }
                 catch(WSException wse){
                     //something here
                     
                 }
-                 body=fan.constructNetworkTableJSON(netUpdatedTable, (updatedNetTable.getDouble("version"))+1);
+                body=fan.constructNetworkTableJSON(netUpdatedTable, (updatedNetTable.getDouble("version"))+1);
                 try{
                     Response r=fan.createNetTable(fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint()), fah.getIp()+":"+fah.getPort(), body);
                     JSONObject answer=r.readEntity(JSONObject.class);
                     m.insertNetTables(homeKey.getVarIdentity().split(":")[0], cloudID, updatedNetTable.put("table", netUpdatedTable).toString(),(double)answer.get("version"));//rivedere entrambe
+                    
                 }
                 catch(WSException wse){
                     //something here
                     
                 }
+                //Inserimento mappe dentro FednetContainer
                 //BEACON>>>Add Management of structure to update fedsdn information
            
             
         }
         
     }
+    
     /**
      * 
      * @param ja
@@ -579,6 +686,13 @@ public class FederationActionManager {
         }
     }
     
+    /**
+     * 
+     * @param ja
+     * @param entry
+     * @return
+     * @throws JSONException 
+     */
     private JSONArray insertEntry_in_SiteTable(JSONArray ja,JSONObject entry)throws JSONException{
         try {
             boolean foundElem = false;
@@ -603,7 +717,14 @@ public class FederationActionManager {
         }
     }        
      
-        
+    /**
+     * 
+     * @param site_name
+     * @param tenant_id
+     * @param name
+     * @param vnid
+     * @return 
+     */    
     private String createNetTableEntry(String site_name, String tenant_id, String name, String vnid) {
         String tmp = "{";
         tmp = tmp + ("\"tenant_id\": \"" + tenant_id + "\", ");
@@ -614,7 +735,16 @@ public class FederationActionManager {
         return tmp;
         
     }
-        
+    
+    /**
+     * 
+     * @param site_name
+     * @param tenant_id
+     * @param ip
+     * @param fa_url
+     * @param port
+     * @return 
+     */
     private String createSiteTableEntry(String site_name, String tenant_id, String ip, String fa_url,String port) {
         String tmp = "{";
         tmp = tmp + ("\"tenant_id\": \"" + tenant_id + "\", ");
@@ -625,26 +755,7 @@ public class FederationActionManager {
         return tmp;
         
     }    
-        
-    /*
+     //</editor-fold>
     
-    tenant_id": "ab6a28b9f3624f4fa46e78247848544e",
-            "name": "site1",
-            "site_proxy": [{"ip": "10.0.0.33", "port": 4789}],
-            "fa_url": "10.0.0.33:4567"
-    
-    
-    
-    
-    
-    private FednetsLink prepareSiteTable(FednetsLink fe){
-        LinkedHashMap<String,JSONObject> old= fe.getOldsiteTablesMap();
-        LinkedHashMap<String,String> nerRef= fe.getEndpoint_to_tenantid();
-        //LinkedHashMap endRef= fe.getCloudId_To_OIC();
-        Set<String> s=nerRef.keySet();
-        for(String end:s){
-            String ten_id=nerRef.get(end);
-        }
-        //TO BE Complete
-    }*/
+   
 }

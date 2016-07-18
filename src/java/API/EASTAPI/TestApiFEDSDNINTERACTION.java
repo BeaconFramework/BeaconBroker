@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ws.rs.core.Response;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import utils.Exception.WSException;
@@ -26,7 +27,7 @@ public class TestApiFEDSDNINTERACTION {
      * This Main is used to test FEDSDN API.
      * @param args the command line arguments
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws JSONException {
        
             EastBrRESTClient ea= new EastBrRESTClient("root","fedsdn");
             String fedsdnURL="http://10.9.0.14:6121";
@@ -54,7 +55,8 @@ public class TestApiFEDSDNINTERACTION {
 //SITE TESTING SECTION
             Site s=new Site(user,password);
             try {
-                System.out.println(s.getAllSite(fedsdnURL).readEntity(String.class));        //TESTED
+                JSONArray ja=new JSONArray(s.getAllSite(fedsdnURL).readEntity(String.class));
+                System.out.println("\n\n\n\n\nGETALLSTITE"+ja.toString()+"\n\n\n\n"+((JSONObject)ja.get(1)).toString());        //TESTED
                 String sitename="MyFirstSite2";
                 //System.out.println(s.getSiteInfoes(fedsdnURL, sitename).readEntity(String.class));        //TESTED
                 long siteid=2;
