@@ -14,9 +14,15 @@
 */
 package JClouds_Adapter;
 
+import com.google.common.collect.UnmodifiableIterator;
+import java.util.Iterator;
 import java.util.List;
 import org.jclouds.openstack.keystone.v2_0.domain.Tenant;
 import org.jclouds.openstack.keystone.v2_0.domain.User;
+import org.jclouds.openstack.neutron.v2.domain.Network;
+import org.jclouds.openstack.neutron.v2.domain.NetworkSegment;
+import org.jclouds.openstack.neutron.v2.domain.Networks;
+import org.jclouds.openstack.neutron.v2.domain.Subnet;
 
 /**
  * This class need to be reviewed.
@@ -89,9 +95,24 @@ public class JcloudTest {
       // neutron.testListRouters();
    //    neutron.createSubnet();
        
-     //  neutron.listNetworks();
-     //  neutron.listSubnet();
-
+       //neutron.listNetworks();
+     
+     neutron.listSubnet();
+     Networks ns=neutron.listNetworks();
+    Iterator<Network> itNet = ns.iterator();
+    while(itNet.hasNext()){
+                Network n=itNet.next();
+                Iterator<String> ti=n.getSubnets().iterator();
+                
+                while(ti.hasNext()){
+                    Subnet s=neutron.getSubnet((String)ti.next());
+                    if( s!=null){
+                        System.out.println(s.getCidr());
+                        System.out.println(s.toString());
+                    }
+                }
+             
+    }
 
         neutron.getStatus("private");
    //    neutron.listRegions();

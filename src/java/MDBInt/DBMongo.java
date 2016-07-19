@@ -61,7 +61,7 @@ public class DBMongo {
     private ParserXML parser;
     private MessageDigest messageDigest;
     static final Logger LOGGER = Logger.getLogger(DBMongo.class);
-    private String identityDB;
+    private String identityDB="ManagementDB"; //DefaultVaue
     private static String configFile="../webapps/OSFFM/WEB-INF/configuration_bigDataPlugin.xml";
     private String mdbIp;
 
@@ -1294,7 +1294,90 @@ public class DBMongo {
        return tenantDbName;
     }
     
+    public String getInfo_Endpoint(String field,String value){
+       DB database = this.getDB(this.identityDB);
+       DBCollection collection = database.getCollection("SystemInfos");
+       BasicDBObject researchField = new BasicDBObject(field, value);
+       DBObject risultato = collection.findOne(researchField);
+       String valueSearched=(String)risultato.get("endpoint");
+       return valueSearched;
+    }
     
+    public void insertfedsdnSite(String json){
+        
+        DB dataBase = this.getDB(this.identityDB);
+        DBCollection collezione = dataBase.getCollection("fedsdnSite");
+        BasicDBObject obj = (BasicDBObject) JSON.parse(json);
+        obj.append("insertTimestamp", System.currentTimeMillis());
+        collezione.save(obj);
+    }
+    
+    public String getfedsdnSite(String name){
+       DB database = this.getDB(this.identityDB);
+       DBCollection collection = database.getCollection("fedsdnSite");
+       BasicDBObject researchField = new BasicDBObject("name", name);
+       DBObject risultato = collection.findOne(researchField);
+       return risultato.toString();
+    }
+     public int getfedsdnSiteID(String name){
+       DB database = this.getDB(this.identityDB);
+       DBCollection collection = database.getCollection("fedsdnSite");
+       BasicDBObject researchField = new BasicDBObject("name", name);
+       DBObject risultato = collection.findOne(researchField);
+       
+       return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
+    }
+     
+    public void insertfedsdnFednet(String json){
+        
+        DB dataBase = this.getDB(this.identityDB);
+        DBCollection collezione = dataBase.getCollection("fedsdnFednet");
+        BasicDBObject obj = (BasicDBObject) JSON.parse(json);
+        obj.append("insertTimestamp", System.currentTimeMillis());
+        collezione.save(obj);
+    }
+    
+    public String getfedsdnFednet(String federationTenantName){
+       DB database = this.getDB(this.identityDB);
+       DBCollection collection = database.getCollection("fedsdnFednet");
+       BasicDBObject researchField = new BasicDBObject("federationTenantName", federationTenantName);
+       DBObject risultato = collection.findOne(researchField);
+       return risultato.toString();
+    }
+     public int getfedsdnFednetID(String federationTenantName){
+       DB database = this.getDB(this.identityDB);
+       DBCollection collection = database.getCollection("fedsdnFednet");
+       BasicDBObject researchField = new BasicDBObject("federationTenantName", federationTenantName);
+       DBObject risultato = collection.findOne(researchField);
+       
+       return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
+    }
+    
+    public void insertfedsdnNetSeg(String json){
+        
+        DB dataBase = this.getDB(this.identityDB);
+        DBCollection collezione = dataBase.getCollection("fedsdnNetSeg");
+        BasicDBObject obj = (BasicDBObject) JSON.parse(json);
+        obj.append("insertTimestamp", System.currentTimeMillis());
+        collezione.save(obj);
+    }
+    
+    public String getfedsdnNetSeg(String vnetName,String CloudID){
+       DB database = this.getDB(this.identityDB);
+       DBCollection collection = database.getCollection("fedsdnNetSeg");
+       BasicDBObject researchField = new BasicDBObject("CloudID", CloudID);
+       DBObject risultato = collection.findOne(researchField);
+       return risultato.toString();
+    }
+     public int getfedsdnNetSegID(String federationTenantName){
+       DB database = this.getDB(this.identityDB);
+       DBCollection collection = database.getCollection("fedsdnNetSeg");
+       BasicDBObject researchField = new BasicDBObject("federationTenantName", federationTenantName);
+       DBObject risultato = collection.findOne(researchField);
+       
+       return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
+    }
+     
 //</editor-fold>    
     //<editor-fold defaultstate="collapsed" desc="NetworkId Management">
     

@@ -188,13 +188,13 @@ public class NeutronTest {
      * Function modified in order to be used as Jclouds neutron interface element.
      * @author gtricomi
      */
-    public Iterator<Network> listNetworks() {
+    public Networks listNetworks() {
 
         NetworkApi networkApi = neutronApi.getNetworkApi(this.regionName);
         Networks it2 = networkApi.list(new PaginationOptions());
         Iterator iter = it2.iterator();
         if (iter.hasNext()) {
-            return iter;
+            return it2;
         } else {
             return null;
         }
@@ -334,7 +334,12 @@ public class NeutronTest {
       }
     }
 
-  
+    public Subnet getSubnet(String name){
+        SubnetApi subnetApi=neutronApi.getSubnetApi("RegionOne");
+        Subnet sub=subnetApi.get(name);
+        return sub;
+    }
+    
     public void createSubnet(){
 
         SubnetApi subnetApi=neutronApi.getSubnetApi("RegionOne");

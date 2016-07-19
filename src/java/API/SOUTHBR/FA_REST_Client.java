@@ -33,6 +33,8 @@ import javax.ws.rs.core.UriBuilder;
 import org.apache.log4j.Logger;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.filter.HttpBasicAuthFilter;
+import org.jclouds.openstack.neutron.v2.domain.Network;
+import org.jclouds.openstack.neutron.v2.domain.Networks;
 import org.json.JSONException;
 import org.json.JSONObject;
 import utils.Exception.*;
@@ -145,8 +147,9 @@ public class FA_REST_Client {
      */
     public Iterator getNetworkList(){
         NeutronTest nt=new NeutronTest(this.idsEndpoint,this.tenantName,this.userName,this.password,this.region);
-        Iterator i=nt.listNetworks();
-        return i;
+        Networks ns=nt.listNetworks();
+        Iterator<Network> itNet=ns.iterator();
+        return itNet;
     }
     
     /**

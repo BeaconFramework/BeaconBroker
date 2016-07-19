@@ -44,7 +44,7 @@ public class TestApiFEDSDNINTERACTION {
                 fednetname="MyFirstFNbc";
                 String linkType="FullMesh";
                 String type="L2";
-                //System.out.println(f.createFednet(fednetname, linkType, type, fedsdnURL).readEntity(String.class));//CREATE        //TESTED
+                System.out.println(f.createFednet(fednetname, linkType, type, fedsdnURL).readEntity(String.class));//CREATE        //TESTED
                 fedid=3;
                 //System.out.println(f.updateFednet(fedid, fednetname, linkType, type, fedsdnURL).readEntity(String.class));//UPDATE        //TESTED
                 fedid=3;
@@ -64,7 +64,7 @@ public class TestApiFEDSDNINTERACTION {
                 String cmp_endpoint="http://opennebula.cloud.org:2633/RPC2";
                 String type="openstack";
                 sitename="MyFirstSiteTEst";
-                //System.out.println(s.createSite(sitename, cmp_endpoint, type, fedsdnURL).readEntity(String.class));//CREATE        //TESTED
+                System.out.println("CREATE\n\n"+s.createSite(sitename, cmp_endpoint, type, fedsdnURL).readEntity(String.class));//CREATE        //TESTED
                 siteid=3;
                 //System.out.println(s.updateSite(siteid, sitename, cmp_endpoint, type, fedsdnURL).readEntity(String.class));//UPDATE        //TESTED
                 //System.out.println(s.delSite(fedsdnURL, siteid).readEntity(String.class));//DELETE        //TESTED
