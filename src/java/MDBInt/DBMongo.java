@@ -1365,14 +1365,14 @@ public class DBMongo {
     public String getfedsdnNetSeg(String vnetName,String CloudID){
        DB database = this.getDB(this.identityDB);
        DBCollection collection = database.getCollection("fedsdnNetSeg");
-       BasicDBObject researchField = new BasicDBObject("CloudID", CloudID);
+       BasicDBObject researchField = new BasicDBObject("CloudID", CloudID).append("vnetName", vnetName);
        DBObject risultato = collection.findOne(researchField);
        return risultato.toString();
     }
-     public int getfedsdnNetSegID(String federationTenantName){
+     public int getfedsdnNetSegID(String vnetName,String CloudID){
        DB database = this.getDB(this.identityDB);
        DBCollection collection = database.getCollection("fedsdnNetSeg");
-       BasicDBObject researchField = new BasicDBObject("federationTenantName", federationTenantName);
+       BasicDBObject researchField = new BasicDBObject("CloudID", CloudID).append("vnetName", vnetName);
        DBObject risultato = collection.findOne(researchField);
        
        return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))

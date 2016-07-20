@@ -358,11 +358,14 @@ public class FederationActionManager {
     }
     
     
+  
     /**
      * 
-     * @param netTablesVersionforDC, mappa stack Nettable
-     * @param tmpMapcred, mappa stack arraylist(di arrayList di OpenStack Container)
+     * @param tenantname
+     * @param mapContainer
+     * @param tmpMapcred ,mappa stack arraylist(di arrayList di OpenStack Container)
      * @param m 
+     * @author gtricomi
      */
     public void prepareNetTables4completeSharing(
             String tenantname,
@@ -391,14 +394,16 @@ public class FederationActionManager {
         }
         this.updatestateOnFEDSDN(tenantname,fe, m);
     }
-    
+    //<editor-fold defaultstate="collapsed" desc="FedSDN Interaction and Management Functions">
     /**
      * 
+     * @param tenant
      * @param mapContainer
      * @param m 
+     * @author gtricomi
      */
     public void updatestateOnFEDSDN(String tenant,FednetsLink  mapContainer,DBMongo m){
-        String fedsdnURL="http://10.9.0.14:6121";//QUESTO DEVE ESSERE PRESO DA MONGODB
+        String fedsdnURL=m.getInfo_Endpoint("entity","fedsdn");//"http://10.9.0.14:6121";
         Site sClient= new Site("root","fedsdn");
         NetworkSegment nClient=new NetworkSegment("root","fedsdn");
         try {
@@ -416,7 +421,18 @@ public class FederationActionManager {
             LOGGER.error("Exception is occurred in checkNetSegmentFEDSDN! \n" + ex);
         }
     }
-    
+    /**
+     * 
+     * @param mapContainer
+     * @param sClient
+     * @param nClient
+     * @param fedsdnURL
+     * @param federationTenant
+     * @param m
+     * @throws WSException
+     * @throws JSONException 
+     * @author gtricomi
+     */
     private void checkNetSegmentFEDSDN(FednetsLink  mapContainer,Site sClient,NetworkSegment nClient,String fedsdnURL,String federationTenant, DBMongo m)throws WSException, JSONException{
         Response r=sClient.getAllSite(fedsdnURL);
         JSONArray ja=new JSONArray(r.readEntity(String.class));
@@ -471,7 +487,23 @@ public class FederationActionManager {
             }
         }
     }
-   
+    /**
+     * 
+     * @param name
+     * @param endpoint_OSFFM
+     * @param network_address
+     * @param network_mask
+     * @param size
+     * @param nClient
+     * @param fedsdnURL
+     * @param fedTenantIDFEDSDN
+     * @param siteIdFEDSDN
+     * @param m
+     * @return
+     * @throws JSONException
+     * @throws WSException 
+     * @author gtricomi
+     */
     private boolean addNetSegOnFedSDN(
             String name,
             String endpoint_OSFFM,
@@ -509,6 +541,7 @@ public class FederationActionManager {
      * @return
      * @throws WSException
      * @throws JSONException 
+     * @author gtricomi
      */
     private boolean checkSiteFEDSDN(FednetsLink  mapContainer,Site sClient,String fedsdnURL, DBMongo m) throws WSException, JSONException{
         Response r=sClient.getAllSite(fedsdnURL);
@@ -537,10 +570,11 @@ public class FederationActionManager {
      * @param siteName
      * @param sClient
      * @param fedsdnURL
-     * @return 
+     * @return
+     * @author gtricomi
      */
-    private boolean addSiteOnFedSDN(String siteName,Site sClient,String fedsdnURL,DBMongo m){
-        String type = "openstack";//BEACON>>>for future use this info could be managed via MongoDB
+    private boolean addSiteOnFedSDN(String siteName,Site sClient,String fedsdnURL,DBMongo m)throws JSONException{
+        String type = (new JSONObject(m.getfedsdnSite(siteName))).getString("type");
         try {
             String cmp_endpoint=m.getInfo_Endpoint("entity", "osffm");
             Response r = sClient.createSite(siteName, cmp_endpoint, type, fedsdnURL);
@@ -552,6 +586,13 @@ public class FederationActionManager {
         }
         return true;
     }
+    
+    private boolean makeLinkOnFednet(){//TBD
+        return false;
+    }
+    
+    //</editor-fold>
+    
     
     //<editor-fold defaultstate="collapsed" desc="Openstack Federation Agent Tables Management & Elaboration Functions">  
     /**
