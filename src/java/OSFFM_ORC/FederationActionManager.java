@@ -16,6 +16,7 @@
 package OSFFM_ORC;
 
 import API.EASTAPI.Clients.EastBrRESTClient;
+import API.EASTAPI.Clients.Fednet;
 import API.EASTAPI.Clients.NetworkSegment;
 import API.EASTAPI.Clients.Site;
 import API.SOUTHBR.FA_client4Network;
@@ -371,7 +372,8 @@ public class FederationActionManager {
             String tenantname,
             FednetsLink  mapContainer,
             HashMap<String, ArrayList<ArrayList<OpenstackInfoContainer>>> tmpMapcred,
-            DBMongo m)
+            DBMongo m,
+            boolean startfromTemplate)
     {
         FednetsLink fe=this.createCredMapwithoutDuplicate(tmpMapcred,mapContainer);
         Set<String> s=mapContainer.getOldnetTablesMap().keySet();
@@ -392,7 +394,8 @@ public class FederationActionManager {
         catch(Exception e){
             LOGGER.error("Exception occurred in the function prepareTables4link");
         }
-        this.updatestateOnFEDSDN(tenantname,fe, m);
+        if(startfromTemplate)
+            this.updatestateOnFEDSDN(tenantname,fe, m);
     }
     //<editor-fold defaultstate="collapsed" desc="FedSDN Interaction and Management Functions">
     /**
@@ -404,8 +407,10 @@ public class FederationActionManager {
      */
     public void updatestateOnFEDSDN(String tenant,FednetsLink  mapContainer,DBMongo m){
         String fedsdnURL=m.getInfo_Endpoint("entity","fedsdn");//"http://10.9.0.14:6121";
-        Site sClient= new Site("root","fedsdn");
-        NetworkSegment nClient=new NetworkSegment("root","fedsdn");
+        String fedsdnpassword=m.getFederationCredential(tenant,tenant,"federationUser");
+        Site sClient= new Site(tenant,fedsdnpassword);//Modificare le info dentro il fedsdn che al momento sono inserite sotto l'utente root e password fedsdn
+        NetworkSegment nClient=new NetworkSegment(tenant,fedsdnpassword);
+        Fednet fClient=new Fednet(tenant,fedsdnpassword);
         try {
             this.checkSiteFEDSDN(mapContainer, sClient, fedsdnURL,m);
         } catch (WSException ex) {
@@ -420,7 +425,17 @@ public class FederationActionManager {
         } catch (JSONException ex) {
             LOGGER.error("Exception is occurred in checkNetSegmentFEDSDN! \n" + ex);
         }
+        try {
+            this.makeLinkOnFednet( fClient, tenant, fedsdnURL,  m);
+        } catch (WSException ex) {
+            LOGGER.error("Exception is occurred in makeLinkOnFednet! \n" + ex);
+        } catch (JSONException ex) {
+            LOGGER.error("Exception is occurred in makeLinkOnFednet! \n" + ex);
+        }
     }
+    
+    
+    
     /**
      * 
      * @param mapContainer
@@ -465,7 +480,7 @@ public class FederationActionManager {
                                 
                                 ok = this.addNetSegOnFedSDN(
                                         s.getName(),
-                                        m.getInfo_Endpoint("entity", "osffm") + "/fednet/eastBr/network",
+                                        m.getInfo_Endpoint("entity", "osffm") + "/fednet/eastBr/network",//sostituire con il FA del sito??
                                         si.getAddress(),
                                         si.getNetmask(),
                                         si.getAddressCount(),
@@ -487,6 +502,7 @@ public class FederationActionManager {
             }
         }
     }
+    
     /**
      * 
      * @param name
@@ -525,7 +541,7 @@ public class FederationActionManager {
         
         try {
             Response r=nClient.createNetSeg(jo, fedsdnURL, fedTenantIDFEDSDN, siteIdFEDSDN);
-            m.insertfedsdnFednet(r.readEntity(String.class));
+            m.insertfedsdnNetSeg(r.readEntity(String.class));
         } catch (WSException ex) {
             LOGGER.error("Exception is occurred in addSiteOnFedSDN for NetSegment: " + name + " on site with ID:"+siteIdFEDSDN+" for the tenant: "+fedTenantIDFEDSDN+ "\n" + ex);
             return false;
@@ -581,14 +597,29 @@ public class FederationActionManager {
             m.insertfedsdnSite(r.readEntity(String.class));
         } catch (WSException ex) {
             LOGGER.error("Exception is occurred in addSiteOnFedSDN for site: " + siteName + "\n" + ex);
-            
             return false;
         }
         return true;
     }
     
-    private boolean makeLinkOnFednet(){//TBD
-        return false;
+    
+    private boolean makeLinkOnFednet(Fednet fClient,String federtenant,String fedsdnURL, DBMongo m)throws WSException, JSONException{//TBD
+        //Sembrerebbe necessario dover richiamare il client fednet (con l'opportuno riferimento al fednet corretto PUT /fednet/fedentID con parametri (action=link, linktype=full_mesh)
+        JSONObject jo=new JSONObject(m.getfedsdnFednet(federtenant));
+        try {
+            
+            long l=((Double)jo.get("id")).longValue();
+            Response r=fClient.updateFednet(l, jo.getString("name"), jo.getString("linkType"), jo.getString("type"), fedsdnURL, "link");
+            //SIstemare questo pezzo, se non ci sono eccezioni deve essere salvato quello restituito da una chiamata f.getNetinfo(fedsdnURL,fednetname )
+            r=fClient.getNetinfo(fedsdnURL,jo.getString("name"));
+            JSONObject tmp=new JSONObject(r.readEntity(String.class));
+            tmp.append("federationTenantName", federtenant);
+            m.insertfedsdnFednet(tmp.toString());
+        }catch (WSException ex) {
+            LOGGER.error("Exception is occurred in makeLinkOnFednet for fedenetID: " + ((Double)jo.get("id")).toString() + " owned from federation tenant: "+federtenant+"\n" + ex);
+            return false;
+        }
+        return true;
     }
     
     //</editor-fold>

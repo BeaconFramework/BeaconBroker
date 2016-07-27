@@ -490,7 +490,7 @@ public class DBMongo {
      * This use only token. It will be
      *
      * @param dbName
-     * @param token, this is an UUID generated from simple_IDM when a new
+     * @param, this is an UUID generated from simple_IDM when a new
      * Federation user is added.
      * @param cloudID
      * @return
@@ -1051,14 +1051,13 @@ public class DBMongo {
         return j.toString();
     }
 
-    //BEACON>>> Function added for preliminaryDEMO. HAVE TO BE REMOVED
+    //BEACON>>> Function added for preliminaryDEMO.
     /**
      * Returns generic federation infoes.
-     *
      * @param dbName
-     * @param token
-     * @return
-     * @author gtricomi
+     * @param value
+     * @param type
+     * @return 
      */
     public String getFederationCredential(String dbName, String value, String type) {
         DB dataBase = this.getDB(dbName);
@@ -1077,11 +1076,6 @@ public class DBMongo {
         BasicDBObject bo = new BasicDBObject();
         bo.append("federationUser", (String) federationUser.get("federationUser"));
         bo.append("federationPassword", (String) federationUser.get("federationPassword"));
-        /*String fu=(String)federationUser.get("federationUser");
-         result+="\"federationUser\":\""+fu+"\",";
-         String fp=(String)federationUser.get("federationPassword");
-         result+="\"federationPassword\":\""+fp+"\"";
-         result+="}";*/
         return bo.toString();//result;
     }
 
@@ -1294,6 +1288,24 @@ public class DBMongo {
        return tenantDbName;
     }
     
+    public String getTenantName(String field,String value){
+       DB database = this.getDB(this.identityDB);
+       DBCollection collection = database.getCollection("Federation_Credential");
+       BasicDBObject researchField = new BasicDBObject(field, value);
+       DBObject risultato = collection.findOne(researchField);
+       String tenantName=(String)risultato.get("federationTenant");
+       return tenantName;
+    }
+    
+    public String getTenantToken(String field,String value){
+       DB database = this.getDB(this.identityDB);
+       DBCollection collection = database.getCollection("Federation_Credential");
+       BasicDBObject researchField = new BasicDBObject(field, value);
+       DBObject risultato = collection.findOne(researchField);
+       String tenantName=(String)risultato.get("token");
+       return tenantName;
+    }
+    
     public String getInfo_Endpoint(String field,String value){
        DB database = this.getDB(this.identityDB);
        DBCollection collection = database.getCollection("SystemInfos");
@@ -1352,7 +1364,7 @@ public class DBMongo {
        
        return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
     }
-    
+    //verificare se la parte dei netsegment và qui o và memorizzata nel DB del tenant
     public void insertfedsdnNetSeg(String json){
         
         DB dataBase = this.getDB(this.identityDB);

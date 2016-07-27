@@ -16,6 +16,8 @@ package OSFFM_ORC;
 
 //<editor-fold defaultstate="collapsed" desc="Import Section">
 //import JClouds_Adapter.Heat;
+import API.EASTAPI.Clients.Fednet;
+import API.EASTAPI.Clients.Site;
 import JClouds_Adapter.NeutronTest;
 import JClouds_Adapter.NovaTest;
 import JClouds_Adapter.OpenstackInfoContainer;
@@ -45,14 +47,17 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.ws.rs.core.Response;
 import org.jclouds.openstack.neutron.v2.domain.Port;
 import org.jdom2.Element;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.openstack4j.model.heat.Resource;
 import org.openstack4j.model.heat.Stack;
 
 import org.yaml.snakeyaml.Yaml;
+import utils.Exception.WSException;
 import utils.ParserXML;
 import utils.RunTimeInfo;
 //</editor-fold>
@@ -392,6 +397,76 @@ public class OrchestrationManager {
     
     //<editor-fold defaultstate="collapsed" desc="Management function for orchestration activity">
     
+    
+    /**
+     * This function create Link starting from a request made from FEDSDN.
+     * It retrieve info from parameter and MongoDB and construct the the table with all netsegments present on the indicated sites.
+     * @param fednetId
+     * @param federationTenant
+     * @param netTables
+     * @param m
+     * @return 
+     * @author gtricomi
+     */
+    public String makeLink(long fednetId, String federationTenant, ArrayList<JSONObject> netTables, DBMongo m) {
+        //fase1: verificare che lo stato della fednet sia "unlink", altrimenti nothing to do
+        JSONObject jo, tmp;
+        try {
+            jo = new JSONObject(m.getfedsdnFednet(federationTenant));
+            if (((String) jo.get("status")).equals("linked")) {
+                return "ok";
+            }
+        } catch (JSONException je) {
+            LOGGER.error("Exception Occurred in makeLink function!" + je.getMessage());
+            return "error";
+        }
+        //fase2: caso unlink: recuperare la lista dei netsegment della fednet per avviare il processo di link delle stesse cloud
+        String fedsdnpassword = m.getFederationCredential(federationTenant, federationTenant, "federationUser");
+        Fednet fClient = new Fednet(federationTenant, fedsdnpassword);
+        Site sClient = new Site(federationTenant, fedsdnpassword);
+        String fedsdnURL = m.getInfo_Endpoint("entity", "fedsdn");
+        try {
+            Response r = fClient.getNetinfo(fedsdnURL, jo.getString("name"));
+            //// creare la tabella (da passare al FA) per i netsegment indicati dal fedsdn. Per ogni netsegment recuperare l'identificativo del "site"
+            //// e da questo individure la cloud (il name = OSFFM cloudID) e per ognuno costruire la tabella che fà lo share di tutte le reti
+            tmp = new JSONObject(r.readEntity(String.class));
+            JSONArray ja = tmp.getJSONArray("netsegments");
+            HashMap<String, ArrayList<ArrayList<OpenstackInfoContainer>>> tmpMapCred = new HashMap<>();
+            for (int i = 0; i < ja.length(); i++) {
+                JSONObject intmp = (JSONObject) ja.getJSONObject(i);
+                String siteid = (String) intmp.get("site_id");
+                JSONObject sitejson = new JSONObject(sClient.getSiteInfoes(fedsdnURL, new Long(siteid).longValue()).readEntity(String.class));
+                //inserirlo nel Fednetcontainer attraverso la funzione privata this.prepareNetTables4completeSharing(String, String, HashMap<String, ArrayList<ArrayList<OpenstackInfoContainer>>>, m);
+                ArrayList<ArrayList<OpenstackInfoContainer>> artmp = new ArrayList<ArrayList<OpenstackInfoContainer>>();
+                JSONObject jj = new JSONObject(m.getFederatedCredential(federationTenant, m.getTenantToken("federationTenant", federationTenant), sitejson.getString("name")));
+                JSONObject j = new JSONObject(m.getDatacenter(federationTenant, sitejson.getString("name")));
+                OpenstackInfoContainer oic = new OpenstackInfoContainer(
+                        sitejson.getString("name"),
+                        j.getString("idmEndpoint"),
+                        federationTenant,
+                        jj.getString("federatedUser"),
+                        jj.getString("federatedPassword"),
+                        "RegionOne");//>>>BEACON: in this moment Region is an hardcoded field but future works could be manage the Region field inside Datacenters infos
+                ArrayList<OpenstackInfoContainer> arintmp = new ArrayList<OpenstackInfoContainer>();
+                arintmp.add(oic);
+                artmp.add(arintmp);
+                tmpMapCred.put(sitejson.getString("name"), artmp);
+            }
+            this.prepareNetTables4completeSharing(federationTenant, "", tmpMapCred, m);
+
+        } catch (JSONException ex) {
+            LOGGER.error("Exception Occurred in makeLink function!" + ex.getMessage());
+            return "error";
+        } catch (WSException ex) {
+            LOGGER.error("Exception Occurred in makeLink function!" + ex.getMessage());
+            return "error";
+        } catch (MDBIException ex) {
+            LOGGER.error("Exception Occurred in makeLink function!" + ex.getMessage());
+            return "error";
+        }
+        return "ok";
+    }
+    
     /**
      * 
      * @param manName uuid manifest passed from dashboard
@@ -621,7 +696,7 @@ public class OrchestrationManager {
             //System.out.println("&&&&&&&&&&&&&&&&&&&&&"+tmpArCr.size());
             for (Object tmpArCrob : tmpArCr) {
                 LOGGER.info("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\nISTANTION PHASE FOR THE CLOUD:" + ((OpenstackInfoContainer) tmpArCrob).getIdCloud() + "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-                boolean result = this.stackInstantiate(template, (OpenstackInfoContainer) tmpArCrob, m, "federation");//BEACON>>> in final version of OSFFM 
+                boolean result = this.stackInstantiate(template, (OpenstackInfoContainer) tmpArCrob, m, stackName);//BEACON>>> in final version of OSFFM 
                 LOGGER.debug("TEMPLATE ISTANTIATED ON CLOUD:" + ((OpenstackInfoContainer) tmpArCrob).getIdCloud());
                 //we will use variable result to understand if the stack is deployed inside the federated cloud
                 
@@ -678,12 +753,14 @@ public class OrchestrationManager {
             HashMap<String, ArrayList<ArrayList<OpenstackInfoContainer>>> tmpMapcred,
             DBMongo m
     ){
-        
         //1 Retrieve NetMap version from Mongo for each DC and create LinkedHashMap for FederationActionManager
         FednetsLink mapcontainer=this.retrieveTablesStored(tenantname,tmpMapcred,m);
         //2 create new NetTables throught ?????? >>>>>>>>this action is forwarded to FederactionActionManager
         FederationActionManager fam=new FederationActionManager();
-        fam.prepareNetTables4completeSharing( tenantname,mapcontainer,tmpMapcred,m);
+        if(template.equals(""))
+            fam.prepareNetTables4completeSharing( tenantname,mapcontainer,tmpMapcred,m,false);
+        else
+            fam.prepareNetTables4completeSharing( tenantname,mapcontainer,tmpMapcred,m,true);
     }
     
     /**

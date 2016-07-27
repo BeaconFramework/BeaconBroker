@@ -35,6 +35,7 @@ public class Fednet extends EastBrRESTClient{
     
     JSONObject body;
     static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(Fednet.class);
+    
     public Fednet(String userName, String password) {
         super(userName, password);
     }
@@ -155,7 +156,7 @@ public class Fednet extends EastBrRESTClient{
     
     /**
      * This function update fednet instance on FEDSDN
-     * @param fedtobemod
+     * @param fedtobemod, String name that will be searched on FEDSDN
      * @param name
      * @param linkType
      * @param type
@@ -163,23 +164,78 @@ public class Fednet extends EastBrRESTClient{
      * @return 
      * @throws WSException/WSException303
      */
-    public Response updateFednet(String fedtobemod,String name,String linkType,String type,String baseFEDSDNURL) throws WSException {
-        
-        long id;
-        try {
-            id = this.searchfedID(fedtobemod, baseFEDSDNURL);
-        } catch (Exception ex) {
-            throw new WSException303("SEE_OTHER! The action can't be completed");
+    public Response updateFednet(String fedtobemod,String name,String linkType,String type,String baseFEDSDNURL,String action) throws WSException {
+        if(action==null){
+            long id;
+            try {
+                id = this.searchfedID(fedtobemod, baseFEDSDNURL);
+            } catch (Exception ex) {
+                throw new WSException303("SEE_OTHER! The action can't be completed");
+            }
+            Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/"+id, this.constructBody(name, linkType, type), "put");
+            try{
+                    this.checkResponse(r);//as answer we expect a status code 200
+                }
+                catch(WSException wse){
+                    LOGGER.error("Exception occurred in createTenantFA method, the web service has answer with bad status!\n"+wse.getMessage());
+                    throw wse;
+                }
+            return r;
         }
-        Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/"+id, this.constructBody(name, linkType, type), "put");
-        try{
-                this.checkResponse(r);//as answer we expect a status code 200
+        else{
+            long id;
+            try {
+                id = this.searchfedID(fedtobemod, baseFEDSDNURL);
+            } catch (Exception ex) {
+                throw new WSException303("SEE_OTHER! The action can't be completed");
             }
-            catch(WSException wse){
-                LOGGER.error("Exception occurred in createTenantFA method, the web service has answer with bad status!\n"+wse.getMessage());
-                throw wse;
-            }
-        return r;
+            Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/"+id, this.constructBody(name, linkType, type, action), "put");
+            try{
+                    this.checkResponse(r);//as answer we expect a status code 200
+                }
+                catch(WSException wse){
+                    LOGGER.error("Exception occurred in createTenantFA method, the web service has answer with bad status!\n"+wse.getMessage());
+                    throw wse;
+                }
+            return r;
+        }
+    }
+    
+    /**
+     * This function update fednet instance on FEDSDN
+     * @param fedtobemod, long name that will be searched on FEDSDN
+     * @param name
+     * @param linkType
+     * @param type
+     * @param baseFEDSDNURL
+     * @return 
+     * @throws WSException/WSException303
+     */
+    public Response updateFednet(long fedtobemod,String name,String linkType,String type,String baseFEDSDNURL,String action) throws WSException {
+        if(action==null){
+            Long id=new Long(fedtobemod);
+            Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/"+id.toString(), this.constructBody(name, linkType, type), "put");
+            try{
+                    this.checkResponse(r);//as answer we expect a status code 200
+                }
+                catch(WSException wse){
+                    LOGGER.error("Exception occurred in createTenantFA method, the web service has answer with bad status!\n"+wse.getMessage());
+                    throw wse;
+                }
+            return r;
+        }
+        else{
+            Long id=new Long(fedtobemod);
+            Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/"+id.toString(), this.constructBody(name, linkType, type, action), "put");
+            try{
+                    this.checkResponse(r);//as answer we expect a status code 200
+                }
+                catch(WSException wse){
+                    LOGGER.error("Exception occurred in createTenantFA method, the web service has answer with bad status!\n"+wse.getMessage());
+                    throw wse;
+                }
+            return r;
+        }
     }
     
     /**
@@ -245,5 +301,9 @@ public class Fednet extends EastBrRESTClient{
     
     private String constructBody(String name,String linkType,String type){
         return "{\"name\" : \""+name+"\", \"type\" : \""+type+"\", \"linktype\" : \""+linkType+"\"}";
+    }
+    
+    private String constructBody(String name,String linkType,String type,String action){
+        return "{\"name\" : \""+name+"\", \"type\" : \""+type+"\", \"linktype\" : \""+linkType+"\",\"action\":\""+action+"\"}";
     }
 }

@@ -108,8 +108,9 @@ public class NetworksegmentResource {
             //String endpoint, String tenant, String user, String password, String region
             sidm=new SimpleIDM(); //>>>BEACON: VERIFY THIS POINT
             String dbName=sidm.retrieve_TenantDB("federationTenant",OSF_tenant );
-            //sidm.setDbName(dbname);  >>>BEACON: FOR THE MOMENT OUR TESTING DB IS CALLED beacon
-            sidm.setDbName("beacon");
+            
+            sidm.setDbName(dbName);  //>>>BEACON: FOR THE MOMENT OUR TESTING DB IS CALLED beacon
+            //sidm.setDbName("beacon");
             
             FederationUser fu=sidm.getFederationU(OSF_token, OSF_cmp_endpoint);//OSF_cmp_endpoint questo non è usato
             

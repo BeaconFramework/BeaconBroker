@@ -36,18 +36,20 @@ public class TestApiFEDSDNINTERACTION {
             Fednet f=new Fednet(user,password);
             
             try {
-                //System.out.println(f.getAllNet(fedsdnURL).readEntity(String.class));   //TESTED
+                System.out.println(f.getAllNet(fedsdnURL).readEntity(String.class));   //TESTED
                 String fednetname="MyFirstFN";
                 System.out.println(f.getNetinfo(fedsdnURL,fednetname ).readEntity(String.class));    //TESTED
                 long fedid=1;
                 //System.out.println(f.getNetinfo(fedsdnURL,fedid ).readEntity(String.class));     //TESTED
-                fednetname="MyFirstFNbc";
+                fednetname="MyFirstFNbTest";
                 String linkType="FullMesh";
                 String type="L2";
                 System.out.println(f.createFednet(fednetname, linkType, type, fedsdnURL).readEntity(String.class));//CREATE        //TESTED
+                fedid=2;
+                fednetname="ModifiedMyFirstFNbc";
+                System.out.println(f.updateFednet(fedid, fednetname, linkType, type, fedsdnURL,null).readEntity(String.class));//UPDATE        //TESTED
                 fedid=3;
-                //System.out.println(f.updateFednet(fedid, fednetname, linkType, type, fedsdnURL).readEntity(String.class));//UPDATE        //TESTED
-                fedid=3;
+                System.out.println(f.getAllNet(fedsdnURL).readEntity(String.class));   //TESTED
                 //System.out.println(f.delNetwork(fedsdnURL, fedid).readEntity(String.class));//DELETE        //TESTED
             } catch (WSException ex) {
                 Logger.getLogger(TestApiFEDSDNINTERACTION.class.getName()).log(Level.SEVERE, null, ex);

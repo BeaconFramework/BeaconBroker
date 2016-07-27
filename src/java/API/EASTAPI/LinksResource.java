@@ -16,6 +16,7 @@
 package API.EASTAPI;
 
 import API.EASTAPI.utils_containers.LinkInfoContainers;
+import OSFFM_ORC.OrchestrationManager;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -29,6 +30,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import MDBInt.DBMongo;
 
 /**
  * REST Web Service
@@ -59,24 +61,34 @@ public class LinksResource {
         JSONObject reply=new JSONObject();
         JSONParser parser= new JSONParser();
         JSONObject input=null;
+        LinkInfoContainers lic=new LinkInfoContainers();
+            
         try 
         {
             input=(JSONObject) parser.parse(content);
-            LinkInfoContainers lic=new LinkInfoContainers();
             lic.setType((String)input.get("type"));
-            lic.setToken((String)input.get("token"));
-            lic.setCommand((String)input.get("Command"));
-            lic.setFa_endpoints(((JSONArray)input.get("fa_endpoints")));
-            lic.setNetwork_tables(((JSONArray)input.get("network_table")));
-        }
-        catch(ParseException pe)
-        {
-            reply.put("returncode", 1); 
+            lic.setToken((String) input.get("token"));//utilizzerò questo elemento per identificare fedten
+            lic.setCommand((String) input.get("Command"));
+            lic.setFa_endpoints(((JSONArray) input.get("fa_endpoints")));
+            lic.setNetwork_tables(((JSONArray) input.get("network_table")));//not used for this moment the tables are recalculated
+        } catch (ParseException pe) {
+            reply.put("returncode", 1);
             reply.put("errormesg", "INPUT_JSON_UNPARSABLE: OPERATION ABORTED");
             return reply.toJSONString();
         }
-        
-        try{
+
+        try {
+            DBMongo m = new DBMongo();
+            String federationUser = m.getTenantName("token", lic.getToken());
+            Integer id = m.getfedsdnFednetID(federationUser);
+            OrchestrationManager om = new OrchestrationManager();
+            String result = om.makeLink(id.longValue(), federationUser, null, m);// null will be substituted with an ArrayList<JSONObject> netTables that correspond at lic.getNetwork_tables()
+            if (!result.equals("ok")) {
+                reply.put("returncode", 1);
+                reply.put("errormesg", "Generic Exception: OPERATION ABORTED");
+                return reply.toJSONString();
+            }
+
             //operation needed to complete link requests!
             ////LA FUNZIONE DELL'ORCHESTRATOR DOVRA': ritrovare la lista di tutte le cloud in federazione per il tenant
             ////Per ogni Cloud:
@@ -86,9 +98,8 @@ public class LinksResource {
             ////// il FA quindi dovranno essere rielaborate prima di rimandarle al FA
             //////)]
             //////>>a questo punto il FEDSDN attraverso l'adapter invoca questo WebService
-        }
-        catch(Exception eg){
-            reply.put("returncode", 1); 
+        } catch (Exception eg) {
+            reply.put("returncode", 1);
             reply.put("errormesg", "Generic Exception: OPERATION ABORTED");
             return reply.toJSONString();
         }

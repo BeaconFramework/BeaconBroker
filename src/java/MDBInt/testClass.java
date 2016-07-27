@@ -20,7 +20,8 @@ public class testClass {
          try{
              JSONObject l= new JSONObject(tmp);
              FederationUser fu=new FederationUser(l.toString());
-             m.insertUser("beacon", "credentials", fu.toString());
+            // m.insertUser("beacon", "credentials", fu.toString());
+             
          }
          catch(Exception e){}
          
