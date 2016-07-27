@@ -436,7 +436,6 @@ public class OrchestrationManager {
                 JSONObject intmp = (JSONObject) ja.getJSONObject(i);
                 String siteid = (String) intmp.get("site_id");
                 JSONObject sitejson = new JSONObject(sClient.getSiteInfoes(fedsdnURL, new Long(siteid).longValue()).readEntity(String.class));
-                //inserirlo nel Fednetcontainer attraverso la funzione privata this.prepareNetTables4completeSharing(String, String, HashMap<String, ArrayList<ArrayList<OpenstackInfoContainer>>>, m);
                 ArrayList<ArrayList<OpenstackInfoContainer>> artmp = new ArrayList<ArrayList<OpenstackInfoContainer>>();
                 JSONObject jj = new JSONObject(m.getFederatedCredential(federationTenant, m.getTenantToken("federationTenant", federationTenant), sitejson.getString("name")));
                 JSONObject j = new JSONObject(m.getDatacenter(federationTenant, sitejson.getString("name")));

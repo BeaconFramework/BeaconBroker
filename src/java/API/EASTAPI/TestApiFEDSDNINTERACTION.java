@@ -32,9 +32,58 @@ public class TestApiFEDSDNINTERACTION {
             EastBrRESTClient ea= new EastBrRESTClient("root","fedsdn");
             String fedsdnURL="http://10.9.0.14:6121";
             String user="root",password="fedsdn";
+            
+            
+            //SITE TESTING SECTION
+            Site s=new Site(user,password);
+            try {
+                JSONArray ja=new JSONArray(s.getAllSite(fedsdnURL).readEntity(String.class));
+                System.out.println("\n\n\n\n\nGETALLSTITE"+ja.toString()+"\n\n\n\n"+((JSONObject)ja.get(1)).toString());        //TESTED
+                String sitename="MyFirstSite2";
+                //System.out.println(s.getSiteInfoes(fedsdnURL, sitename).readEntity(String.class));        //TESTED
+                long siteid=2;
+                //System.out.println(s.getSiteInfoes(fedsdnURL, siteid).readEntity(String.class));        //TESTED
+                String cmp_endpoint="http://opennebula.cloud.org:2633/RPC2";
+                String type="openstack";
+                sitename="MyFirstSiteTEst";
+                //System.out.println("CREATE\n\n"+s.createSite(sitename, cmp_endpoint, type, fedsdnURL).readEntity(String.class));//CREATE        //TESTED
+                siteid=3;
+                //System.out.println(s.updateSite(siteid, sitename, cmp_endpoint, type, fedsdnURL).readEntity(String.class));//UPDATE        //TESTED
+                //System.out.println(s.delSite(fedsdnURL, siteid).readEntity(String.class));//DELETE        //TESTED
+            } catch (WSException ex) {
+                Logger.getLogger(TestApiFEDSDNINTERACTION.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            //NETSEGMENT SECTION
+            NetworkSegment nt=new NetworkSegment(user,password);
+            try {
+                //System.out.println(t.getAllNetSegm(fedsdnURL,1,4).readEntity(String.class));        //TESTED
+                String tenantname="MyFirstSite2";
+                //System.out.println(t.getInofesNetSegm(fedsdnURL,1,4,2).readEntity(String.class));
+                long tenantid=1;
+                /*System.out.println(t.getInofesTenant(fedsdnURL, tenantid).readEntity(String.class));    
+                String cmp_endpoint="http://opennebula.cloud.org:2633/RPC2";
+                String type="openstack";
+                tenantname="MyFirstSiteTEst";*/
+                JSONObject j=new JSONObject("{\"name\" : \"prova\", \"fa_endpoint\" : \"http://10.0.0.1:4054\",\"network_address\" : \"10.0.0.1\",\"network_mask\" : \"255.255.255.0\", \"size\": \"255\", \"vlan_id\": \"908\", \"cmp_net_id\": \"3\" }");
+
+                /*JSONObject j=new JSONObject("{\"name\" : \"root\"," +
+                    " \"password\": \"fedsdn\"," +
+                    " \"type\": \"admin\"," +
+                    " \"valid_sites\": [{\"site_id\" : \"3\",\"user_id_in_site\": \"1\", \"credentials\": \"oneadmin:opennebula\"}]}");*/
+                
+                System.out.println(nt.createNetSeg(j, fedsdnURL,1,4).readEntity(String.class));//CREATE    
+                /*tenantid=3;
+                System.out.println(t.updateTen(j, fedsdnURL, tenantid).readEntity(String.class));//UPDATE     
+                System.out.println(t.delTen(fedsdnURL, tenantid).readEntity(String.class));//DELETE   */  
+            } 
+            catch (WSException ex) {
+                Logger.getLogger(TestApiFEDSDNINTERACTION.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            catch (Exception e){
+                Logger.getLogger(TestApiFEDSDNINTERACTION.class.getName()).log(Level.SEVERE, null, e);
+            }
 //FEDNET TESTING SECTION
             Fednet f=new Fednet(user,password);
-            
             try {
                 System.out.println(f.getAllNet(fedsdnURL).readEntity(String.class));   //TESTED
                 String fednetname="MyFirstFN";
@@ -54,25 +103,7 @@ public class TestApiFEDSDNINTERACTION {
             } catch (WSException ex) {
                 Logger.getLogger(TestApiFEDSDNINTERACTION.class.getName()).log(Level.SEVERE, null, ex);
             }
-//SITE TESTING SECTION
-            Site s=new Site(user,password);
-            try {
-                JSONArray ja=new JSONArray(s.getAllSite(fedsdnURL).readEntity(String.class));
-                System.out.println("\n\n\n\n\nGETALLSTITE"+ja.toString()+"\n\n\n\n"+((JSONObject)ja.get(1)).toString());        //TESTED
-                String sitename="MyFirstSite2";
-                //System.out.println(s.getSiteInfoes(fedsdnURL, sitename).readEntity(String.class));        //TESTED
-                long siteid=2;
-                //System.out.println(s.getSiteInfoes(fedsdnURL, siteid).readEntity(String.class));        //TESTED
-                String cmp_endpoint="http://opennebula.cloud.org:2633/RPC2";
-                String type="openstack";
-                sitename="MyFirstSiteTEst";
-                System.out.println("CREATE\n\n"+s.createSite(sitename, cmp_endpoint, type, fedsdnURL).readEntity(String.class));//CREATE        //TESTED
-                siteid=3;
-                //System.out.println(s.updateSite(siteid, sitename, cmp_endpoint, type, fedsdnURL).readEntity(String.class));//UPDATE        //TESTED
-                //System.out.println(s.delSite(fedsdnURL, siteid).readEntity(String.class));//DELETE        //TESTED
-            } catch (WSException ex) {
-                Logger.getLogger(TestApiFEDSDNINTERACTION.class.getName()).log(Level.SEVERE, null, ex);
-            }
+
 //TENANT TESTING SECTION            
             Tenant t=new Tenant(user,password);
             try {
@@ -99,6 +130,11 @@ public class TestApiFEDSDNINTERACTION {
             catch (Exception e){
                 Logger.getLogger(TestApiFEDSDNINTERACTION.class.getName()).log(Level.SEVERE, null, e);
             }
+            
+            
+            
+            
+            
             /*
             
             Response makeSimpleRequest = ea.makeSimpleRequest("http://10.9.0.14:6121/fednet/site", null, "get");

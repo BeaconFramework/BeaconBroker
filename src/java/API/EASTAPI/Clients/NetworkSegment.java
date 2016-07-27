@@ -90,10 +90,12 @@ public class NetworkSegment extends EastBrRESTClient{
     public Response createNetSeg(JSONObject params,String baseFEDSDNURL,long fedId,long siteId) throws WSException, JSONException {
         body=params;
         Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/"+fedId+"/"+siteId+"/netsegment", this.constructBody(params), "post");
+        
         try{
                 this.checkResponse(r);//as answer we expect a status code 200
             }
             catch(WSException wse){
+                System.out.println(r.readEntity(String.class));
                 LOGGER.error("Exception occurred in createTenantFA method, the web service has answer with bad status!\n"+wse.getMessage());
                 throw wse;
             }

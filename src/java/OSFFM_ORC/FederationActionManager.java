@@ -541,7 +541,8 @@ public class FederationActionManager {
         
         try {
             Response r=nClient.createNetSeg(jo, fedsdnURL, fedTenantIDFEDSDN, siteIdFEDSDN);
-            m.insertfedsdnNetSeg(r.readEntity(String.class));
+            m.insertfedsdnNetSeg(r.readEntity(String.class));//Bsogna verificare realmente cosa viene restituito
+            
         } catch (WSException ex) {
             LOGGER.error("Exception is occurred in addSiteOnFedSDN for NetSegment: " + name + " on site with ID:"+siteIdFEDSDN+" for the tenant: "+fedTenantIDFEDSDN+ "\n" + ex);
             return false;
@@ -592,7 +593,7 @@ public class FederationActionManager {
     private boolean addSiteOnFedSDN(String siteName,Site sClient,String fedsdnURL,DBMongo m)throws JSONException{
         String type = (new JSONObject(m.getfedsdnSite(siteName))).getString("type");
         try {
-            String cmp_endpoint=m.getInfo_Endpoint("entity", "osffm");
+            String cmp_endpoint=m.getInfo_Endpoint("entity", "osffm");//sicuri?
             Response r = sClient.createSite(siteName, cmp_endpoint, type, fedsdnURL);
             m.insertfedsdnSite(r.readEntity(String.class));
         } catch (WSException ex) {

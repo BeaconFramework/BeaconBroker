@@ -106,6 +106,9 @@ public class NetworksegmentResource {
             //verrà restituito l'OSFFM endpoint
             //ricavare dal simple IDM gli elementi che mi mancano ovvero:
             //String endpoint, String tenant, String user, String password, String region
+            
+            
+            //funzione che verifica l'esistenza del netsegment
             sidm=new SimpleIDM(); //>>>BEACON: VERIFY THIS POINT
             String dbName=sidm.retrieve_TenantDB("federationTenant",OSF_tenant );
             
