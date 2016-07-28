@@ -218,6 +218,25 @@ public class NeutronTest {
         return null;
     }
     
+    /**
+     * 
+     * @param id
+     * @return 
+     * @author gtricomi
+     */
+    public Network getNetworkFromId(String id) {
+
+        NetworkApi networkApi = neutronApi.getNetworkApi(this.regionName);
+        Networks it2 = networkApi.list(new PaginationOptions());
+        Iterator iter = it2.iterator();
+        while(iter.hasNext()) {
+            Network n=(Network)iter.next();
+            if(n.getName().equalsIgnoreCase(id))
+                return n;
+        }
+        return null;
+    }
+    
   public void deleteNetworks(){//ok
      
      NetworkApi networkApi=neutronApi.getNetworkApi("RegionOne");

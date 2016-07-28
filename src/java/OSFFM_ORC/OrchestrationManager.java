@@ -586,8 +586,7 @@ public class OrchestrationManager {
      * @param user
      * @param psw
      * @return
-     * 
-     * @author gtricomi
+     * @author gtricomi & agalletta
      */
     public boolean stackInstantiate(String template, OpenstackInfoContainer credential, DBMongo m, String templateId) {
         try {
@@ -598,11 +597,8 @@ public class OrchestrationManager {
             //System.out.println(" ccccc");
             RMIServerInterface impl = (RMIServerInterface) myRegistry.lookup("myMessage");
 
-          //  System.out.println("aaax"+template);
-            // result=impl.stackInstantiate(template, "idid", "http://172.17.1.217:5000/v2.0", "admin", "beacon", "password", "RegionOne", "UME");
-            //System.out.println(credential.getEndpoint());
             result = impl.stackInstantiate(template, templateId, credential.getEndpoint(), credential.getUser(), credential.getTenant(), credential.getPassword(), credential.getRegion(), credential.getIdCloud());
-            System.out.println(credential.getEndpoint());
+            //System.out.println(credential.getEndpoint());
 
             return result;
 
@@ -614,7 +610,7 @@ public class OrchestrationManager {
     }
     
     /**
-     * 
+     * This function is used to shut off the stack instantiated via deploy action when they are twins VMs of the active ones.
      * @param stackName
      * @param endpoint
      * @param tenant
@@ -624,7 +620,6 @@ public class OrchestrationManager {
      * @param first
      * @param m
      * @return
-     * 
      * @author gtricomi
      */
     public HashMap<String, ArrayList<Port>> sendShutSignalStack4DeployAction(String stackName, OpenstackInfoContainer credential,
@@ -733,7 +728,8 @@ public class OrchestrationManager {
     
     //<editor-fold defaultstate="collapsed" desc="Networks Management function">
     /**
-     * 
+     * This function creates private network environment on target cloud.
+     * For future usage.
      * @param fu
      * @param OSF_network_segment_id
      * @param params
@@ -746,6 +742,14 @@ public class OrchestrationManager {
         return fam.networkSegmentAdd(fu, OSF_network_segment_id,OSF_cloud,params,federationTenant);
     }
     
+    /**
+     * Function called to create the complete nettable of a tenant networks that will be shared to FA.
+     * @param tenantname
+     * @param template
+     * @param tmpMapcred
+     * @param m 
+     * @author gtricomi
+     */
     public void prepareNetTables4completeSharing(
             String tenantname,
             String template,
@@ -754,7 +758,7 @@ public class OrchestrationManager {
     ){
         //1 Retrieve NetMap version from Mongo for each DC and create LinkedHashMap for FederationActionManager
         FednetsLink mapcontainer=this.retrieveTablesStored(tenantname,tmpMapcred,m);
-        //2 create new NetTables throught ?????? >>>>>>>>this action is forwarded to FederactionActionManager
+        //2 create new NetTables this action is forwarded to FederactionActionManager
         FederationActionManager fam=new FederationActionManager();
         if(template.equals(""))
             fam.prepareNetTables4completeSharing( tenantname,mapcontainer,tmpMapcred,m,false);
@@ -829,7 +833,3 @@ public class OrchestrationManager {
     
 }
 
-
-/*
-
-*/
