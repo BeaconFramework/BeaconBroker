@@ -17,11 +17,14 @@ package API.EASTAPI;
 
 import JClouds_Adapter.KeystoneTest;
 import JClouds_Adapter.OpenstackInfoContainer;
+import MDBInt.DBMongo;
 import MDBInt.FederatedCloud;
 import MDBInt.FederatedUser;
 import MDBInt.FederationUser;
+import MDBInt.MDBIException;
 import OSFFMIDM.SimpleIDM;
 import java.util.HashMap;
+import java.util.logging.Level;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -31,7 +34,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 import org.apache.log4j.Logger;
-import org.json.simple.JSONObject;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 /**
@@ -62,7 +66,7 @@ public class UsersResource {
     @Path("/validate_user")
     @Consumes("application/json")
     @Produces("application/json")
-    public String validate_user(String content) {
+    public String validate_user(String content) throws JSONException{
         //VERIFICARE L'APPROCCIO NELL'INTERAZIONE CON IL FEDSDN
         JSONObject reply=new JSONObject();
         JSONParser parser= new JSONParser();
@@ -75,41 +79,49 @@ public class UsersResource {
         String region="RegionOne";
         try 
         {
-            input=(JSONObject) parser.parse(content);
-            LOGGER.error("INPUT: "+input.toString());
-            username=((String)input.get("username")).split("@")[0];
-            tenant=((String)input.get("username")).split("@")[1];
-            cloud=((String)input.get("username")).split("@")[2]; //FORSE NON DEVO USARE QST...
+            input=new JSONObject(content);
+            //LOGGER.error("INPUT: "+input.toString());
+            username=((String)input.get("username")).split("@@")[1];
+            tenant=((String)input.get("username")).split("@@")[0];
+            //cloud=((String)input.get("username")).split("@")[2]; //FORSE NON DEVO USARE QST...
             pass=(String)input.get("password"); // NOT USED FOR THE MOMENT
+            cmp_endpoint=input.getString("cmp_endpoint");
             //region=(String)input.get("region"); NOT USED FOR THE MOMENT
         }
-        catch(ParseException pe)
+        catch(JSONException pe)
         {
             //something TODO
             LOGGER.error("INPUT_JSON_UNPARSABLE: OPERATION ABORTED"+pe.getLocalizedMessage());
             reply.put("returncode", 1); 
             reply.put("errormesg", "INPUT_JSON_UNPARSABLE: OPERATION ABORTED");
-            reply.put("token",null);
-            reply.put("tenant_id", null);
-            return reply.toJSONString();
+            reply.put("token","");
+            reply.put("tenant_id", "");
+            return reply.toString();
         }catch(Exception e){
             e.printStackTrace();
             reply.put("returncode", 1); 
             reply.put("errormesg", "INPUT_GEN_EXCEPTION: OPERATION ABORTED!"+e.getMessage());
-            reply.put("token",null);
-            reply.put("tenant_id", null);
-            return reply.toJSONString();
+            reply.put("token","");
+            reply.put("tenant_id", "");
+            return reply.toString();
         }
         sidm=new SimpleIDM(); //>>>BEACON: VERIFY THIS POINT
         String dbName=sidm.retrieve_TenantDB("federationTenant",tenant );
-        //sidm.setDbName(dbname);  >>>BEACON: FOR THE MOMENT OUR TESTING DB IS CALLED beacon
-        sidm.setDbName("beacon");
-        cmp_endpoint=sidm.getcmp_endpointFederated(tenant, cloud);
+        sidm.setDbName(dbName);  //>>>BEACON: FOR THE MOMENT OUR TESTING DB IS CALLED beacon
+        cloud=sidm.getCloudID(username, tenant, cmp_endpoint);
         // add check for cloud endpoint
         FederatedUser fu= sidm.retr_infoes_fromfedsdn(tenant, cloud);
-        OpenstackInfoContainer oic=new OpenstackInfoContainer(cloud,cmp_endpoint,tenant,fu.getUser(),fu.getPassword(),fu.getRegion());
+        //OpenstackInfoContainer oic=new OpenstackInfoContainer(cloud,cmp_endpoint,tenant,fu.getUser(),fu.getPassword(),fu.getRegion());
         //costruzione oggetto Openstackinfocontainer, e verifica delle credenziali attraverso il modulo di keystone 
         //fornito da jclouds
+        if(!fu.getPassword().equals(pass.toString())){
+            LOGGER.debug("User not Valid!");
+            reply.put("returncode", 1); 
+            reply.put("errormesg", "Password is not correct!");
+            reply.put("token","");
+            reply.put("tenant_id", "");
+            return reply.toString();
+        }
         KeystoneTest key=new KeystoneTest(tenant,fu.getUser(),fu.getPassword(),cmp_endpoint);
         HashMap hm=key.getToken(tenant, fu.getUser(), fu.getPassword());
         String token=(String)hm.get("ID");
@@ -122,25 +134,25 @@ public class UsersResource {
             LOGGER.debug("User not Valid!");
             reply.put("returncode", 1); 
             reply.put("errormesg", "User not Valid!");
-            reply.put("token",null);
-            reply.put("tenant_id", null);
-            return reply.toJSONString();
+            reply.put("token","");
+            reply.put("tenant_id", "");
+            return reply.toString();
         }
         else if(token==null)
         {
             LOGGER.debug("It is impossible retrieve token");
             reply.put("returncode", 1); 
             reply.put("errormesg", "It is impossible retrieve token: OPERATION ABORTED");
-            reply.put("token",null);
-            reply.put("tenant_id", null);
-            return reply.toJSONString();
+            reply.put("token","");
+            reply.put("tenant_id", "");
+            return reply.toString();
         }
         String tenant_id=key.getTenantId(tenant);
         reply.put("returncode", 0); 
         reply.put("errormesg", "None");
         reply.put("token",token);
         reply.put("tenant_id", tenant_id);
-        return reply.toJSONString();
+        return reply.toString();
     }
     
     /**

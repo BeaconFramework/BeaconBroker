@@ -37,7 +37,7 @@ import MDBInt.DBMongo;
  *
  * @author gtricomi
  */
-@Path("/fednet/eastBr/FA_Management/")
+@Path("/fednet/eastBr/FA_Management")
 public class LinksResource {
 
     @Context
@@ -88,7 +88,7 @@ public class LinksResource {
                 reply.put("errormesg", "Generic Exception: OPERATION ABORTED");
                 return reply.toJSONString();
             }
-
+            
             //operation needed to complete link requests!
             ////LA FUNZIONE DELL'ORCHESTRATOR DOVRA': ritrovare la lista di tutte le cloud in federazione per il tenant
             ////Per ogni Cloud:

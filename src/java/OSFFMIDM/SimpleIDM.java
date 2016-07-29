@@ -309,7 +309,7 @@ public class SimpleIDM {
      * @return 
      * @author gtricomi
      */
-    private String getCloudID(
+    public String getCloudID(
             String username,
             String tenant,
             String cmp_endpoint){
