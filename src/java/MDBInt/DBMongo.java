@@ -145,8 +145,6 @@ public class DBMongo {
         }
         Element params;
         try {
-            LOGGER.error("workdir"+System.getProperty("user.dir"));
-            LOGGER.error("£$$$\n"+file);
             parser = new ParserXML(new File(file));
             params = parser.getRootElement().getChild("pluginParams");
             dbName = params.getChildText("dbName");
@@ -154,7 +152,7 @@ public class DBMongo {
             password = params.getChildText("password");
             //serverList = params.getChild("serversList");
             this.mdbIp = params.getChildText("serverip");
-            LOGGER.error("££££££££££$$$$$$$$$$$$$$$"+mdbIp+"\n"+file);
+            
 
         } 
         catch (Exception ex) {
@@ -586,7 +584,7 @@ public class DBMongo {
     public void connectLocale(String ip) {
 
         try {
-            LOGGER.error("£££££££££££££££££££££££££££££££££££££££££££££££££££££££££"+ip);
+            
             mongoClient = new MongoClient(ip);
         } catch (Exception ex) {
             ex.printStackTrace();
