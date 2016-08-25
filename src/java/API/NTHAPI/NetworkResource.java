@@ -23,7 +23,7 @@ import javax.ws.rs.DELETE;
 
 /**
  * REST Web Service
- *
+ * TO BE REVIEWED
  * @author Giuseppe Tricomi
  */
 public class NetworkResource {

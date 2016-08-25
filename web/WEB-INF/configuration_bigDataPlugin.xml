@@ -6,6 +6,7 @@
     <dbName>admin</dbName>
     <user>SYSTEM</user>
     <password>manager</password>
+    <serverip>172.17.2.32</serverip>
     <serversList>
 	<server>
            <serverUrl>ing-clever-07</serverUrl>

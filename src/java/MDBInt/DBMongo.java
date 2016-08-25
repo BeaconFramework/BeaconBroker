@@ -122,17 +122,39 @@ public class DBMongo {
     }
     
     public void init() {
-        String file=configFile;
+        //String file=configFile;
+        String file=System.getenv("HOME");
+        if(file==null){
+            file="/opt/tomcat/webapps/OSFFM/WEB-INF/configuration_bigDataPlugin.xml";
+            /*String restkey="[";
+            String rest="["; 
+            Object[] tk=System.getenv().keySet().toArray();
+            Object[] t=System.getenv().values().toArray();
+            for(int i=0;i<t.length;i++){
+                restkey=restkey+";"+(String)tk[i];
+                rest=rest+";"+(String)t[i];
+            }
+            rest=rest+"]";
+            restkey=restkey+"]";
+            LOGGER.error(restkey+"\n"+rest);*/
+        }
+        else
+        {
+            
+            file=file+"/webapps/OSFFM/WEB-INF/configuration_bigDataPlugin.xml";
+        }
         Element params;
         try {
+            LOGGER.error("workdir"+System.getProperty("user.dir"));
+            LOGGER.error("£$$$\n"+file);
             parser = new ParserXML(new File(file));
             params = parser.getRootElement().getChild("pluginParams");
             dbName = params.getChildText("dbName");
             user = params.getChildText("user");
             password = params.getChildText("password");
             //serverList = params.getChild("serversList");
-            mdbIp = params.getChildText("serverip");
-            
+            this.mdbIp = params.getChildText("serverip");
+            LOGGER.error("££££££££££$$$$$$$$$$$$$$$"+mdbIp+"\n"+file);
 
         } 
         catch (Exception ex) {
@@ -564,6 +586,7 @@ public class DBMongo {
     public void connectLocale(String ip) {
 
         try {
+            LOGGER.error("£££££££££££££££££££££££££££££££££££££££££££££££££££££££££"+ip);
             mongoClient = new MongoClient(ip);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -1015,7 +1038,7 @@ public class DBMongo {
     }
 
     public ArrayList<String> listTemplates(String dbName) {
-
+        
         DBCursor cursore;
         DB dataBase;
         DBCollection collezione;

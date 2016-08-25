@@ -49,10 +49,12 @@ public class NetworksResource {
      * Creates a new instance of NetworksResource
      */
     public NetworksResource() {
-        this.init("cfg/Configuration_NTHBR_WS.xml");
+        String file=System.getenv("HOME");
+        this.init(file+"/webapps/OSFFM/WEB-INF/Configuration_NTHBR_WS.xml");
     }
          
     public void init(String file) {
+        
         Element params;
         try {
             parserXML = new ParserXML(new File(file));
@@ -60,6 +62,7 @@ public class NetworksResource {
             fedSDNTarget = params.getChildText("fedSDNTarget");
         } //init();
         catch (Exception ex) {
+            LOGGER.error("$$$$$$$$$$$$$"+ex.getMessage());
             ex.printStackTrace();
         }
     }

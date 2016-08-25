@@ -71,7 +71,7 @@ public class OrchestrationManager {
     //<editor-fold defaultstate="collapsed" desc="Variable Definition Section">
     private String ip="172.17.3.142";//default value for internal testing
     private int port=1099;//default value for internal testing
-    private String fileConf="../webapps/OSFFM/WEB-INF/configuration_Orchestrator.xml";
+    private String fileConf="/webapps/OSFFM/WEB-INF/configuration_Orchestrator.xml";//this path starts from the tomcat home
     static HashMap<String,ManifestManager> mapManifestThr=new HashMap<String,ManifestManager>();//mappa che mantiene riferimenti manifest- manifest manager
     HashMap<String,ArrayList> globalTOfragmentsManif;//BEACON>>> this variable need to be used in splitting alghoritm
     static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(OrchestrationManager.class);
@@ -85,7 +85,8 @@ public class OrchestrationManager {
     public void init(){
         Element params;
         try {
-            ParserXML parser = new ParserXML(new File(fileConf));
+            String file=System.getenv("HOME");
+            ParserXML parser = new ParserXML(new File(file+fileConf));
             params = parser.getRootElement().getChild("pluginParams");
             ip = params.getChildText("ip");
             port = Integer.parseInt(params.getChildText("port"));

@@ -55,8 +55,8 @@ public class SitesResource {
      * Creates a new instance of SitesResource
      */
     public SitesResource() {
-        //LOGGER.error("test");
-        this.init("../webapps/OSFFM/WEB-INF/Configuration_NTHBR_WS.xml");
+        String file=System.getenv("HOME");
+        this.init(file+"/webapps/OSFFM/WEB-INF/Configuration_NTHBR_WS.xml");
         
         
     }
