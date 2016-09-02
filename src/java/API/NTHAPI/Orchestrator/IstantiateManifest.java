@@ -93,13 +93,11 @@ public class IstantiateManifest {
     ) {
         //BEACON>>> INSIDE THIS FUNCTION WE NEED TO ADD SOME AUTHENTICATION STUFF, FOR THE MOMENT IS A 
         //SIMPLE UNAUTHENTICATING OPERATION
-        String templatename="";
-        //templatename="cc228189-0f2f-4aa4-8336-88db88e477d2";
-        String home=System.getProperty("java.home");
-        String fs=System.getProperty("file.separator");
+        String templatename="";//templatename="cc228189-0f2f-4aa4-8336-88db88e477d2";
+        //String home=System.getProperty("java.home");      //Removed, unused
+        //String fs=System.getProperty("file.separator");   //Removed, unused
         //String prepath=home+fs+"subrepoTemplate";
         String prepath="./subrepoTemplate/"+tenant;
-        //System.out.println("SI PARTE");
         JSONObject input=new JSONObject(),reply=new JSONObject();
         JSONParser jp=new JSONParser();
         try{
@@ -136,11 +134,10 @@ public class IstantiateManifest {
                 return reply.toJSONString();
             }
         }
-        //BEACON>>> There is another om.manifestistantiation create for dashboard but it isn't complete, for the moment
+        //BEACON>>> There is another om.manifestistantiation created for dashboard but it isn't complete, for the moment
         String manifestName=templatename;
         System.out.println("The Manifest "+manifestName+" analysis process started....");
         om.manifestinstatiation(manifestName,jo,tenant);
-        //System.out.println("");
         HashMap<String,ArrayList<ArrayList<String>>> tmpMap=om.managementgeoPolygon(manifestName, this.m, tenant);
         //retrieve from MongoDb federation password for federation user
         if(tmpMap==null)
@@ -165,12 +162,12 @@ public class IstantiateManifest {
         //+tenant+rootName+"_"+(String)obj[index]
         
         Set<String> setStack = om.getSGList(manifestName);
+        //BEACON>>> this step it will be substitude by a function that analize the manifest and retireve the ServiceManagementGroups 
+            //stored inside global manifest
         for (String stack : setStack) {
 
-            ///String stack = "federation2";//BEACON>>> this step it will be substitude by a function that analize the manifest and retireve the ServiceManagementGroups 
-            //stored inside global manifest
+            ///String stack = "federation2";
             FileFunction ff = new FileFunction();
-            //System.out.println("2£$");
             String template = ff.readFromFile(prepath + "/" + tenant + manifestName + "_" + stack);
             ArrayList<ArrayList<HashMap<String, ArrayList<Port>>>> arMapRes =om.deployManifest(template, stack, tmpMapcred, tmpMap, this.m);
             //BEACON:>>> It is needed decide what do with the info returned from om.deployManifest inside strucure arMapRes
@@ -181,7 +178,7 @@ public class IstantiateManifest {
             File currentFile = new File(f.getPath(),s);
             currentFile.delete();
         }
-        f.delete();//in fine 
+        f.delete();//at the end
         reply.put("returncode", 0);
         reply.put("errormesg", "");
         return reply.toJSONString();

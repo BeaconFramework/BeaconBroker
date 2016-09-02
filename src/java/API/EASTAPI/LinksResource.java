@@ -67,7 +67,7 @@ public class LinksResource {
         {
             input=(JSONObject) parser.parse(content);
             lic.setType((String)input.get("type"));
-            lic.setToken((String) input.get("token"));//utilizzerò questo elemento per identificare fedten
+            lic.setToken((String) input.get("token"));//utilizzerò questo elemento per identificare federation tenant
             lic.setCommand((String) input.get("Command"));
             lic.setFa_endpoints(((JSONArray) input.get("fa_endpoints")));
             lic.setNetwork_tables(((JSONArray) input.get("network_table")));//not used for this moment the tables are recalculated

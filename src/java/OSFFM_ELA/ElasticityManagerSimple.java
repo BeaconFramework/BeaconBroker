@@ -25,8 +25,12 @@ import org.apache.log4j.Logger;
  */
 public class ElasticityManagerSimple {
      static final Logger LOGGER = Logger.getLogger(ElasticityManagerSimple.class);
+     DBMongo m;
     public ElasticityManagerSimple() {
-        
+        this.m=new DBMongo();
+        this.m.init();
+       // this.m.init("../webapps/OSFFM/WEB-INF/Configuration_bit");
+        this.m.connectLocale(this.m.getMdbIp());
     }
     
     /**
@@ -37,5 +41,7 @@ public class ElasticityManagerSimple {
         
         om.sufferingProcedure(vm,tenant,userFederation,pswFederation,m,element,region);
     }
+    
+    
     
 }

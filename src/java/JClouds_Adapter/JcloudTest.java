@@ -41,9 +41,9 @@ public class JcloudTest {
         
         //       KeystoneTest key=new KeystoneTest(mongo);
 
-        //KeystoneTest key=new KeystoneTest("demo","admin","password","http://172.17.1.217:5000/v2.0");
+        KeystoneTest key=new KeystoneTest("admin","admin","0penstack","http://212.189.207.32.17.1.32:5000/v2.0");
      //   System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-       // key.autenticate("demo", "admin", "password");
+        key.autenticate("admin", "admin", "0penstack");
 //key.serviceGet("test");
    //     key.servicetList();
     //    key.listRole();
@@ -51,7 +51,7 @@ public class JcloudTest {
    //   key.createUser(t);
     //  key.listUser();
    //   key.listRole();
-   //     key.listTenant();
+        key.listTenant();
    
              //   GlanceTest glance=new GlanceTest();
 
@@ -84,7 +84,7 @@ public class JcloudTest {
         
        
         
-     NeutronTest neutron = new NeutronTest("http://172.17.1.217:35357/v2.0","demo","admin","password","RegionOne");
+     //NeutronTest neutron = new NeutronTest("http://172.17.1.217:35357/v2.0","demo","admin","password","RegionOne");
      // neutron.listNetworks();
 //neutron.listRegions();
         //neutron.createRouter("prova","RegionOne","f225b4d8-9da8-422f-a637-9427a4f64a7a","62da5ef7-87ed-4e49-8cd7-1bad78257080");
@@ -97,7 +97,7 @@ public class JcloudTest {
        
        //neutron.listNetworks();
      
-     neutron.listSubnet();
+  /*   neutron.listSubnet();
      Networks ns=neutron.listNetworks();
     Iterator<Network> itNet = ns.iterator();
     while(itNet.hasNext()){
@@ -120,7 +120,7 @@ public class JcloudTest {
        //neutron.createFloading();
         //NovaTest nova=new NovaTest();
         //nova.test();
-             
+             */
             
     }
     
