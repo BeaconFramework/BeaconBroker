@@ -939,7 +939,7 @@ public class DBMongo {
 
             System.out.println(query);
             cursore = collection.find(query);
-
+            
         }
         if (cursore != null) {
             it = cursore.iterator();
@@ -950,6 +950,47 @@ public class DBMongo {
         }
         return mates;
 
+    }
+    
+    public String findResourceMate(String dbName, String uuid,String dcid) {
+
+        BasicDBObject first = new BasicDBObject();
+        first.put("phisicalResourceId", uuid);
+
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("runTimeInfo");
+        DBObject obj = null;
+        BasicDBObject query = new BasicDBObject();
+        DBCursor cursore = null;
+        //ArrayList<String> mates = new ArrayList();
+        Iterator<DBObject> it;
+
+        obj = collection.findOne(first);
+
+        if (obj != null) {
+            query.put("localResourceName", obj.get("localResourceName"));
+            query.put("stackName", obj.get("stackName"));
+            query.put("resourceName", obj.get("resourceName"));
+            query.put("type", obj.get("type"));
+            query.put("state", false);
+            query.put("idCloud",dcid);
+
+            //System.out.println(query);
+            obj = collection.findOne(query);
+            if(obj!=null)
+                return (String)obj.get("localResourceName");
+            else
+                return null;
+        }
+        /*if (cursore != null) {
+            it = cursore.iterator();
+            while (it.hasNext()) {
+                mates.add(it.next().toString());
+
+            }
+        }
+        return mates;*/
+        return null;
     }
 
     public boolean updateStateRunTimeInfo(String dbName, String phisicalResourceId, boolean newState) {

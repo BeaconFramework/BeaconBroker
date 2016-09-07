@@ -578,7 +578,87 @@ public class OrchestrationManager {
         while(it_tmpar.hasNext())
             LOGGER.debug((String)it_tmpar.next());
     }
-     
+    
+    /**
+     * Function invocated when an elasticity action have to be started; this function 
+     * shutdown the VM with some problem and start one of the Twin VM of that.
+     * This function could be improved with a better twin VM search algorithm, and to do this is needed 
+     * modify this: "m.findResourceMate".
+     * @param vm
+     * @param tenant
+     * @param userFederation
+     * @param pswFederation
+     * @param m
+     * @param element
+     * @param region
+     * @author gtricomi
+     */
+    public void migrationProcedure(String vm,String tenant,String userFederation,String vmTwin,String pswFederation,DBMongo m,String region){
+        //spegnimento vm
+        ////recupero runtimeinfo
+        String runTime=m.getRunTimeInfo(tenant, vm);
+        String idClo="",endpoint="",cred="", twinUUID="";
+        OpenstackInfoContainer credential=null,credential2=null;
+        JSONObject credJobj=null,runJobj=null;
+        try{
+            runJobj=new JSONObject(runTime);
+            ////recupero idCloud
+            idClo=runJobj.getString("idCloud");
+            ////recupero le credenziali passando da quelle di federazione
+            cred=m.getFederatedCredential(tenant, userFederation, pswFederation,idClo);
+            credJobj=new JSONObject(cred);
+            try {
+                endpoint=(new JSONObject(m.getDatacenter(tenant, idClo))).getString("idmEndpoint");
+            } catch (MDBIException ex) {
+                Logger.getLogger(OrchestrationManager.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            credential=new OpenstackInfoContainer(idClo,endpoint,tenant,credJobj.getString("federatedUser"),credJobj.getString("federatedPassword"),region);
+        }
+        catch(JSONException je){
+             LOGGER.error("An error is occourred in JSON crederntial manipulation.");
+        }
+        ////spengo la vm
+        NovaTest nova=new NovaTest(credential.getEndpoint(),credential.getTenant(), credential.getUser(),credential.getPassword(),credential.getRegion());
+        nova.stopVm(vm);
+        // identificazione nuova vm
+        try{
+            twinUUID=vmTwin;
+            ////recupero runtimeinfo
+            runTime=m.getRunTimeInfo(tenant, twinUUID);
+            runJobj=new JSONObject(runTime);
+            ////recupero idCloud
+            idClo=runJobj.getString("idCloud");
+            ////recupero le credenziali passando da quelle di federazione
+            cred=m.getFederatedCredential(tenant, userFederation, pswFederation,idClo);
+            credJobj=new JSONObject(cred);
+            try {
+                endpoint=(new JSONObject(m.getDatacenter(tenant, idClo))).getString("idmEndpoint");
+            } catch (MDBIException ex) {
+                Logger.getLogger(OrchestrationManager.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            credential2=new OpenstackInfoContainer(idClo,endpoint,tenant,credJobj.getString("federatedUser"),credJobj.getString("federatedPassword"),region);
+        }
+        catch(JSONException je){
+             LOGGER.error("An error is occourred in JSON crederntial manipulation.");
+        }
+        //accensione vm idenitificata
+        nova=new NovaTest(credential2.getEndpoint(),credential2.getTenant(), credential2.getUser(),credential2.getPassword(),credential2.getRegion());
+        nova.startVm(twinUUID);
+        //restituzione dettagli vm spenta- rete, vm accesa- rete
+        LOGGER.debug("Network infoes of the shutted down VM(identified by UUID:"+vm+"):");
+        Iterator it_tmpar=m.getportinfoes(tenant, vm).iterator();
+        while(it_tmpar.hasNext())
+            LOGGER.debug((String)it_tmpar.next());
+        LOGGER.debug("Network infoes of the twin VM started(identified by UUID:"+twinUUID+"):");
+        it_tmpar=m.getportinfoes(tenant, twinUUID).iterator();
+        while(it_tmpar.hasNext())
+            LOGGER.debug((String)it_tmpar.next());
+    }
+    
+    
+    
+    
+    
     /**
      * 
      * @param tenant

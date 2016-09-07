@@ -23,7 +23,7 @@ import com.google.common.collect.HashBiMap;
  */
 public interface Policy {
     
-    public String selectNewDatacenter(int val);
+    public HashBiMap  selectNewDatacenter(Integer val);
 
     public void migrationAlertManager(HashBiMap params);
 }

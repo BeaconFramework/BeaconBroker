@@ -19,6 +19,7 @@ import MDBInt.DBMongo;
 import MDBInt.MDBIException;
 import OSFFM_ELA.ElasticityPolicyException;
 import OSFFM_ELA.Policy;
+import OSFFM_ORC.OrchestrationManager;
 import com.google.common.collect.HashBiMap;
 import java.io.File;
 import java.time.Clock;
@@ -26,6 +27,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import org.apache.log4j.Logger;
 import org.jdom2.Element;
 import org.json.JSONException;
@@ -45,19 +47,26 @@ public class SunLightPolicy implements Policy,Runnable{
     private int actualDCGap;
     private int threshold=19;//default value is 19 (7pm)
     private DBMongo mongo;
-    private String tenant;
-    private HashBiMap<String,ArrayList> datacenterMap;
+    private String tenant,userFederation,pswFederation;
+    private HashBiMap<String,ArrayList<String>> datacenterMap;
     private int minimumGap=-8;//default value is -8 hours
+    private ArrayList<String> monitoredVM;
+    private OrchestrationManager om;
+    
     
     public SunLightPolicy(HashMap<String,Object> paramsMap)throws ElasticityPolicyException {
         //paramsMap.get(this) // I need to understand which parameters need here
         this.tenant=(String)paramsMap.get("tenantName");
         this.constructDCMap((ArrayList<ArrayList<String>>)paramsMap.get("dcList"));
         this.mongo=(DBMongo)paramsMap.get("mongoConnector");
+        this.om=(OrchestrationManager)paramsMap.get("OrchestrationManager");
+        this.userFederation=(String)paramsMap.get("userFederation");
+        this.pswFederation=(String)paramsMap.get("pswFederation");
     }
     
     public void init(){
         Element params;
+        this.datacenterMap=HashBiMap.create();
         try {
         String file=System.getenv("HOME");
         ParserXML parser = new ParserXML(new File(file+fileConf));
@@ -102,10 +111,55 @@ public class SunLightPolicy implements Policy,Runnable{
         }
     }
     
+    
+    
+    /**
+     * The mission of this function is identify the moments when a VM or a group of VM needs to be "migrated"(shuttedoff in one site and activated in another
+     * selected by selectNewDatacenter function).
+     * @param params 
+     */
     @Override
-    public String selectNewDatacenter(int val){
-        int searchedGap=0;
-        if (val == 0)
+    public void migrationAlertManager(HashBiMap params){
+        HashBiMap elem = this.selectNewDatacenter(null);
+        String tmpDCID=(String)elem.get("dcID");
+        if(tmpDCID!=null){
+            ArrayList<String> newMonitoredVMs=new ArrayList<String>();
+            for (String targetVM : this.monitoredVM) {
+                String twinVM = this.mongo.findResourceMate(this.tenant, targetVM, tmpDCID);
+                if (twinVM == null) {
+                    LOGGER.error("Something going wrong it's imppossible find a twinVM for: " + targetVM + ".The migration for that VM is aborted!");
+                    newMonitoredVMs.add(targetVM);
+                    continue;
+                } else {
+                    HashBiMap<String, Object> param = HashBiMap.create();
+                    param.put("vm2shut", targetVM);
+                    param.put("vm2Act", twinVM);
+                    if (!this.moveVM(param)) {
+                        LOGGER.error("error occurred in migration VM " + targetVM);//sistemare qst logger
+                        newMonitoredVMs.add(targetVM);
+                    }
+                    newMonitoredVMs.add(twinVM);
+                }
+            }
+            this.actualDCGap=(Integer)elem.get("newgap");
+            this.monitoredVM=newMonitoredVMs;
+        }
+        else{
+            LOGGER.error("Something going wrong it's impossible find a twinVM for VMs monitored.The migration aborted");
+        }
+    }
+    /**
+     * This function is based on the workflow of the sunlight demo for beacon.
+     * All tenant in an Openstack cloud in federation is a clone of the other instance of the tenant, then it has deployed on it the same VM, 
+     * and for each VM monitored we can found a twinVM inside the DC chose from the algorithm.
+     * @param val
+     * @return 
+     */
+    @Override
+    public HashBiMap selectNewDatacenter(Integer val){
+        HashBiMap<String,Object> element=HashBiMap.create();
+        Integer searchedGap;
+        if (val == null)
             searchedGap = this.actualDCGap + minimumGap;
         else
             searchedGap = val - 1;
@@ -117,29 +171,54 @@ public class SunLightPolicy implements Policy,Runnable{
             }
         }
         if (this.datacenterMap.containsKey(searchedGap)) {
-            //prendi array e trova il DC corretto
-            return null;
+            ArrayList<String> ar = this.datacenterMap.get(searchedGap);//Take array and and findcorrect DC
+            Iterator i = ar.iterator();
+            boolean end=false;
+            while (i.hasNext()||!end) {
+                String tmpDCID = (String) i.next();
+                //07/090/2016 basandosi sulla sunlight demo di BEACON basta identificare il DC su cui è presente una VM del gruppo e tutte le altre saranno spostate(attivate) di conseguenza
+                ////in alternativa si dovrebbe prendere il datacenter adatto per ogni VM da monitorare
+                for (String targetVM : this.monitoredVM) {
+                    String twinVM = this.mongo.findResourceMate(this.tenant, targetVM, tmpDCID);
+                    if(twinVM==null)
+                        continue;
+                    else{
+                        end = true;
+                        element.put("dcID", tmpDCID);
+                        element.put("newgap", searchedGap);
+                        return element;
+                    }
+                }
+                if(!end)
+                {
+                    LOGGER.error("Something going wrong it's impossible find a twinVM for VMs monitored.The migration for that VM is moved on another DC");
+                    return this.selectNewDatacenter(searchedGap);
+                }
+            }
         } else {
             return this.selectNewDatacenter(searchedGap);
         }
+        return null;
     }
-    
     
     
     /**
-     * The mission of this function is identify the moments when a VM or a group of VM needs to be "migrated"(shuttedoff in one site and activated in another
-     * selected by selectNewDatacenter function).
-     * @param params 
+     * This function is used to move a VM
+     * @param params
+     * @return 
      */
-    @Override
-    public void migrationAlertManager(HashBiMap params){
-        int gap;
-        //ArrayList<ArrayList<String>> Datacenters  ---------> o meglio qualcosa che mi permetta di risalire a questa lista
-        
-        //before exit change internal information of the Actual DC whit the new datacenter infos.
+    public boolean moveVM(HashBiMap params){
+        //this function have to invoke OrchestrationManager.migrationProcedure
+        try{
+            this.om.migrationProcedure((String)params.get("vm2shut"), this.tenant, this.userFederation, (String)params.get("vm2Act"), this.pswFederation, this.mongo, "RegionOne");//BEACON>>> Region field need to be managed?
+            
+        }
+        catch(Exception e){
+            LOGGER.error("Error occurred in moveVM:"+e.getMessage());
+            return false;
+        }
+        return true;
     }
-    
-    
     
     /**
      * Take from Mongo the DCGap for selected Datacenter.
