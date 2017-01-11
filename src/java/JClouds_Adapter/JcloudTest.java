@@ -41,9 +41,9 @@ public class JcloudTest {
         
         //       KeystoneTest key=new KeystoneTest(mongo);
 
-        KeystoneTest key=new KeystoneTest("admin","admin","0penstack","http://212.189.207.32.17.1.32:5000/v2.0");
+        KeystoneTest key=new KeystoneTest("admin","admin","0penstack","http://10.9.1.155:5000/v2.0");
      //   System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-        key.autenticate("admin", "admin", "0penstack");
+        key.autenticate("demo", "admin", "0penstack");
 //key.serviceGet("test");
    //     key.servicetList();
     //    key.listRole();
@@ -52,6 +52,7 @@ public class JcloudTest {
     //  key.listUser();
    //   key.listRole();
         key.listTenant();
+        System.out.println(key.getTenantId("demo"));
    
              //   GlanceTest glance=new GlanceTest();
 

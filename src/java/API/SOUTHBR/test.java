@@ -34,16 +34,16 @@ public class test {
         t2Id="0ce39f6ae8044445b31d5b7f9b34062b";
         //FAclient4 tenant istantiation. 
   ///*   
-        FA_client4Tenant fat1=new FA_client4Tenant("http://10.9.240.20:5000/v2.0",t1name,"admin","password");
-        FA_client4Tenant fat2=new FA_client4Tenant("http://10.9.240.11:5000/v2.0",t2name,"admin","password");
+        FA_client4Tenant fat1=new FA_client4Tenant("http://192.168.32.1:5000/v2.0",t1name,"demo","0penstack");
+        FA_client4Tenant fat2=new FA_client4Tenant("http://192.168.87.1:5000/v2.0",t2name,"demo","0penstack");
         try{
             //System.out.println("tid1: "+fat1.getID()+"\ntid2: "+fat2.getID());
-            boolean res=fat1.createTenantFA(t1Id, "10.9.240.21:4567");
+            boolean res=fat1.createTenantFA(t1Id, "10.9.1.169:4567");
             System.out.println("Result of tenant 1 inserting operation on FA is: "+res);
             res=fat2.createTenantFA(t2Id, "10.9.240.7:4567");
             
             System.out.println("Result of tenant 2 inserting operation on FA is: "+res);
-            System.out.println(fat1.getTenantList("10.9.240.21:4567").toString());
+            System.out.println(fat1.getTenantList("10.9.1.159:4567").toString());
         }
         catch(Exception e ){
             System.out.println("Error1");

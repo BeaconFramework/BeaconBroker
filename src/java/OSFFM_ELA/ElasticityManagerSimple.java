@@ -16,7 +16,10 @@
 package OSFFM_ELA;
 
 import MDBInt.DBMongo;
+import OSFFM_ELA.Policies.SunLightPolicy;
 import OSFFM_ORC.OrchestrationManager;
+import java.util.ArrayList;
+import java.util.HashMap;
 import org.apache.log4j.Logger;
 /**
  * Simple elasticity module, It provides a function that simulate Vm suffer.
@@ -26,13 +29,34 @@ import org.apache.log4j.Logger;
 public class ElasticityManagerSimple {
      static final Logger LOGGER = Logger.getLogger(ElasticityManagerSimple.class);
      DBMongo m;
+     static HashMap <String,HashMap <String,SunLightPolicy>>tenantHash=new HashMap<String,HashMap <String,SunLightPolicy>>();
     public ElasticityManagerSimple() {
         this.m=new DBMongo();
-        this.m.init();
+        //this.m.init();
        // this.m.init("../webapps/OSFFM/WEB-INF/Configuration_bit");
-        this.m.connectLocale(this.m.getMdbIp());
+        this.m.connectLocale("10.9.0.42");//this.m.connectLocale(this.m.getMdbIp());
+    }
+    public ElasticityManagerSimple(DBMongo m) {
+        this.m=m;
+        
     }
     
+    public ElasticityManagerSimple startMonitoringThreads(DBMongo mongo,String tenant,String stack,HashMap<String,ArrayList<ArrayList<String>>> dcList,String userFederation, String pswFederation,String minimumgap,String firstCloudID) throws ElasticityPolicyException{
+        HashMap <String,SunLightPolicy> monitoringPolicy=new HashMap<String,SunLightPolicy>();
+        HashMap<String, Object> paramsMap=new HashMap<String, Object>();
+        paramsMap.put("tenantName", tenant);
+        paramsMap.put("dcList", dcList.get(stack));
+        paramsMap.put("mongoConnector", mongo); 
+        paramsMap.put("userFederation", userFederation);
+        paramsMap.put("pswFederation",pswFederation);
+        paramsMap.put("minimumGap",minimumgap);
+        SunLightPolicy slp=new SunLightPolicy(paramsMap);
+        paramsMap.put("firstCloudID",firstCloudID);
+        monitoringPolicy.put(stack, new SunLightPolicy(paramsMap));
+        slp.run();
+        tenantHash.put(tenant,monitoringPolicy);
+        return this;
+    }
     /**
      * Simulate an issue with VM "vm", Ask to OrchestrationManager to stop it in cloud A, and active it in other cloud.
      * @param vm 

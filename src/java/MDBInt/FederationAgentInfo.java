@@ -76,10 +76,10 @@ public class FederationAgentInfo {
     }
     public FederationAgentInfo(String json) throws JSONException {
         JSONObject j=new JSONObject(json);
-        this.SiteName = j.getString(SiteName);
-        this.Ip = j.getString(Ip);
-        this.Port = j.getString(Port);
-        this.site_proxyip=j.getString(site_proxyip);
-        this.site_proxyport=j.getString(site_proxyport);
+        this.SiteName = j.getString("SiteName");
+        this.Ip = j.getString("Ip");
+        this.Port = j.getString("Port");
+        this.site_proxyip=j.getString("site_proxyip");
+        this.site_proxyport=j.getString("site_proxyport");
     }
 }

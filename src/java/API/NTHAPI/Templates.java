@@ -47,8 +47,8 @@ public class Templates {
      */
     public Templates() {
        this.m=new DBMongo();
-       this.m.init();
-       this.m.connectLocale(this.m.getMdbIp());
+       //this.m.init();
+       this.m.connectLocale("10.9.0.42");//this.m.connectLocale(this.m.getMdbIp());
        this.s=new Splitter(m);
     }
 
@@ -82,7 +82,8 @@ public class Templates {
                 return reply.toJSONString();
             }
         }
-        reply.put("templates", ja);
+        reply.put("data", ja);
+        reply.put("count",ja.size());
         reply.put("returncode", 0); 
         reply.put("errormesg", "None");
         return reply.toJSONString();
@@ -101,7 +102,8 @@ public class Templates {
     public String getTemplate(@PathParam("uuidTemplate") String uuidTemplate,@PathParam("tenant") String tenant){
         JSONObject reply=new JSONObject();
         try{
-            reply.put("templates",this.m.getTemplate(tenant, uuidTemplate));
+            JSONParser p=new JSONParser();
+            reply.put("templates",(JSONObject)p.parse(this.m.getTemplate(tenant, uuidTemplate)));
             reply.put("returncode", 0); 
             reply.put("errormesg", "None");
             return reply.toJSONString();
@@ -126,17 +128,18 @@ public class Templates {
     @Produces("application/json")
     public String getRunTime(@PathParam("uuidTemplate") String uuidTemplate,@PathParam("tenant") String tenant){
         JSONObject reply=new JSONObject();
+        JSONParser p=new JSONParser();
         try{
-            reply.put("templates",this.m.getMapInfo(tenant, uuidTemplate));
+            reply.put("templates",p.parse(this.m.getMapInfo(tenant, uuidTemplate)));
             reply.put("returncode", 0); 
             reply.put("errormesg", "None");
-            return reply.toJSONString();
+            return reply.toString();
         }
         catch(Exception e){
             LOGGER.error("Exception is occurred when OSFFM try to retrieve RunTimeInfo for stacks created from template with UUID:"+uuidTemplate+".\n "+e.getMessage());
             reply.put("returncode", 1); 
             reply.put("errormesg", "Exception is occurred when OSFFM try to retrieve RunTimeInfo for stacks created from template with UUID:"+uuidTemplate+".\n"+e.getMessage());
-            return reply.toJSONString();
+            return reply.toString();
         }
     }
 }

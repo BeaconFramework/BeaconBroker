@@ -24,6 +24,9 @@ import JClouds_Adapter.OpenstackInfoContainer;
 import MDBInt.DBMongo;
 import MDBInt.FederationUser;
 import MDBInt.MDBIException;
+import OSFFM_ELA.Policies.sunlightInfoContainer;
+import OSFFM_ORC.FederationActionManager;
+import OSFFM_ORC.Utils.ElasticitysuppContainer;
 import OSFFM_ORC.Utils.Exception.NotFoundGeoRefException;
 import OSFFM_ORC.Utils.FednetsLink;
 import OSFFM_ORC.Utils.MultiPolygon;
@@ -38,7 +41,9 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -55,7 +60,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.openstack4j.model.heat.Resource;
 import org.openstack4j.model.heat.Stack;
-
 import org.yaml.snakeyaml.Yaml;
 import utils.Exception.WSException;
 import utils.ParserXML;
@@ -654,11 +658,7 @@ public class OrchestrationManager {
         while(it_tmpar.hasNext())
             LOGGER.debug((String)it_tmpar.next());
     }
-    
-    
-    
-    
-    
+   
     /**
      * 
      * @param tenant
@@ -669,7 +669,7 @@ public class OrchestrationManager {
      * @return
      * @author gtricomi & agalletta
      */
-    public boolean stackInstantiate(String template, OpenstackInfoContainer credential, DBMongo m, String templateId) {
+    public boolean stackInstantiate(String template, OpenstackInfoContainer credential, DBMongo m, String templateId,String serviceManifName) {
         try {
             //System.out.println("axv"); 
             Registry myRegistry = LocateRegistry.getRegistry(ip, port);
@@ -677,14 +677,16 @@ public class OrchestrationManager {
             boolean result;
             //System.out.println(" ccccc");
             RMIServerInterface impl = (RMIServerInterface) myRegistry.lookup("myMessage");
-
-            result = impl.stackInstantiate(template, templateId, credential.getEndpoint(), credential.getUser(), credential.getTenant(), credential.getPassword(), credential.getRegion(), credential.getIdCloud());
+       
+        
+           
+            result = impl.stackInstantiate(template, templateId, credential.getEndpoint(), credential.getUser(), credential.getTenant(), credential.getPassword(), credential.getRegion(), credential.getIdCloud(),serviceManifName);
             //System.out.println(credential.getEndpoint());
-
-            return result;
+           
+            return true;//result;
 
         } catch (Exception e) {
-            LOGGER.error("An error is occurred in stack creation phase.");
+            System.err.println("An error is occurred in stack creation phase.");
             e.printStackTrace();
             return false;
         }
@@ -730,11 +732,9 @@ public class OrchestrationManager {
                         m.insertPortInfo(credential.getTenant(), neutron.portToString((Port) it_po.next()));
                     }
                 }
-            System.out.println("map res "+mapResNet.size());
+            //System.out.println("map res "+mapResNet.size());
             return mapResNet;
-
         } catch (Exception e) {
-
             LOGGER.error("An error is occurred in stack creation phase.");
             e.printStackTrace();
             return null;
@@ -750,18 +750,19 @@ public class OrchestrationManager {
      * @return 
      * @author gtricomi
      */
-    public ArrayList<ArrayList<HashMap<String, ArrayList<Port>>>> deployManifest(
+    public ElasticitysuppContainer deployManifest(
             String template,
             String stack,
             HashMap<String, ArrayList<ArrayList<OpenstackInfoContainer>>> tmpMapcred,
             HashMap<String,ArrayList<ArrayList<String>>> tmpMap,
-            DBMongo m
+            DBMongo m,
+            String serviceManifName
     ){
         String stackName = stack.substring(stack.lastIndexOf("_") + 1 > 0 ? stack.lastIndexOf("_") + 1 : 0, stack.lastIndexOf(".yaml") >= 0 ? stack.lastIndexOf(".yaml") : stack.length());
         ArrayList arDC = (ArrayList<ArrayList<String>>) tmpMap.get(stackName);
         ArrayList arCr = (ArrayList<ArrayList<OpenstackInfoContainer>>) tmpMapcred.get(stackName);
         ArrayList<ArrayList<HashMap<String, ArrayList<Port>>>> arMapRes = new ArrayList<>();
-
+        String firstDC="";
         boolean skip = false, first = true;
         int arindex = 0;
         while (!skip) {
@@ -771,25 +772,25 @@ public class OrchestrationManager {
             //System.out.println("&&&&&&&&&&&&&&&&&&&&&"+tmpArCr.size());
             for (Object tmpArCrob : tmpArCr) {
                 LOGGER.info("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\nISTANTION PHASE FOR THE CLOUD:" + ((OpenstackInfoContainer) tmpArCrob).getIdCloud() + "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-                boolean result = this.stackInstantiate(template, (OpenstackInfoContainer) tmpArCrob, m, stackName);//BEACON>>> in final version of OSFFM 
+                boolean result = this.stackInstantiate(template, (OpenstackInfoContainer) tmpArCrob, m, stackName,serviceManifName);//BEACON>>> in final version of OSFFM 
                 LOGGER.debug("TEMPLATE ISTANTIATED ON CLOUD:" + ((OpenstackInfoContainer) tmpArCrob).getIdCloud());
                 //we will use variable result to understand if the stack is deployed inside the federated cloud
-                
                 String region = "RegionOne";
                 ((OpenstackInfoContainer) tmpArCrob).setRegion(region);
                 HashMap<String, ArrayList<Port>> map_res_port = this.sendShutSignalStack4DeployAction(stackName, (OpenstackInfoContainer) tmpArCrob, first, m);
                 if (true) {//result) {
+                    firstDC=((OpenstackInfoContainer)tmpArCrob).getIdCloud();
                     first = false;//if first stack creation is successfully completed, the other stacks instantiated are not the First
                 }                        //and need different treatment.
                 arRes.add(map_res_port);
             }
             arindex++;
             arMapRes.add(arRes);
-            if (arindex > tmpArCr.size()) {
+            if (arindex >= arDC.size()) {
                 skip = true;
             }
         }
-        return arMapRes;
+        return new ElasticitysuppContainer(arMapRes,firstDC);
     }
     
     //</editor-fold>
@@ -840,11 +841,18 @@ public class OrchestrationManager {
         //1 Retrieve NetMap version from Mongo for each DC and create LinkedHashMap for FederationActionManager
         FednetsLink mapcontainer=this.retrieveTablesStored(tenantname,tmpMapcred,m);
         //2 create new NetTables this action is forwarded to FederactionActionManager
-        FederationActionManager fam=new FederationActionManager();
+        System.out.println("STO PER RICHIAMARE IL FederationActionManager");
+        try{
+        OSFFM_ORC.FederationActionManager fam;
+            fam = new OSFFM_ORC.FederationActionManager();
         if(template.equals(""))
             fam.prepareNetTables4completeSharing( tenantname,mapcontainer,tmpMapcred,m,false);
         else
-            fam.prepareNetTables4completeSharing( tenantname,mapcontainer,tmpMapcred,m,true);
+           fam.prepareNetTables4completeSharing( tenantname,mapcontainer,tmpMapcred,m,true);
+        }catch(Exception ex){
+            System.err.println("richiamato IL FederationActionManager si ha: "+ ex.getMessage() );
+            ex.printStackTrace();
+        }
     }
     
     /**
@@ -873,8 +881,14 @@ public class OrchestrationManager {
                     if((!netTablesMap.containsKey(tmpArCrob.getIdCloud()))||(netTablesMap.get(tmpArCrob.getIdCloud())==null))
                     {
                         try {
-                            netTablesMap.put(tmpArCrob.getIdCloud(),new JSONObject(m.getNetTables(tenantname,tmpArCrob.getIdCloud())));
-                            
+                            String tmp=m.getNetTables(tenantname,tmpArCrob.getIdCloud());
+                            if(tmp==null){
+                                netTablesMap.put(tmpArCrob.getIdCloud(),null);
+                                LOGGER.info("Impossible parse NetTables for cloud :"+tmpArCrob.getIdCloud()+".\n");
+                            }
+                            else{
+                                netTablesMap.put(tmpArCrob.getIdCloud(),new JSONObject(tmp));
+                            }
                         } catch (JSONException ex) {
                             LOGGER.error("Impossible parse NetTables for cloud :"+tmpArCrob.getIdCloud()+".\nException obtained:"+ex.getMessage());
                             netTablesMap.put(tmpArCrob.getIdCloud(),null);
@@ -883,8 +897,14 @@ public class OrchestrationManager {
                     if((!siteTablesMap.containsKey(tmpArCrob.getIdCloud()))||(siteTablesMap.get(tmpArCrob.getIdCloud())==null))
                     {
                         try {
-                            siteTablesMap.put(tmpArCrob.getIdCloud(),new JSONObject(m.getSiteTables(tenantname,tmpArCrob.getIdCloud())));
-                            
+                            String tmp=m.getSiteTables(tenantname,tmpArCrob.getIdCloud());
+                            if(tmp==null){
+                                siteTablesMap.put(tmpArCrob.getIdCloud(),null);
+                                LOGGER.info("Impossible parse SiteTables for cloud :"+tmpArCrob.getIdCloud()+".\n");
+                            }
+                            else{
+                                siteTablesMap.put(tmpArCrob.getIdCloud(),new JSONObject(tmp));
+                            }
                         } catch (JSONException ex) {
                             LOGGER.error("Impossible parse SiteTables for cloud :"+tmpArCrob.getIdCloud()+".\nException obtained:"+ex.getMessage());
                             siteTablesMap.put(tmpArCrob.getIdCloud(),null);
@@ -893,14 +913,21 @@ public class OrchestrationManager {
                     if((!tenantTablesMap.containsKey(tmpArCrob.getIdCloud()))||(tenantTablesMap.get(tmpArCrob.getIdCloud())==null))
                     {
                         try {
-                            tenantTablesMap.put(tmpArCrob.getIdCloud(),new JSONObject(m.getTenantTables(tenantname,tmpArCrob.getIdCloud())));
-                            
+                            String tmp=m.getTenantTables(tenantname,tmpArCrob.getIdCloud());
+                            if(tmp==null){
+                                tenantTablesMap.put(tmpArCrob.getIdCloud(),null);
+                                LOGGER.info("Impossible parse tenantTables for cloud :"+tmpArCrob.getIdCloud()+".\n");
+                            }
+                            else{
+                                tenantTablesMap.put(tmpArCrob.getIdCloud(),new JSONObject(tmp));
+                            }
                         } catch (JSONException ex) {
                             LOGGER.error("Impossible parse tenantTables for cloud :"+tmpArCrob.getIdCloud()+".\nException obtained:"+ex.getMessage());
                             tenantTablesMap.put(tmpArCrob.getIdCloud(),null);
                         }
                     }
                 }
+                skip=true;
             }
         }
         FednetsLink f=new FednetsLink();
@@ -911,6 +938,15 @@ public class OrchestrationManager {
         return f;
     }
     //</editor-fold>
-    
+    /**
+     * 
+     * @param manifestname
+     * @param stack
+     * @return 
+     */
+    public sunlightInfoContainer getELaContainer(String manifestname,String stack){
+        sunlightInfoContainer sCont=(sunlightInfoContainer)(this.mapManifestThr.get(manifestname)).ElaPolicies.get(stack);
+        return sCont;
+    }
 }
 

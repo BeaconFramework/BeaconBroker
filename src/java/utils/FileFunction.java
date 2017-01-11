@@ -37,7 +37,7 @@ public class FileFunction {
               new BufferedReader(new InputStreamReader(in))) {
             String line = null;
             while ((line = reader.readLine()) != null) {
-                manifest=manifest+line;
+                manifest=manifest+"\n"+line;
             }
         } catch (IOException x) {
             System.err.println(x.getMessage());

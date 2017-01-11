@@ -58,8 +58,13 @@ public class SerGrManager {
     public void consumeSerGr(JSONObject prop)throws JSONException{
         this.groupName=prop.getString("name");
         this.setGeoreference(prop.getJSONObject("geo_deploy").getString("get_resource"));
+        if(prop.has("els_rules"))
+        {
+            //invoke storing function for elasticity policy
+        }
         this.serviceGroup=prop.getJSONObject("resource");
     }
+    
     /**
      * Return resource involved in service group.
      * @return
@@ -73,6 +78,7 @@ public class SerGrManager {
         }
         return resources;
     }
+    
     public void verifycorrelation(String resName,JSONObject outputelem,String outName){
         if(this.container.resourceIsPresent(resName)){
             this.container.addOutput(outputelem,outName);

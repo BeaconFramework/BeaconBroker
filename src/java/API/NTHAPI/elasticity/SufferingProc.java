@@ -43,9 +43,9 @@ public class SufferingProc {
         //this.init("../webapps/OSFFM/WEB-INF/Configuration_NTHBR_WS.xml");
         
         this.m=new DBMongo();
-        this.m.init();
+        //this.m.init();
        // this.m.init("../webapps/OSFFM/WEB-INF/Configuration_bit");
-        this.m.connectLocale(this.m.getMdbIp());
+        this.m.connectLocale("10.9.0.42");//this.m.connectLocale(this.m.getMdbIp());
         this.s=new Splitter(m);
     }
     

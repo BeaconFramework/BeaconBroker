@@ -16,7 +16,7 @@ import java.util.ArrayList;
  */
 public interface RMIServerInterface extends Remote{
     
-     public boolean stackInstantiate(String template,String templateId,String endpoint,String user,String tenant,String password,String region,String idCloud) throws RemoteException;
+     public boolean stackInstantiate(String template,String templateId,String endpoint,String user,String tenant,String password,String region,String idCloud,String serviceManifName) throws RemoteException;
     
      
      public ArrayList getListResource(String endpoint,String user,String tenant,String password,String templateId) throws RemoteException;

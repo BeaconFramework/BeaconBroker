@@ -22,11 +22,16 @@ import JClouds_Adapter.OpenstackInfoContainer;
 import MDBInt.DBMongo;
 import MDBInt.MDBIException;
 import MDBInt.Splitter;
+import OSFFM_ELA.ElasticityManagerSimple;
 import OSFFM_ORC.OrchestrationManager;
+import OSFFM_ORC.Utils.ElasticitysuppContainer;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Set;
@@ -60,7 +65,7 @@ public class IstantiateManifest {
     @Context
     private UriInfo context;
     static final Logger LOGGER = Logger.getLogger(IstantiateManifest.class);
-    Splitter s;
+    Splitter spli;
     DBMongo m;
      /**
      * Creates a new instance of SitesResource
@@ -70,10 +75,10 @@ public class IstantiateManifest {
         //this.init("../webapps/OSFFM/WEB-INF/Configuration_NTHBR_WS.xml");
         
         this.m=new DBMongo();
-        this.m.init();
+        //this.m.init();
        // this.m.init("../webapps/OSFFM/WEB-INF/Configuration_bit");
-        this.m.connectLocale(this.m.getMdbIp());
-        this.s=new Splitter(m);
+        this.m.connectLocale("10.9.0.42");//this.m.getMdbIp());
+        this.spli=new Splitter(m);
     }
     
     /**
@@ -97,22 +102,28 @@ public class IstantiateManifest {
         //String home=System.getProperty("java.home");      //Removed, unused
         //String fs=System.getProperty("file.separator");   //Removed, unused
         //String prepath=home+fs+"subrepoTemplate";
+        String templateRef="null";
+        String userFederation="",passwordFederation="";
         String prepath="./subrepoTemplate/"+tenant;
         JSONObject input=new JSONObject(),reply=new JSONObject();
         JSONParser jp=new JSONParser();
         try{
             input=(JSONObject)jp.parse(jsonInput);
             templatename=(String)input.get("templateId");
+            userFederation=(String)input.get("userFederation");
+            passwordFederation=(String)input.get("passwordFederation");
+            templateRef=(String)input.get("templateref");
+            if(templateRef==null)
+                templateRef="null";
         }catch(Exception e){
             LOGGER.error("JSON  input received for web service startTemplates is not parsable.\n"+e.getMessage());
             reply.put("returncode", 1); 
             reply.put("errormesg", "INPUT_JSON_UNPARSABLE: OPERATION ABORTED "+e.getMessage());
-            
             return reply.toJSONString();
         }
         String tmpStr="";
         try{
-            tmpStr = s.ricomponiYamlManifest(templatename, tenant);
+            tmpStr = spli.ricomponiYamlManifest(templatename, tenant);
         }
         catch(MDBIException e ){
             LOGGER.error(e.getMessage());
@@ -124,7 +135,9 @@ public class IstantiateManifest {
         Yaml yaml = new Yaml();
         LinkedHashMap<String, Object> list = (LinkedHashMap<String, Object>) yaml.load(tmpStr);
         org.json.JSONObject jo=new org.json.JSONObject(list);
+       
         OrchestrationManager om=new OrchestrationManager();
+        ElasticityManagerSimple ela=new ElasticityManagerSimple(this.m);
         File f=new File(prepath);
         if (!f.exists()) {
             if(!f.mkdirs()){
@@ -136,8 +149,9 @@ public class IstantiateManifest {
         }
         //BEACON>>> There is another om.manifestistantiation created for dashboard but it isn't complete, for the moment
         String manifestName=templatename;
-        System.out.println("The Manifest "+manifestName+" analysis process started....");
+        //System.out.println("The Manifest "+manifestName+" analysis process started....");
         om.manifestinstatiation(manifestName,jo,tenant);
+        spli.loadFromYAMLString(tmpStr,tenant,userFederation,manifestName,templateRef);
         HashMap<String,ArrayList<ArrayList<String>>> tmpMap=om.managementgeoPolygon(manifestName, this.m, tenant);
         //retrieve from MongoDb federation password for federation user
         if(tmpMap==null)
@@ -146,33 +160,43 @@ public class IstantiateManifest {
             reply=this.createErrorAnswer("No one Datacenter is found for manifest instantiation");
             return reply.toJSONString();
         }
-        String tmp=this.m.getFederationCredential(tenant, "userFederation","federationUser");
+        String tmp=this.m.getFederationCredential(tenant, userFederation,"federationUser");
         //System.out.println(tmp);
         try {
             org.json.JSONObject tj=new org.json.JSONObject(tmp);
         } catch (JSONException ex) {
             LOGGER.error("Error occurred in manifest istantiation; OPERATION ABORTED."+ex.getMessage());
-            ex.printStackTrace();
+            //ex.printStackTrace();
             reply=this.createErrorAnswer("Error occurred in manifest istantiation; OPERATION ABORTED."+ex.getMessage());
             return reply.toJSONString();
         }
         
-        HashMap<String, ArrayList<ArrayList<OpenstackInfoContainer>>> tmpMapcred = om.managementRetrieveCredential(tmpMap, m, tenant, "userFederation", "passwordFederation", "RegionOne");
+        HashMap<String, ArrayList<ArrayList<OpenstackInfoContainer>>> tmpMapcred = om.managementRetrieveCredential(tmpMap, this.m, tenant, userFederation, passwordFederation, "RegionOne");
         //////////////////////////////////////////////////////////////////////////////////
-        //+tenant+rootName+"_"+(String)obj[index]
-        
         Set<String> setStack = om.getSGList(manifestName);
         //BEACON>>> this step it will be substitude by a function that analize the manifest and retireve the ServiceManagementGroups 
             //stored inside global manifest
         for (String stack : setStack) {
-
-            ///String stack = "federation2";
+            
             FileFunction ff = new FileFunction();
             String template = ff.readFromFile(prepath + "/" + tenant + manifestName + "_" + stack);
-            ArrayList<ArrayList<HashMap<String, ArrayList<Port>>>> arMapRes =om.deployManifest(template, stack, tmpMapcred, tmpMap, this.m);
+            
+            ElasticitysuppContainer tmpsupp=om.deployManifest(template, stack, tmpMapcred, tmpMap, this.m,manifestName);
+            ArrayList<ArrayList<HashMap<String, ArrayList<Port>>>> arMapRes= tmpsupp.getInfo();
             //BEACON:>>> It is needed decide what do with the info returned from om.deployManifest inside strucure arMapRes
+            ////INSERIRE LA PARTE CHE GESTISCA L'ISTANZIAZIONE DEL SUNLIGHT POLICY THREAD
+            try{
+                if(om.getELaContainer(manifestName, stack)!=null){
+                    String i=om.getELaContainer(manifestName, stack).getMinimumgap();
+                    ela=ela.startMonitoringThreads(this.m,tenant, stack, tmpMap, userFederation,passwordFederation,i,tmpsupp.getFirstCloudId() );
+                }
+            }
+            catch(Exception e){
+                
+                LOGGER.error("Error occurred in elasticity Thread launching; OPERATION ABORTED."+e.getMessage());
+            }
         }
-        om.prepareNetTables4completeSharing(tenant, manifestName, tmpMapcred, m);
+        om.prepareNetTables4completeSharing(tenant, manifestName, tmpMapcred, this.m);
         String[]entries = f.list();
         for(String s: entries){
             File currentFile = new File(f.getPath(),s);
@@ -192,5 +216,12 @@ public class IstantiateManifest {
         return reply;
     }
     
-    
+    private void take_time_instant(FileWriter fw, String begin) throws Exception
+    {
+        Calendar cal = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+        BufferedWriter bw = new BufferedWriter(fw);
+        bw.write(begin+sdf.format(cal.getTime()));
+        bw.close();
+    }
 }

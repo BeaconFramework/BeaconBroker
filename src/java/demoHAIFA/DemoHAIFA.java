@@ -24,22 +24,28 @@ import OSFFM_ORC.OrchestrationManager;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jclouds.openstack.neutron.v2.domain.Port;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.yaml.snakeyaml.Yaml;
+import utils.FileFunction;
 
 /**
  *
@@ -95,6 +101,8 @@ public class DemoHAIFA {
                 }
             }
         }
+        
+        
         while(cont);
         do
         {
@@ -146,7 +154,7 @@ public class DemoHAIFA {
                         psw = ((OpenstackInfoContainer) tmpArDC1).getPassword(); //new JSONObject((String)tmpArCr.get(index)).getString("federatedPassword");
                         */
                         //System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"+template);
-                        boolean resultIS=om.stackInstantiate(template,(OpenstackInfoContainer) tmpArCrob,m,stackName);//BEACON>>> in final version of OSFFM
+                        boolean resultIS=om.stackInstantiate(template,(OpenstackInfoContainer) tmpArCrob,m,stackName,manifestName);//BEACON>>> in final version of OSFFM
                         //we will use variable result to understand if the stack is deployed inside the federated cloud
                         
                         region=dh.consoleRequest("Insert region name:[Deafult: RegionOne]","RegionOne");//this element it will be analized in second 

@@ -126,6 +126,7 @@ public class DBMongo {
         String file=System.getenv("HOME");
         if(file==null){
             file="/opt/tomcat/webapps/OSFFM/WEB-INF/configuration_bigDataPlugin.xml";
+            
             /*String restkey="[";
             String rest="["; 
             Object[] tk=System.getenv().keySet().toArray();
@@ -167,9 +168,14 @@ public class DBMongo {
      * @return 
      * @author agalletta
      */
-    private String conditionedResearch(DBCollection collection,BasicDBObject resQuery,BasicDBObject sortQuery){
-        DBCursor b= collection.find(resQuery).sort(sortQuery).limit(1);
-       return b.next().toString();
+    private String conditionedResearch(DBCollection collection,BasicDBObject resQuery,BasicDBObject sortQuery) {
+        try{
+            DBCursor b= collection.find(resQuery).sort(sortQuery).limit(1);
+            return b.next().toString();
+        }catch(Exception e){
+            LOGGER.error("Conditioned Research for collection: "+collection+", resQuery "+resQuery+", sortQuery "+sortQuery);
+            return null;
+        }
     }
     //<editor-fold defaultstate="collapsed" desc="FAInfo Management Functions">
     /**
@@ -188,6 +194,8 @@ public class DBMongo {
         first.put("SiteName", faSite);
         DBObject obj = null;
         obj = collection.findOne(first);
+        if (obj==null)
+            return null;
         return obj.toString();
     }
     /**
@@ -225,8 +233,8 @@ public class DBMongo {
         
         BasicDBObject resQuery=new BasicDBObject("referenceSite",faSite);
         BasicDBObject sortQuery=new BasicDBObject("version",-1);
-        return this.conditionedResearch(collection,resQuery,sortQuery);
-
+        String result=this.conditionedResearch(collection,resQuery,sortQuery);
+        return result;
     }
     /**
      * 
@@ -1215,8 +1223,7 @@ public class DBMongo {
 
         return risultato;
     }
-
-    public String getMapInfo(String dbName, String uuidTemplate) {
+public String getMapInfo(String dbName, String uuidTemplate) {
 
         DB database = this.getDB(dbName);
         DBCollection collection = database.getCollection("runTimeInfo");
@@ -1227,7 +1234,7 @@ public class DBMongo {
         ArrayList<String> listCloud = new ArrayList();
         Iterator<DBObject> it;
         String idCloud, idmEndpoint, idRisorsa, nameRisorsa;
-        boolean isPresent;
+        boolean isPresent,linkAttivo;
         MapInfo map;
         Shape s;
         boolean state;
@@ -1237,7 +1244,8 @@ public class DBMongo {
         Object array[];
 
         query.put("uuidTemplate", uuidTemplate);
-        cursore = collection.find(query);
+        //cursore = collection.find(query).sort(new BasicDBObject("insertTimestamp",-1)).limit(3);  //query utile nel caso in cui il template viene deployato + di una volta
+        cursore = collection.find(query).sort(new BasicDBObject("insertTimestamp",-1));
         map = new MapInfo();
 
         if (cursore != null) {
@@ -1264,9 +1272,8 @@ public class DBMongo {
                         nameRisorsa = (String) obj.get("resourceName");
                         r = new Risorse(idRisorsa, nameRisorsa);
                         s.addResource(r);
+                        listCloud.add(idCloud);
                     }
-
-                    listCloud.add(idCloud);
                     map.addShape(s);
 
                 } else {
@@ -1284,14 +1291,57 @@ public class DBMongo {
                 }
             }
             array = attivi.toArray();
+            
+            //da controllare //secondo me potrebbe dare dei problemi...
             for (i = 0; i < array.length; i++) {
                 for (j = i + 1; j < array.length; j++) {
-                    link = new Collegamenti((String) array[i], (String) array[j]);
-                    map.addCollegamento(link);
+                    //verifico se il link e' attivo
+                    linkAttivo=this.testLink(dbName, (String) array[i], (String) array[j]);
+                    if(linkAttivo){
+                        link = new Collegamenti((String) array[i], (String) array[j]);
+                        map.addCollegamento(link);
+                    }
                 }
             }
+            /*         array = attivi.toArray();    //forzatura creata prima della sistemazione fatta da Antonio
+           linkAttivo=this.testLink(dbName, "CETIC", "UME");
+                    if(linkAttivo){
+                        link = new Collegamenti("CETIC", "UME");
+                        map.addCollegamento(link);
+                    }
+            */
         }
         return map.toString();
+    }
+
+
+  public boolean testLink(String tenantName, String Cloud1, String Cloud2){
+    
+        boolean attivo=false;
+        BasicDBList or;
+        BasicDBObject query;
+        DB database = this.getDB(tenantName);
+        DBCollection collection = database.getCollection("link");
+        DBObject result;
+        try{
+        or = new BasicDBList();
+        or.add(new BasicDBObject("_id", Cloud1+"_"+Cloud2));
+        or.add(new BasicDBObject("_id", Cloud2+"_"+Cloud1));
+        query= new BasicDBObject("$or",or);
+        result = collection.findOne(query);
+        attivo=(boolean) result.get("status");
+        }
+        catch(Exception ex){
+            
+            return false;         
+        
+        
+        }
+        
+        
+        
+        return attivo;
+    
     }
 
     public DBObject getFirstCountry(String tenant, DBObject shape) {

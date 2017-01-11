@@ -90,7 +90,6 @@ public class GeoManager {
             for(int index =0;index<elements.length();index++){
                 JSONObject shape=elements.getJSONObject(index);
                 MultiPolygon pol=new MultiPolygon(shape);
-                //System.out.println(pol.toJSONString());
                 pol.setPriority(index);
                 shapelist.add(pol);
             }

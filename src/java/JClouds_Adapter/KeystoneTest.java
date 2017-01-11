@@ -396,6 +396,7 @@ while(i.hasNext()){
      Optional<? extends TenantApi> tenantExt=  keystoneApi.getTenantApi();
       TenantApi tenantApi=tenantExt.get();
       Tenant t=tenantApi.getByName(tenantName);
+      Object o=tenantApi.list();
       return t.getId();
  }
   

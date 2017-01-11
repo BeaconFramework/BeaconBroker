@@ -50,8 +50,8 @@ public class ManifestcreatesResource {
      */
     public ManifestcreatesResource() {
        this.m=new DBMongo(); 
-       this.m.init();
-       this.m.connectLocale(this.m.getMdbIp());
+       //this.m.init();
+       this.m.connectLocale("10.9.0.42");//this.m.connectLocale(this.m.getMdbIp());
        this.s=new Splitter(m);
     }
 

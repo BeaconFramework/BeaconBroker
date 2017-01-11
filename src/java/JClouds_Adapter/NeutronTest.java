@@ -111,8 +111,9 @@ public class NeutronTest {
                 .credentials(identity, password)
                 .modules(modules)
                 .buildApi(NeutronApi.class);
-        regions = neutronApi.getConfiguredRegions();
-
+       // regions = neutronApi.getConfiguredRegions();
+        regions =new java.util.HashSet<String>();
+        regions.add("RegionOne");
     }
 
     public void printListNetworks() {

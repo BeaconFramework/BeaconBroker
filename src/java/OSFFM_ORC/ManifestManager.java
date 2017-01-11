@@ -16,9 +16,11 @@
 package OSFFM_ORC;
 //<editor-fold defaultstate="collapsed" desc="Import Section">
 import MDBInt.Splitter;
+import OSFFM_ELA.Policies.sunlightInfoContainer;
 import OSFFM_ORC.SerGrManager;
 import OSFFM_ORC.Utils.Exception.NotFoundGeoRefException;
 import OSFFM_ORC.Utils.FednetsLink;
+import OSFFM_ORC.Utils.MultiPolygon;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -44,7 +46,7 @@ public class ManifestManager implements Runnable{
     JSONObject resource,outputs, parameters;
     LinkedHashMap<String,LinkedHashMap> table_resourceset;
     GeoManager geo_man;
-    HashMap<String,Object> georef_table,serGr_table;
+    HashMap<String,Object> georef_table,serGr_table,ElaPolicies=null;
     String tempVers="2014-10-16",description="empty_descr";
     FednetsLink fnl;
     static Logger LOGGER = Logger.getLogger(ManifestManager.class);
@@ -65,6 +67,11 @@ public class ManifestManager implements Runnable{
     public void setDescription(String description) {
         this.description = description;
     }
+
+    public HashMap<String, Object> getElaPolicies() {
+        return ElaPolicies;
+    }
+    
     //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Constructor">
     public ManifestManager(String name,JSONObject manifest)throws JSONException{
@@ -103,10 +110,17 @@ public class ManifestManager implements Runnable{
             this.elaborateSerGr(sgObj,(JSONObject)this.table_resourceset.get("OS::Beacon::ServiceGroupManagement").get(resName), resName);
             this.serGr_table.put(resName, sgObj);
         }
-        //fedNetManagement Analisys
-        this.prepareFednetLinkMap();
-        
-        //BEACON>>> verificare se sono state richiamate tutte le funzioni
+        try {
+
+            this.elaborateElaRef();
+            //INSERIRE QUI FUNZIONE CHE AVVIA I THREAD RELATIVI ALL'ELASTICITY
+            //fedNetManagement Analisys
+            //this.prepareFednetLinkMap();//Not used right now
+            
+            //BEACON>>> verificare se sono state richiamate tutte le funzioni
+        } catch (Exception ex) {
+            System.err.println("Error in elaborateElasticityReference");
+        }
     }
     
     
@@ -540,7 +554,67 @@ public class ManifestManager implements Runnable{
 //</editor-fold>
     
     
-//<editor-fold defaultstate="collapsed" desc="GeoReference management Functions">
+//<editor-fold defaultstate="collapsed" desc="ScalingPolicy management Functions(Elasticity rules)">
+    /**
+     * This function is used to populate object ElasticityManager.
+     * @return 
+     */
+    public void elaborateElaRef()throws Exception{
+        boolean completed=true;
+        String error="";
+        LinkedHashMap<String,Object> result=new LinkedHashMap<String,Object>();
+        if(this.ElaPolicies==null)
+            this.ElaPolicies=new HashMap<String,Object>();
+        result.put("error", error);
+        String name="";//Name of the geoshape
+        Iterator itkey=((LinkedHashMap)this.table_resourceset.get("OS::Beacon::ScalingPolicy")).keySet().iterator();
+        while(itkey.hasNext()){
+            name=(String)itkey.next();
+            try{
+                JSONObject pol=(JSONObject)((LinkedHashMap)this.table_resourceset.get("OS::Beacon::ScalingPolicy")).get(name);
+                String shape=(String)pol.getJSONObject("properties").getJSONObject("geo_deploy").get("get_resource");
+                String serName=(String)pol.getJSONObject("properties").getJSONObject("groupmonitored").get("get_resource");
+                String mingap=pol.getJSONObject("properties").getString("min_gap");
+                this.ElaPolicies.put(serName, new sunlightInfoContainer(shape,serName,mingap));
+            /*    SerGrManager sgm=(SerGrManager)this.serGr_table.get(serName);
+                ArrayList<MultiPolygon> ar=null;
+            try{
+                ar=(ArrayList<MultiPolygon>)this.geo_man.retrievegeoref(sgm.getGeoreference());
+            }catch(NotFoundGeoRefException ngrf){
+                LOGGER.error("An error is occourred in retrievegeoref. The GeoManager doesn't contain the shape searched.\n"+ngrf.getMessage());
+                ngrf.printStackTrace();
+            }
+            ArrayList dcInfoes=new ArrayList();
+            for(int index=0;index<ar.size();index++){
+                try{
+                    ArrayList<String> dcInfo=db.getDatacenters(tenant,ar.get(index).toJSONString());
+                    if(dcInfo.size()!=0){
+                        dcInfoes.add(dcInfo);
+                        foundone=true;
+                    }
+                }
+                catch(org.json.JSONException je){
+                    LOGGER.error("An error is occourred in MultiPolygon JSON creation.");
+                }
+            }*/
+                /*
+                if(!geo_man.consume_georeference(name, (JSONObject)((LinkedHashMap)this.table_resourceset.get("OS::Beacon::ScalingPolicy")).get(name)))
+                    throw new Exception("Generic Exception generated in elaborateGeoRef");
+                else
+                    completed=true;
+                */
+            }
+            catch(Exception e){
+                completed=false;
+            }
+        }
+        result.put("completed", completed);//For future improvement
+       // return result;
+    }
+//</editor-fold>
+    
+    
+    //<editor-fold defaultstate="collapsed" desc="GeoReference management Functions">
     /**
      * This function is used to populate object GeoManager.
      * @return 
@@ -555,17 +629,20 @@ public class ManifestManager implements Runnable{
         while(itkey.hasNext()){
             name=(String)itkey.next();
             try{
-                if(geo_man.consume_georeference(name, (JSONObject)((LinkedHashMap)this.table_resourceset.get("OS::Beacon::Georeferenced_deploy")).get(name)))
+                if(!geo_man.consume_georeference(name, (JSONObject)((LinkedHashMap)this.table_resourceset.get("OS::Beacon::Georeferenced_deploy")).get(name)))
                     throw new Exception("Generic Exception generated in elaborateGeoRef");
+                else
+                    completed=true;
             }
             catch(Exception e){
                 completed=false;
-            }
+                }
         }
-        result.put("completed", completed);
+        result.put("completed", completed);//For future improovement
         return result;
     }
 //</editor-fold>
+    
     
     
     @Override
@@ -575,7 +652,6 @@ public class ManifestManager implements Runnable{
             OrchestrationManager.putEntryinTable(this.nameSetRes, this);
         }
         catch(Exception ex){
-            
         }
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
