@@ -15,8 +15,12 @@
 
 package API.NTHAPI;
 
+import JClouds_Adapter.KeystoneTest;
+import MDBInt.FederatedUser;
+import OSFFMIDM.SimpleIDM;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -183,4 +187,105 @@ public class UserssResource {
     public Users getUsers(@PathParam("sitename") String sitename, @PathParam("tenantname") String tenantname) {
         return Users.getInstance(sitename, tenantname);
     }
+    
+    
+    
+    
+    
+    @GET
+    @Path("/token")
+    @Produces("application/json")
+    @Consumes("application/json")
+    public String getFederationToken(String content) {
+        JSONObject reply = new JSONObject();
+        JSONObject input = null;
+        JSONParser parser = new JSONParser();
+        String username = null;
+        String tenant = null;
+        String token = null;
+        String cmp_endpoint = null;
+        SimpleIDM sidm;
+        String cloud = null;
+        String pass = null;
+
+        try {
+            input = (JSONObject) parser.parse(content);
+            username = (String) input.get("username");
+            tenant = (String) input.get("tenant");
+            //token=(String)input.get("token");
+            cmp_endpoint = (String) input.get("cmp_endpoint");
+            pass = (String) input.get("passwordUser");
+        } catch (ParseException pe) {
+            reply.put("returncode", 1);
+            reply.put("errormesg", "INPUT_JSON_UNPARSABLE: OPERATION ABORTED");
+            return reply.toJSONString();
+        }
+
+  
+        sidm = new SimpleIDM(); //>>>BEACON: VERIFY THIS POINT
+        String dbName = sidm.retrieve_TenantDB("federationTenant", tenant);
+        sidm.setDbName(dbName);  //>>>BEACON: FOR THE MOMENT OUR TESTING DB IS CALLED beacon
+        cloud = sidm.getCloudID(username, tenant, cmp_endpoint);
+        // add check for cloud endpoint
+        FederatedUser fu = sidm.retr_infoes_fromfedsdn(tenant, cloud);
+
+        if (!fu.getPassword().equals(pass.toString())) {
+            LOGGER.debug("User not Valid!");
+            reply.put("returncode", 1);
+            reply.put("errormesg", "Password is not correct!");
+            reply.put("token", "");
+            reply.put("tenant_id", "");
+            return reply.toString();
+        }
+        KeystoneTest key = new KeystoneTest(tenant, fu.getUser(), fu.getPassword(), cmp_endpoint);
+        HashMap hm = key.getToken(tenant, fu.getUser(), fu.getPassword());
+        token = (String) hm.get("ID");
+
+        //When FEDSDN will take in count token expiration date we will use this token as
+        ////output parameter that will be returned to it. For the moment we will return a static 
+        //////token taken from MongoDb 
+        token = sidm.getFederationToken(tenant, username);
+
+        if ((String) hm.get("ID") == null) {
+            LOGGER.debug("User not Valid!");
+            reply.put("returncode", 1);
+            reply.put("errormesg", "User not Valid!");
+            reply.put("token", "");
+            reply.put("tenant_id", "");
+            return reply.toString();
+        } else if (token == null) {
+            LOGGER.debug("It is impossible retrieve token");
+            reply.put("returncode", 1);
+            reply.put("errormesg", "It is impossible retrieve token: OPERATION ABORTED");
+            reply.put("token", "");
+            reply.put("tenant_id", "");
+            return reply.toString();
+        }
+        String tenant_id = key.getTenantId(tenant);
+        reply.put("returncode", 0);
+        reply.put("errormesg", "None");
+        reply.put("token", token);
+        reply.put("tenant_id", tenant_id);
+
+        reply.put("returncode", 0); // or reply.put("returncode", 1);
+        reply.put("errormesg", "None"); //or reply.put("errormesg", "Mesg");
+        return reply.toJSONString();
+    }
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 }
