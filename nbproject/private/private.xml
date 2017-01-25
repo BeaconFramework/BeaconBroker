@@ -3,5 +3,11 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group name="OSFederationFlowManager"/>
+        <group>
+            <file>file:/home/dissennato/NetBeansProjects/BB/src/java/API/EASTAPI/Clients/NetworkSegment.java</file>
+            <file>file:/home/dissennato/NetBeansProjects/BB/src/java/API/NTHAPI/UserssResource.java</file>
+            <file>file:/home/dissennato/NetBeansProjects/BB/src/java/OSFFM_ORC/OrchestrationManager.java</file>
+            <file>file:/home/dissennato/NetBeansProjects/BB/src/java/API/NTHAPI/NetworksResource.java</file>
+        </group>
     </open-files>
 </project-private>
