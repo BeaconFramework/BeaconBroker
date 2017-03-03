@@ -254,7 +254,7 @@ public class SunLightPolicy implements Policy,Runnable{
                 }
                 catch(MDBIException me){
                     LOGGER.error("Impossible manage the Datacenter information Stored on MongoDb for the Tenant "+this.tenant+"; It's Impossible accede to Datacenter info for selected DC:");
-                 //   throw new ElasticityPolicyException("Impossible manage the Datacenter information Stored on MongoDb for the Tenant "+this.tenant+"; It's Impossible accede to Datacenter info for selected DC:\n"+me);
+                 //   throw new ElasticityPolicyExceptionslp("Impossible manage the Datacenter information Stored on MongoDb for the Tenant "+this.tenant+"; It's Impossible accede to Datacenter info for selected DC:\n"+me);
                 }
         this.actualDCGap=dcgap;
     }

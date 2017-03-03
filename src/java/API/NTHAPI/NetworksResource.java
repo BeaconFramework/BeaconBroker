@@ -268,8 +268,9 @@ public class NetworksResource {
             jArr = (JSONArray) input.get("network_tables");
             it = jArr.iterator();
             while (it.hasNext()) {
-
+                LOGGER.error("TESTALFONSO1"+(String) it.next());
                 jSonList.add(new org.json.JSONObject((String) it.next())); // BEACON>>CODIFICARE QUESTA ASSEGNAZIONE
+                LOGGER.error("TESTALFONSO2"+new org.json.JSONObject((String) it.next()));
 
             }
 
@@ -288,8 +289,10 @@ public class NetworksResource {
 
         //sidm.setDbName(dbName); 
         //FederationUser fu = sidm.getFederationU(OSF_token, OSF_cmp_endpoint);
-        OrchestrationManager om = new OrchestrationManager();
-        response = om.makeLink(Long.getLong(fedId).longValue(), fedUser, jSonList, m).toString();
+        
+//        OrchestrationManager om = new OrchestrationManager();
+//        response = om.makeLink(Long.getLong(fedId).longValue(), fedUser, jSonList, m).toString();
+        //return response;
         return null;
     }
 }

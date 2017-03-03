@@ -36,11 +36,15 @@ import java.util.NoSuchElementException;
 import org.jdom2.Element;
 import utils.*;
 import MDBInt.MDBIException;
+import org.json.JSONException;
 import com.mongodb.AggregationOutput;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.logging.Level;
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 
 /**
@@ -1676,4 +1680,46 @@ public String getMapInfo(String dbName, String uuidTemplate) {
 //        this.insert(tenant, "NetTablesInfo", jsonTable);
         return true;
     }
+    
+    
+    public String retrieveONEFlowTemplate(String tenant, String ManifestName, String onetempNAME) throws MDBIException {
+        DBObject query = new com.mongodb.BasicDBObject();
+        query.put("masterKey", ManifestName);
+        JSONObject manifest = null;
+        try {
+            manifest = new JSONObject(this.getObj(tenant, "master", query.toString()));
+        } catch (JSONException ex) {
+            LOGGER.error("Impossible create a JSONObject form the Object retrieved by master collection");
+        } catch (MDBIException ex) {
+            LOGGER.error("Impossible create a JSONObject form the Object retrieved by master collection");
+        }
+        query = new com.mongodb.BasicDBObject();
+        query.put("type", "ONE::Beacon::OneFlowTemplate");
+        query.put("nome", onetempNAME);
+
+        JSONArray ja = (JSONArray) manifest.remove("resources");
+        String[] arquer = new String[ja.length()];
+        for (int i = 0; i < ja.length(); i++) {
+            try {
+                arquer[i] = ja.getString(i);
+            } catch (JSONException ex) {
+                LOGGER.error("Error in Manifest resources identification, impossible analyze Manifest stored on Database");
+                throw new MDBIException("Error in Manifest resources identification, impossible analyze Manifest stored on Database");
+            }
+        }
+
+        try {
+            query.put("uuid", new com.mongodb.BasicDBObject("$in", arquer));
+            DBObject result = this.find(tenant, "resources", query);
+            result = ((DBObject) result.get("properties"));
+            result = ((DBObject) result.get("onetemplate"));
+            return result.toString();
+
+        } catch (Exception ex) {
+            LOGGER.error("Impossible create a JSONObject with the oneFlow Template retrieved from Manifest");
+            throw new MDBIException("Impossible create a JSONObject with the oneFlow Template retrieved from Manifest");
+        }
+       
+    }
 }
+

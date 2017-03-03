@@ -46,7 +46,7 @@ public class ManifestManager implements Runnable{
     JSONObject resource,outputs, parameters;
     LinkedHashMap<String,LinkedHashMap> table_resourceset;
     GeoManager geo_man;
-    HashMap<String,Object> georef_table,serGr_table,ElaPolicies=null;
+    HashMap<String,Object> georef_table,serGr_table,oneTem_table,ElaPolicies=null;
     String tempVers="2014-10-16",description="empty_descr";
     FednetsLink fnl;
     static Logger LOGGER = Logger.getLogger(ManifestManager.class);
@@ -77,6 +77,12 @@ public class ManifestManager implements Runnable{
     public ManifestManager(String name,JSONObject manifest)throws JSONException{
         this.manifest=manifest;
         this.nameSetRes=name;
+        this.init();
+    }
+    /**
+     * It instantiate variable.
+     */
+    private void init(){
         this.table_resourceset=new LinkedHashMap<>();
         this.table_resourceset.put("OS::Beacon::ServiceGroupManagement",new LinkedHashMap<String,JSONObject>());
         this.table_resourceset.put("OS::Beacon::fedNetManagement",new LinkedHashMap<String,JSONObject>());
@@ -84,8 +90,10 @@ public class ManifestManager implements Runnable{
         this.table_resourceset.put("OS::Beacon::fedSecManagement",new LinkedHashMap<String,JSONObject>());
         this.table_resourceset.put("OS::Beacon::ScalingPolicy",new LinkedHashMap<String,JSONObject>());
         this.table_resourceset.put("OS::Beacon::Georeferenced_deploy",new LinkedHashMap<String,JSONObject>());
+        this.table_resourceset.put("ONE::Beacon::OneFlowTemplate",new LinkedHashMap<String,JSONObject>());
         this.geo_man=new GeoManager();
         this.serGr_table=new HashMap<>();
+        this.oneTem_table=new HashMap<>();
         this.fnl=new FednetsLink();
     }
     //</editor-fold>
@@ -110,6 +118,13 @@ public class ManifestManager implements Runnable{
             this.elaborateSerGr(sgObj,(JSONObject)this.table_resourceset.get("OS::Beacon::ServiceGroupManagement").get(resName), resName);
             this.serGr_table.put(resName, sgObj);
         }
+        it_keyset=this.table_resourceset.get("ONE::Beacon::OneFlowTemplate").keySet().iterator();
+        while(it_keyset.hasNext()){
+            OneTemplateManager oneObj=new OneTemplateManager();
+            String resName=(String)it_keyset.next();
+            this.elaborateOneTemp(oneObj,(JSONObject)this.table_resourceset.get("ONE::Beacon::OneFlowTemplate").get(resName), resName);
+            this.oneTem_table.put(resName, oneObj);
+        }//27/02  TESTARE
         try {
 
             this.elaborateElaRef();
@@ -163,6 +178,10 @@ public class ManifestManager implements Runnable{
                     this.table_resourceset.get("OS::Beacon::Georeferenced_deploy").put(key, tmp);
                     break;
                 }
+                case "ONE::Beacon::OneFlowTemplate":{
+                    this.table_resourceset.get("ONE::Beacon::OneFlowTemplate").put(key, tmp);
+                    break;
+                }
                 default :{
                     
                     break;
@@ -170,6 +189,7 @@ public class ManifestManager implements Runnable{
             }
         } 
     }
+    
 //</editor-fold>
 
 //<editor-fold defaultstate="collapsed" desc="FedNet management Functions"> 
@@ -263,6 +283,20 @@ public class ManifestManager implements Runnable{
             }
         }
         this.outputAnalisys(sgObj);
+    }
+//</editor-fold>
+    
+    //<editor-fold defaultstate="collapsed" desc="OneFlow Template management Functions">    
+    /**
+     * This function is called to analyze the manifest in order to identify and pass the resource/parameter/output 
+     * elements connected at the service group to OneTemplateManager Object.
+     * @param oneObj, OneTemplateManager that will be used to manage the information of the OneFlow Template
+     * @param one, JSONObject took from manifest that describe OneFlow Template resource
+     * @param oneTName, String that represent name of OneFlow Template
+     */
+    private void elaborateOneTemp(OneTemplateManager oneObj,JSONObject one,String oneTName)throws JSONException{
+        JSONObject properties=one.getJSONObject("properties");
+        oneObj.consumeOneTemp(properties);
     }
 //</editor-fold>
     

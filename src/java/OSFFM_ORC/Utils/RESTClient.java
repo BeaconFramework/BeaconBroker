@@ -13,9 +13,10 @@
 *   limitations under the License.
 */
 
-package API.EASTAPI.Clients;
+package OSFFM_ORC.Utils;
 
 //<editor-fold defaultstate="collapsed" desc="Import Section">
+
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.Iterator;
@@ -44,15 +45,15 @@ import utils.Exception.*;
 
 /**
  * This CLASS NEED TO BE MODIFIED.
- * This CLASS IS USED TO MAKE REQUESTS FORFEDSDN
+ * This CLASS IS USED TO MAKE REQUESTS FOR FEDSDN
  * @author Giuseppe Tricomi
  */
-public class EastBrRESTClient {
+public class RESTClient {
 
     
 
     private String userName="",password="";//,region="RegionOne";
-    static final Logger LOGGER = Logger.getLogger(EastBrRESTClient.class);
+    static final Logger LOGGER = Logger.getLogger(RESTClient.class);
 //<editor-fold defaultstate="collapsed" desc="Getter&Setter">
     /*public String getRegion() {
         return region;
@@ -80,23 +81,23 @@ public class EastBrRESTClient {
 
     //</editor-fold>
     
-    public EastBrRESTClient(String userName,String password) {
+    public RESTClient(String userName,String password) {
         this.password=password;
         this.userName=userName;
     }
     
 
     
-   public Response makeSimpleRequest(String urlFEDSDN,String body,String type){
-    HttpBasicAuthFilter auth=new HttpBasicAuthFilter(this.userName,this.password);
+    public Response makeSimpleRequest(String urlFEDSDN, String body, String type) {
+        HttpBasicAuthFilter auth = new HttpBasicAuthFilter(this.userName, this.password);
         ClientConfig config = new ClientConfig();
         Client client = ClientBuilder.newClient(config);
         WebTarget target;
         client.register(auth);
         target = client.target(getBaseURI(urlFEDSDN));
-        
-        Invocation.Builder invocationBuilder =target.request();
-        MultivaluedHashMap<String,Object> mm=new MultivaluedHashMap<String,Object>();
+
+        Invocation.Builder invocationBuilder = target.request();
+        MultivaluedHashMap<String, Object> mm = new MultivaluedHashMap<String, Object>();
         mm.add("content-type", "application/json");
         mm.add("Accept", "application/json");
         mm.add("charsets", "utf-8");
@@ -127,7 +128,7 @@ public class EastBrRESTClient {
                         .get();
                 break;
             }
-            default :{
+            default: {
                 //nothing to do
             }
         }

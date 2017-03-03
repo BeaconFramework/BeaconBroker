@@ -19,12 +19,12 @@ package JClouds_Adapter;
  *
  * @author Giuseppe Tricomi
  */
-public class OpenstackInfoContainer {
+public class OpenstackInfoContainer {//TODO: BEACON>>> REFACTOR required to change this class name in CloudFedInfoContainer
 
     public OpenstackInfoContainer(String idCloud,String endpoint, String tenant, String user, String password, String region) {
         this.endpoint = endpoint;
         this.tenant = tenant;
-        this.user = user;
+        this.user = user;//TODO: BEACON>>> in ONE si usa questo elemento come user
         this.password = password;
         this.region = region;
         this.idCloud=idCloud;

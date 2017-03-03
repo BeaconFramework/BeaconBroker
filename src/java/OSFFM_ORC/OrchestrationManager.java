@@ -30,6 +30,7 @@ import OSFFM_ORC.Utils.ElasticitysuppContainer;
 import OSFFM_ORC.Utils.Exception.NotFoundGeoRefException;
 import OSFFM_ORC.Utils.FednetsLink;
 import OSFFM_ORC.Utils.MultiPolygon;
+import OSFFM_ORC.Utils.ONEClient;
 import com.edw.rmi.RMIServerInterface;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -58,6 +59,7 @@ import org.jdom2.Element;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import utils.Exception.OrchestrationException;
 //import org.openstack4j.model.heat.Resource;
 //import org.openstack4j.model.heat.Stack;
 //import org.yaml.snakeyaml.Yaml;
@@ -227,6 +229,7 @@ public class OrchestrationManager {
             LOGGER.error(ex.getMessage());
         }
         mm.run();
+        
     }
     
     /**
@@ -318,7 +321,7 @@ public class OrchestrationManager {
      * @return 
      */
     public HashMap<String,ArrayList<ArrayList<String>>> managementgeoPolygon(String manName,MDBInt.DBMongo db,String tenant){
-        HashMap<String,ArrayList<ArrayList<String>>> tmp=new HashMap<String,ArrayList<ArrayList<String>>>();//mappa contenente associazione nome shape con Datacenter ID&info
+        HashMap<String,ArrayList<ArrayList<String>>> tmp=new HashMap<String,ArrayList<ArrayList<String>>>();//mappa contenente associazione nome Servizio/OneFlowTemp con Datacenter ID&info
 //salvare questa mappa come oggetto dell'orchestrator
         ManifestManager mm=(ManifestManager)OrchestrationManager.mapManifestThr.get(manName);
         Set s=mm.table_resourceset.get("OS::Beacon::ServiceGroupManagement").keySet();
@@ -337,6 +340,92 @@ public class OrchestrationManager {
             ArrayList dcInfoes=new ArrayList();
             for(int index=0;index<ar.size();index++){
                 try{
+                   // dcInfoes=new ArrayList();//commentato,verificare funzionamento
+                    ArrayList<String> dcInfo=db.getDatacenters(tenant,ar.get(index).toJSONString());
+                    if(dcInfo.size()!=0){
+                        dcInfoes.add(dcInfo);
+                        foundone=true;
+                    }
+                }
+                catch(org.json.JSONException je){
+                    LOGGER.error("An error is occourred in MultiPolygon JSON creation.");
+                    
+                }
+            }
+            tmp.put(serName, dcInfoes);
+            if(!foundone)
+                //return null; //NOTE: It isn't correct that it returns null if some research fail it has to go ahead
+                if(it.hasNext())
+                    continue;
+        }
+   ///////////////////////////////////////////VERIFICARE DA QUI IN POI///////////////////
+        if(!(mm.table_resourceset.get("ONE::Beacon::OneFlowTemplate").isEmpty()))
+        {
+            s=mm.table_resourceset.get("ONE::Beacon::OneFlowTemplate").keySet();
+            it=s.iterator();
+            foundone =false;
+            while (it.hasNext()) {
+                String oneName = (String) it.next();
+                OneTemplateManager otm = (OneTemplateManager) mm.oneTem_table.get(oneName);
+                ArrayList<MultiPolygon> ar = null;
+                try {
+                    ar = (ArrayList<MultiPolygon>) mm.geo_man.retrievegeoref(otm.getGeoreference());
+                } catch (NotFoundGeoRefException ngrf) {
+                    LOGGER.error("An error is occourred in retrievegeoref. The GeoManager doesn't contain the shape searched.\n" + ngrf.getMessage());
+                    ngrf.printStackTrace();
+                }
+                ArrayList dcInfoes = new ArrayList();
+                for (int index = 0; index < ar.size(); index++) {
+                    try {
+                        ArrayList<String> dcInfo = db.getDatacenters(tenant, ar.get(index).toJSONString());
+                        if (dcInfo.size() != 0) {
+                            dcInfoes.add(dcInfo);
+                            foundone = true;
+                        }
+                    } catch (org.json.JSONException je) {
+                        LOGGER.error("An error is occourred in MultiPolygon JSON creation.");
+                    }
+                }
+                tmp.put(oneName, dcInfoes);
+                if (!foundone)
+                    if (it.hasNext())
+                        continue;
+            }
+        }
+        return tmp;
+    }
+    
+    /**
+     * It returns an HashMap that correlate ONEFlowTemplate with the ArrayList that contains 
+     * the ArrayList of String representation of JSONObject of the OpenNebula Datacenter info.
+     * These Datacenter set (represented by the inner ArrayList) is the dc, existent inside the shape
+     * descript in geoshape; the external ArrayList is the set of all previous entity retrieved for each shape.
+     * The external ArrayList is a priority ordered List.
+     * @param manName
+     * @param db
+     * @param tenant
+     * @return 
+     */
+    public HashMap<String,ArrayList<ArrayList<String>>> managementgeoPolygonONE(String manName,MDBInt.DBMongo db,String tenant){
+        HashMap<String,ArrayList<ArrayList<String>>> tmp=new HashMap<String,ArrayList<ArrayList<String>>>();//mappa contenente associazione nome shape con Datacenter ID&info
+//salvare questa mappa come oggetto dell'orchestrator
+        ManifestManager mm=(ManifestManager)OrchestrationManager.mapManifestThr.get(manName);
+        Set s=mm.table_resourceset.get("ONE::Beacon::OneFlowTemplate").keySet();
+        Iterator it=s.iterator();
+        boolean foundone =false;
+        while(it.hasNext()){
+            String oneName=(String)it.next();
+            OneTemplateManager otm=(OneTemplateManager)mm.oneTem_table.get(oneName);
+            ArrayList<MultiPolygon> ar=null;
+            try{
+                ar=(ArrayList<MultiPolygon>)mm.geo_man.retrievegeoref(otm.getGeoreference());
+            }catch(NotFoundGeoRefException ngrf){
+                LOGGER.error("An error is occourred in retrievegeoref. The GeoManager doesn't contain the shape searched.\n"+ngrf.getMessage());
+                ngrf.printStackTrace();
+            }
+            ArrayList dcInfoes=new ArrayList();
+            for(int index=0;index<ar.size();index++){
+                try{
                     ArrayList<String> dcInfo=db.getDatacenters(tenant,ar.get(index).toJSONString());
                     if(dcInfo.size()!=0){
                         dcInfoes.add(dcInfo);
@@ -347,11 +436,13 @@ public class OrchestrationManager {
                     LOGGER.error("An error is occourred in MultiPolygon JSON creation.");
                 }
             }
-            tmp.put(serName, dcInfoes);
+            tmp.put(oneName, dcInfoes);
             if(!foundone)
-                return null;
+                 //return null; //NOTE: It isn't correct that it returns null if some research fail it has to go ahead
+                if(it.hasNext())
+                    continue;
         }
-        return tmp;
+        return tmp;//VERIFICARE QUESTA FUNZIONE 27/02
     }
     
     /**
@@ -371,14 +462,14 @@ public class OrchestrationManager {
         HashMap<String,ArrayList<ArrayList<OpenstackInfoContainer>>> tmp=new HashMap<String,ArrayList<ArrayList<OpenstackInfoContainer>>>();//mappa contenente associazione nome shape con federatedUser credential for each Datacenter
         String serName="";
         Iterator it=dcInfoesMap.keySet().iterator();
-        while(it.hasNext()){
+        while(it.hasNext()){ //Cycle one: analisys of the MAP
             serName=(String)it.next();
             ArrayList<ArrayList<String>> tmp2=(ArrayList<ArrayList<String>>)dcInfoesMap.get(serName);
             ArrayList<ArrayList<OpenstackInfoContainer>> crtmp2=new ArrayList<ArrayList<OpenstackInfoContainer>>();
-            for(int ind_ex=0;ind_ex<tmp2.size();ind_ex++){
+            for(int ind_ex=0;ind_ex<tmp2.size();ind_ex++){//Cycle2 Analisys of the DC Array selected to manage the Resource
                 ArrayList<String> tmp3=(ArrayList<String>)dcInfoesMap.get(serName).get(ind_ex);
                 ArrayList<OpenstackInfoContainer> crtmp3=new ArrayList<OpenstackInfoContainer>();
-                for(int ind_int=0;ind_int<tmp3.size();ind_int++){
+                for(int ind_int=0;ind_int<tmp3.size();ind_int++){    //Cycle3 retrieve Clouds credentials 
                     JSONObject j=null,jj=null;
                     OpenstackInfoContainer credential=null;
                     try{
@@ -772,17 +863,18 @@ public class OrchestrationManager {
             //System.out.println("&&&&&&&&&&&&&&&&&&&&&"+tmpArCr.size());
             for (Object tmpArCrob : tmpArCr) {
                 LOGGER.info("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\nISTANTION PHASE FOR THE CLOUD:" + ((OpenstackInfoContainer) tmpArCrob).getIdCloud() + "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-                boolean result = this.stackInstantiate(template, (OpenstackInfoContainer) tmpArCrob, m, stackName,serviceManifName);//BEACON>>> in final version of OSFFM 
+ //               boolean result = this.stackInstantiate(template, (OpenstackInfoContainer) tmpArCrob, m, stackName,serviceManifName);//BEACON>>> in final version of OSFFM 
+                
                 LOGGER.debug("TEMPLATE ISTANTIATED ON CLOUD:" + ((OpenstackInfoContainer) tmpArCrob).getIdCloud());
                 //we will use variable result to understand if the stack is deployed inside the federated cloud
                 String region = "RegionOne";
                 ((OpenstackInfoContainer) tmpArCrob).setRegion(region);
-                HashMap<String, ArrayList<Port>> map_res_port = this.sendShutSignalStack4DeployAction(stackName, (OpenstackInfoContainer) tmpArCrob, first, m);
+//                HashMap<String, ArrayList<Port>> map_res_port = this.sendShutSignalStack4DeployAction(stackName, (OpenstackInfoContainer) tmpArCrob, first, m);
                 if (true) {//result) {
                     firstDC=((OpenstackInfoContainer)tmpArCrob).getIdCloud();
                     first = false;//if first stack creation is successfully completed, the other stacks instantiated are not the First
                 }                        //and need different treatment.
-                arRes.add(map_res_port);
+  //              arRes.add(map_res_port);
             }
             arindex++;
             arMapRes.add(arRes);
@@ -792,6 +884,61 @@ public class OrchestrationManager {
         }
         return new ElasticitysuppContainer(arMapRes,firstDC);
     }
+    
+    /**
+     * This function is used to istantiate all OneFlow template in the selected OpenNebula Site.
+     * It extracts OneFlowTemplate from the Manifest and send it to OneFlow via REST interface.
+     * Future improvement might manage different answers of the instantiation request.
+     * @param ManifestName
+     * @param tmpMapcred
+     * @param tmpMap
+     * @param m 
+     */
+    public void istantiateONE_Templates(
+            String ManifestName,
+            HashMap<String, ArrayList<ArrayList<OpenstackInfoContainer>>> tmpMapcred,
+            HashMap<String,ArrayList<ArrayList<String>>> tmpMap,//usefull??
+            DBMongo m,
+            String tenant) 
+    {
+        String oneuser="";
+        String onepass="";
+        String oneFlowTemplate="";
+        String ONEFlowURL="";
+        //recuperare da   tmpMapcred la lista dei datacenter ONE preposti al lancio del template, e le credenziali per accedere alle funzioni di ONE
+        //recuperare da DBMongo/ManifestName/"ONE::Beacon::OneFlowTemplate" il template per oneflow
+        Set s = this.getONETempList(ManifestName);
+        Iterator it = s.iterator();
+        while (it.hasNext()) {
+            String onetempNAME = (String) it.next();
+            ArrayList<ArrayList<OpenstackInfoContainer>> ar = tmpMapcred.get(onetempNAME);
+            try {
+                oneFlowTemplate = m.retrieveONEFlowTemplate(tenant, ManifestName, onetempNAME);
+            } catch (MDBIException ex) {
+                LOGGER.error("Error occurred in retrieving OneFlow Template named:" +onetempNAME+ " for manifest with UUID "+ ManifestName+"\n"+ex.getMessage());
+                continue;
+            }
+            //gestione array  
+            for (int i = 0; i < ar.size(); i++) {
+                OpenstackInfoContainer infocont = (OpenstackInfoContainer) ar.get(i).get(0);//we will use only the first element of the inner OpenstackInfoContainer
+                oneuser = infocont.getUser();
+                onepass = infocont.getPassword();
+                ONEFlowURL = infocont.getEndpoint();//mettere tutti i cazzo di trycatch
+                ONEClient oc = new ONEClient(oneuser, onepass);
+                try {
+                    Response r = oc.beaconDeployOperation(oneFlowTemplate, ONEFlowURL);
+
+                } catch (WSException ex) {//SISTEMARE GESTIONE
+                    LOGGER.error("Error occurred in creation of service_template on Openebula site of OneFlow Template named:" +onetempNAME+ " contained in manifest with UUID "+ ManifestName+". It appears with cloud "+infocont.getIdCloud()+"\n"+ex.getMessage());
+                } catch (OrchestrationException ex) {
+                  LOGGER.error("Error occurred in instantiation of service_template on Openebula site of OneFlow Template named:" +onetempNAME+ " contained in manifest with UUID "+ ManifestName+". It appears with cloud "+infocont.getIdCloud()+"\n"+ex.getMessage());
+                }
+            }
+        }
+        
+    }
+    
+    
     
     //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Management function for ServiceGroup">
@@ -807,7 +954,19 @@ public class OrchestrationManager {
         return s;
     }
     //</editor-fold>
-    
+    //<editor-fold defaultstate="collapsed" desc="Management function for ONETemplate">
+    /**
+     * This function returns the set of ONETemplate name described inside manifest
+     * and stored inside ManifestManager.
+     * @param manifestName
+     * @return Set, set of mplateTe name described inside manifest. 
+     */
+    public Set<String> getONETempList(String manifestName){
+        ManifestManager mm=(ManifestManager)OrchestrationManager.mapManifestThr.get(manifestName);
+        Set s=mm.oneTem_table.keySet();
+        return s;
+    }
+    //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Networks Management function">
     /**
      * This function creates private network environment on target cloud.

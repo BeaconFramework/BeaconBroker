@@ -183,3 +183,50 @@ resources:
     properties:
       rules:
         - value 
+
+        
+        
+  prova:
+    type:  ONE::Beacon::OneFlowTemplate
+    properties:
+        name: GroupName
+        geo_deploy: { get_resource: geoshape_1}
+        onetemplate:
+        {
+            "name": "Scalability1",
+            "deployment": "none",
+            "roles": [
+                {
+                "name": "frontend",
+                "cardinality": 2,
+                "vm_template": 0,
+
+                "min_vms" : 1,
+                "max_vms" : 5,
+
+                "elasticity_policies" : [
+                    {
+                    // +2 VMs when the exp. is true for 3 times in a row,
+                    // separated by 10 seconds
+                    "expression" : "ATT > 50",
+
+                    "type" : "CHANGE",
+                    "adjust" : 2,
+
+                    "period_number" : 3,
+                    "period" : 10
+                    },
+                    {
+                    // -10 percent VMs when the exp. is true.
+                    // If 10 percent is less than 2, -2 VMs.
+                    "expression" : "ATT < 20",
+
+                    "type" : "PERCENTAGE_CHANGE",
+                    "adjust" : -10,
+                    "min_adjust_step" : 2
+                    }
+                ]
+                }
+            ]
+        }
+        

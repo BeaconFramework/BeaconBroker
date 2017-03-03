@@ -137,12 +137,12 @@ public class SerGrManager {
         this.georeference = georeference;
     }
 //<editor-fold defaultstate="collapsed" desc="Variable">
-    private String georeference; //questo serve come parametro per la chiamta da inoltrare al manifest manger per ottenere il
+    private String georeference; //questo serve come parametro per la chiamata da inoltrare al manifest manger per ottenere il
                                 //luoghi dove effettuare il deploy
     private String groupName;
     private JSONObject serviceGroup; //It contains the resource object that will be treated by osffm to manage this service group
     private SerGrInfoContainer container; //it contains the resource that will be composed in YAML file and passed to target HEAT
 //</editor-fold>
-    
+     
     
 }

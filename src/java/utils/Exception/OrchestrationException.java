@@ -19,12 +19,12 @@ package utils.Exception;
  *
  * @author Giuseppe Tricomi
  */
-public class WSException extends Exception {
+public class OrchestrationException extends Exception {
 
     /**
      * Creates a new instance of <code>WSException</code> without detail message.
      */
-    public WSException() {
+    public OrchestrationException() {
     }
 
 
@@ -32,7 +32,7 @@ public class WSException extends Exception {
      * Constructs an instance of <code>WSException</code> with the specified detail message.
      * @param msg the detail message.
      */
-    public WSException(String msg) {
+    public OrchestrationException(String msg) {
         super(msg);
     }
 }

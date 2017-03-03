@@ -172,7 +172,7 @@ public class IstantiateManifest {
         }
         
         HashMap<String, ArrayList<ArrayList<OpenstackInfoContainer>>> tmpMapcred = om.managementRetrieveCredential(tmpMap, this.m, tenant, userFederation, passwordFederation, "RegionOne");
-        //////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////SERGROUP MANAGEMENT
         Set<String> setStack = om.getSGList(manifestName);
         //BEACON>>> this step it will be substitude by a function that analize the manifest and retireve the ServiceManagementGroups 
             //stored inside global manifest
@@ -196,7 +196,13 @@ public class IstantiateManifest {
                 LOGGER.error("Error occurred in elasticity Thread launching; OPERATION ABORTED."+e.getMessage());
             }
         }
-        om.prepareNetTables4completeSharing(tenant, manifestName, tmpMapcred, this.m);
+        /////////////////////////////////////////////////////////////ONEFLOWTEMPLATE MANAGEMENT
+        //INSERIRE QUI LA PARTE CHE GESTISCE I TEMPLATE PER ONEFLOW
+        om.istantiateONE_Templates(manifestName, tmpMapcred, tmpMap, m, tenant);
+        
+        
+        ////////////////////////////////////////////////////////////NETWORK LINK MANAGEMENT
+        om.prepareNetTables4completeSharing(tenant, manifestName, tmpMapcred, this.m);//27/02 verificare questa parte del flusso deve interagire diversamente con il FEDSDN
         String[]entries = f.list();
         for(String s: entries){
             File currentFile = new File(f.getPath(),s);
