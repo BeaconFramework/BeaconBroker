@@ -105,7 +105,7 @@ public class OrchestrationManager {
     
    
     
-    
+    //<editor-fold defaultstate="collapsed" desc="OLD functions commented">
     
     /**
      * 
@@ -212,7 +212,7 @@ public class OrchestrationManager {
         this.manageYAMLcreation(mm, root);
     }
     */
-   
+   //</editor-fold>
    
     //<editor-fold defaultstate="collapsed" desc="Utility functions for orchestration">
     
@@ -863,18 +863,18 @@ public class OrchestrationManager {
             //System.out.println("&&&&&&&&&&&&&&&&&&&&&"+tmpArCr.size());
             for (Object tmpArCrob : tmpArCr) {
                 LOGGER.info("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\nISTANTION PHASE FOR THE CLOUD:" + ((OpenstackInfoContainer) tmpArCrob).getIdCloud() + "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
- //               boolean result = this.stackInstantiate(template, (OpenstackInfoContainer) tmpArCrob, m, stackName,serviceManifName);//BEACON>>> in final version of OSFFM 
+               boolean result = this.stackInstantiate(template, (OpenstackInfoContainer) tmpArCrob, m, stackName,serviceManifName);//BEACON>>> in final version of OSFFM 
                 
                 LOGGER.debug("TEMPLATE ISTANTIATED ON CLOUD:" + ((OpenstackInfoContainer) tmpArCrob).getIdCloud());
                 //we will use variable result to understand if the stack is deployed inside the federated cloud
                 String region = "RegionOne";
                 ((OpenstackInfoContainer) tmpArCrob).setRegion(region);
-//                HashMap<String, ArrayList<Port>> map_res_port = this.sendShutSignalStack4DeployAction(stackName, (OpenstackInfoContainer) tmpArCrob, first, m);
+                HashMap<String, ArrayList<Port>> map_res_port = this.sendShutSignalStack4DeployAction(stackName, (OpenstackInfoContainer) tmpArCrob, first, m);
                 if (true) {//result) {
                     firstDC=((OpenstackInfoContainer)tmpArCrob).getIdCloud();
                     first = false;//if first stack creation is successfully completed, the other stacks instantiated are not the First
                 }                        //and need different treatment.
-  //              arRes.add(map_res_port);
+                arRes.add(map_res_port);
             }
             arindex++;
             arMapRes.add(arRes);

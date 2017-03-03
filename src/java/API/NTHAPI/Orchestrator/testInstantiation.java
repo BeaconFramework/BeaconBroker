@@ -182,7 +182,7 @@ public class testInstantiation {
             ArrayList<ArrayList<HashMap<String, ArrayList<Port>>>> arMapRes= tmpsupp.getInfo();
             //BEACON:>>> It is needed decide what do with the info returned from om.deployManifest inside strucure arMapRes
             ////INSERIRE LA PARTE CHE GESTISCA L'ISTANZIAZIONE DEL SUNLIGHT POLICY THREAD
-           /* try{
+         /*  try{
                 if(om.getELaContainer(manifestName, stack)!=null){
                     String i=om.getELaContainer(manifestName, stack).getMinimumgap();
                     ela=ela.startMonitoringThreads(this.m,tenant, stack, tmpMap, userFederation,passwordFederation,i,tmpsupp.getFirstCloudId() );
