@@ -1,0 +1,19 @@
+outputs:
+  out_B_private_ip:
+    description: IP address of B server in private network
+    value:
+      get_attr: [B, first_address]
+heat_template_version: '2014-10-16'
+description: empty_descr
+resources:
+  B:
+    type: OS::Nova::Server
+    properties:
+      key_name: {get_param: key_name}
+      flavor: m1.tiny
+      image: {get_param: cirros}
+      name: test
+parameters:
+  key_name: {default: heat_key, description: Name of keypair to assign to servers,
+    type: string}
+  cirros: {default: cirros-0.3.4-x86_64-uec, description: description, type: string}
