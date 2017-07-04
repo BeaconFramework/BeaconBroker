@@ -13,8 +13,11 @@
 *   limitations under the License.
 */
 
-package OSFFM_ORC;
+package OSFFM_ORC.testsORC;
 
+import OSFFM_ORC.GeoManager;
+import OSFFM_ORC.ManifestManager;
+import OSFFM_ORC.OrchestrationManager;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;

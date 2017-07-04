@@ -15,7 +15,7 @@
 
 package OSFFM_ELA;
 
-import com.google.common.collect.HashBiMap;
+import java.util.HashMap;
 
 /**
  *
@@ -23,7 +23,7 @@ import com.google.common.collect.HashBiMap;
  */
 public interface Policy {
     
-    public HashBiMap  selectNewDatacenter(Integer val);
+    public HashMap  selectNewDatacenter(Integer val);
 
-    public void migrationAlertManager(HashBiMap params);
+    public void migrationAlertManager(HashMap params);
 }

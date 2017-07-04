@@ -77,7 +77,7 @@ public class IstantiateManifest {
         this.m=new DBMongo();
         //this.m.init();
        // this.m.init("../webapps/OSFFM/WEB-INF/Configuration_bit");
-        this.m.connectLocale("10.9.0.42");//this.m.getMdbIp());
+        this.m.connectLocale("10.9.240.1");//this.m.getMdbIp());
         this.spli=new Splitter(m);
     }
     
@@ -188,7 +188,20 @@ public class IstantiateManifest {
             try{
                 if(om.getELaContainer(manifestName, stack)!=null){
                     String i=om.getELaContainer(manifestName, stack).getMinimumgap();
-                    ela=ela.startMonitoringThreads(this.m,tenant, stack, tmpMap, userFederation,passwordFederation,i,tmpsupp.getFirstCloudId() );
+                    ela=ela.startMonitoringThreads(this.m,tenant, stack, tmpMap, userFederation,passwordFederation,i,tmpsupp.getFirstCloudId(),manifestName );
+                    /*//PARTE CREATE PER INTERCONNETTERE IL BB AL BB_ELASTICITYMANAGER
+                        JSONObject content= new JSONObject();
+                        content.put("tenant", tenant);
+                        content.put("stack",stack);
+                        content.put("geographical_Map", new JSONObject(tmpMap));
+                        content.put("userF",userFederation);
+                        content.put("passF",passwordFederation);
+                        content.put("minGap",i);
+                        content.put("firstC",tmpsupp.getFirstCloudId());
+                        content.put("manifestName",manifestName);
+                    */
+                    
+                    
                 }
             }
             catch(Exception e){

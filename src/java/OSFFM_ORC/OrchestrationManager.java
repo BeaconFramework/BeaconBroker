@@ -75,7 +75,7 @@ import utils.RunTimeInfo;
 public class OrchestrationManager {
     
     //<editor-fold defaultstate="collapsed" desc="Variable Definition Section">
-    private String ip="172.17.3.142";//default value for internal testing
+    private String ip="10.9.1.108";//default value for internal testing(VM with service RMIServer, PINGServer
     private int port=1099;//default value for internal testing
     private String fileConf="/webapps/OSFFM/WEB-INF/configuration_Orchestrator.xml";//this path starts from the tomcat home
     static HashMap<String,ManifestManager> mapManifestThr=new HashMap<String,ManifestManager>();//mappa che mantiene riferimenti manifest- manifest manager
@@ -937,7 +937,62 @@ public class OrchestrationManager {
         }
         
     }
-    
+    /**
+     * This function is used to istantiate all OneFlow template in the selected OpenNebula Site.
+     * It extracts OneFlowTemplate from the Manifest and send it to OneFlow via REST interface.
+     * Future improvement might manage different answers of the instantiation request.
+     * @param ManifestName
+     * @param tmpMapcred
+     * @param tmpMap
+     * @param m 
+     */
+    public void istantiateTOSCA_Templates(
+            String ManifestName,
+            HashMap<String, ArrayList<ArrayList<OpenstackInfoContainer>>> tmpMapcred,
+            HashMap<String,ArrayList<ArrayList<String>>> tmpMap,//usefull??
+            DBMongo m,
+            String tenant) 
+    {
+        String oneuser="";
+        String onepass="";
+        String oneFlowTemplate="";
+        String ONEFlowURL="";
+        //recuperare da tmpMapcred la lista dei datacenter ONE preposti al lancio del template, e le credenziali per accedere alle funzioni di ONE
+        //recuperare da DBMongo/ManifestName/"ONE::Beacon::OneFlowTemplate" il template per oneflow
+        Set s = this.getTostcaTempList(ManifestName);
+        Iterator it = s.iterator();
+        while (it.hasNext()) {
+            String toscatempNAME = (String) it.next();
+            //ArrayList<ArrayList<OpenstackInfoContainer>> ar = tmpMapcred.get(toscatempNAME);
+            try{
+            String vnfdTemp=((ManifestManager)mapManifestThr.get(ManifestName)).getVNFDManifest(toscatempNAME);
+                System.out.println(vnfdTemp);
+            String vnffgTemp=((ManifestManager)mapManifestThr.get(ManifestName)).getVNFFGManifest(toscatempNAME);
+            System.out.println(vnffgTemp);
+            }
+            catch(JSONException f){
+                
+            }
+            ////////////////DA RIVEDERE E SISTEMARE 18/04/2017
+//gestione array  
+          /*  for (int i = 0; i < ar.size(); i++) {
+                OpenstackInfoContainer infocont = (OpenstackInfoContainer) ar.get(i).get(0);//we will use only the first element of the inner OpenstackInfoContainer
+                oneuser = infocont.getUser();
+                onepass = infocont.getPassword();
+                ONEFlowURL = infocont.getEndpoint();//mettere tutti i cazzo di trycatch
+                ONEClient oc = new ONEClient(oneuser, onepass);
+                try {
+                    Response r = oc.beaconDeployOperation(oneFlowTemplate, ONEFlowURL);
+
+                } catch (WSException ex) {//SISTEMARE GESTIONE
+               //     LOGGER.error("Error occurred in creation of service_template on Openebula site of OneFlow Template named:" +onetempNAME+ " contained in manifest with UUID "+ ManifestName+". It appears with cloud "+infocont.getIdCloud()+"\n"+ex.getMessage());
+                } catch (OrchestrationException ex) {
+           //       LOGGER.error("Error occurred in instantiation of service_template on Openebula site of OneFlow Template named:" +onetempNAME+ " contained in manifest with UUID "+ ManifestName+". It appears with cloud "+infocont.getIdCloud()+"\n"+ex.getMessage());
+                }
+            }*/
+        }
+        
+    }
     
     
     //</editor-fold>
@@ -967,6 +1022,20 @@ public class OrchestrationManager {
         return s;
     }
     //</editor-fold>
+    //<editor-fold defaultstate="collapsed" desc="Management function for SFC/VNF TOSCATemplate">
+    /**
+     * This function returns the set of ONETemplate name described inside manifest
+     * and stored inside ManifestManager.
+     * @param manifestName
+     * @return Set, set of mplateTe name described inside manifest. 
+     */
+    public Set<String> getTostcaTempList(String manifestName){
+        ManifestManager mm=(ManifestManager)OrchestrationManager.mapManifestThr.get(manifestName);
+        Set s=mm.ttManTable.keySet();
+        return s;
+    }
+    //</editor-fold>
+    
     //<editor-fold defaultstate="collapsed" desc="Networks Management function">
     /**
      * This function creates private network environment on target cloud.
@@ -1007,7 +1076,7 @@ public class OrchestrationManager {
         if(template.equals(""))
             fam.prepareNetTables4completeSharing( tenantname,mapcontainer,tmpMapcred,m,false);
         else
-           fam.prepareNetTables4completeSharing( tenantname,mapcontainer,tmpMapcred,m,true);
+           fam.prepareNetTables4completeSharing( tenantname,mapcontainer,tmpMapcred,m,false);//true);
         }catch(Exception ex){
             System.err.println("richiamato IL FederationActionManager si ha: "+ ex.getMessage() );
             ex.printStackTrace();
@@ -1036,7 +1105,7 @@ public class OrchestrationManager {
             int arindex = 0;
             while (!skip) {
                 ArrayList<OpenstackInfoContainer> tmpArCr = (ArrayList<OpenstackInfoContainer>) arCr.get(arindex);
-                for (OpenstackInfoContainer tmpArCrob : tmpArCr) {
+                for (OpenstackInfoContainer tmpArCrob : tmpArCr) {//questo pezzo verifica se all'interno della netTables siano presenti informazioni relative alla cloud indicata dall'openstackinfocontainer in tal caso prova a recuperarle da Mongo
                     if((!netTablesMap.containsKey(tmpArCrob.getIdCloud()))||(netTablesMap.get(tmpArCrob.getIdCloud())==null))
                     {
                         try {
@@ -1052,7 +1121,7 @@ public class OrchestrationManager {
                             LOGGER.error("Impossible parse NetTables for cloud :"+tmpArCrob.getIdCloud()+".\nException obtained:"+ex.getMessage());
                             netTablesMap.put(tmpArCrob.getIdCloud(),null);
                         }
-                    }
+                    }//lo stesso di seguito per le sitetables
                     if((!siteTablesMap.containsKey(tmpArCrob.getIdCloud()))||(siteTablesMap.get(tmpArCrob.getIdCloud())==null))
                     {
                         try {
@@ -1068,7 +1137,7 @@ public class OrchestrationManager {
                             LOGGER.error("Impossible parse SiteTables for cloud :"+tmpArCrob.getIdCloud()+".\nException obtained:"+ex.getMessage());
                             siteTablesMap.put(tmpArCrob.getIdCloud(),null);
                         }
-                    }
+                    }//lo stesso per la tabella dei tenant
                     if((!tenantTablesMap.containsKey(tmpArCrob.getIdCloud()))||(tenantTablesMap.get(tmpArCrob.getIdCloud())==null))
                     {
                         try {
@@ -1078,7 +1147,11 @@ public class OrchestrationManager {
                                 LOGGER.info("Impossible parse tenantTables for cloud :"+tmpArCrob.getIdCloud()+".\n");
                             }
                             else{
-                                tenantTablesMap.put(tmpArCrob.getIdCloud(),new JSONObject(tmp));
+                                JSONObject tmpj=new JSONObject(tmp);
+                                tmpj.remove("referenceSite");
+                                tmpj.remove("insertTimestamp");
+                                tmpj.remove("version");
+                                tenantTablesMap.put(tmpArCrob.getIdCloud(),tmpj);
                             }
                         } catch (JSONException ex) {
                             LOGGER.error("Impossible parse tenantTables for cloud :"+tmpArCrob.getIdCloud()+".\nException obtained:"+ex.getMessage());
@@ -1086,14 +1159,17 @@ public class OrchestrationManager {
                         }
                     }
                 }
-                skip=true;
+                if(arindex>=arCr.size()-1)
+                    skip=true;
+                else
+                    arindex++;
             }
         }
+        //qui vengono settate come vecchie tabelle per il sistema le tabelle appena trovate (o le tabelle pari a null, nel caso in cui non ce ne fossero)
         FednetsLink f=new FednetsLink();
         f.setOldtenantTablesMap(tenantTablesMap);
         f.setOldsiteTablesMap(siteTablesMap);
         f.setOldnetTablesMap(netTablesMap);
-        
         return f;
     }
     //</editor-fold>

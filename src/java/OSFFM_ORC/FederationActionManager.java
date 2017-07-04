@@ -18,6 +18,7 @@ package OSFFM_ORC;
 import API.EASTAPI.Clients.Fednet;
 import API.EASTAPI.Clients.NetworkSegment;
 import API.EASTAPI.Clients.Site;
+import API.EASTAPI.Clients.Tenant;
 import API.SOUTHBR.FA_ScriptInvoke;
 import API.SOUTHBR.FA_client4Network;
 import API.SOUTHBR.FA_client4Sites;
@@ -373,6 +374,7 @@ public class FederationActionManager {
             DBMongo m,
             boolean startfromTemplate)
     {
+        HashMap<String,HashMap<String,Object>> al= new HashMap<String,HashMap<String,Object>>();
         FednetsLink fe=this.createCredMapwithoutDuplicate(tmpMapcred,mapContainer);
         Set<String> s=mapContainer.getCloudId_To_OIC().keySet();//getOldnetTablesMap().keySet();-->>verificare intanto modificato
         LinkedHashMap<String,FederationAgentInfo> fa4cloud=new LinkedHashMap<>();
@@ -387,13 +389,43 @@ public class FederationActionManager {
         fe.setEndpoint_To_FAInfo(fa4cloud);
         fe=this.prepareKeystoneMap(fe);
         try{
-           this.prepareTables4link(fe, m);
+           al=this.prepareTables4link(fe, m);
+           
+//02/07/2017 gt: al è una HashMap<String,HashMap<String,Object>>, la più esterna contiene l'associazione sito - Mappa , 
+//quella interna contiene negli  Object le tabelle da passare al FA per quel che riguarda Openstack
+//a questa mappa dovranno essere aggiunti gli elementi provenienti dal FEDSDN
         }
         catch(Exception e){
             LOGGER.error("Exception occurred in the function prepareTables4link");
         }
-        if(startfromTemplate)
-            this.updatestateOnFEDSDN(tenantname,fe, m);
+//04/07/2017 gt: la seguente funzione salva all'interno di MongoDB le tables ottenute che verranno usate durante la fase di instaurazione del link
+        this.saveTablesOnMongo(al,tenantname,m);
+        //if(startfromTemplate)
+        this.updatestateOnFEDSDN(tenantname,fe, m);
+    }
+    
+    private void saveTablesOnMongo(HashMap<String,HashMap<String,Object>> resultingTables, String tenant,DBMongo m){
+        Set<String> s=resultingTables.keySet();
+        JSONObject tenantTab=null;
+        JSONArray siteTab=null;
+        JSONObject netTab=null;
+        for(String idCloud: s){
+            
+            HashMap<String,Object> innerMap=(HashMap<String,Object>)resultingTables.get(idCloud);
+            try{
+                tenantTab=new JSONObject((String)innerMap.get("tenantTable"));
+                siteTab=new JSONArray((String)innerMap.get("siteTable"));
+                netTab=new JSONObject((String)innerMap.get("netTable"));
+                tenantTab.append("version", (Integer)netTab.get("version"));
+                m.insertTenantTables(tenant, idCloud,tenantTab.toString(0));
+                m.insertSiteTables(tenant, idCloud, "{"+siteTab.toString(0)+"}");
+                m.insertNetTable(tenant, idCloud,netTab.toString(0));
+            }
+            catch(JSONException ex){
+                LOGGER.error("Exception occurred in the function saveTablesOnMongo, it is not possible cast tables calculated for BNA from String to JSON.\nException Message:"+ex.getMessage());
+            }
+            
+        }
     }
     //<editor-fold defaultstate="collapsed" desc="FedSDN Interaction and Management Functions">
     /**
@@ -409,13 +441,25 @@ public class FederationActionManager {
         Site sClient= new Site(tenant,fedsdnpassword);//Modificare le info dentro il fedsdn che al momento sono inserite sotto l'utente root e password fedsdn
         NetworkSegment nClient=new NetworkSegment(tenant,fedsdnpassword);
         Fednet fClient=new Fednet(tenant,fedsdnpassword);
+
         try {
-            this.checkSiteFEDSDN(mapContainer, sClient, fedsdnURL,m);
+            if(!this.checkSiteFEDSDN(mapContainer, sClient, fedsdnURL,m)){
+                LOGGER.error("It was not possible to insert the site inside the BNM! \n");
+            }
         } catch (WSException ex) {
             LOGGER.error("Exception is occurred in checkSiteFEDSDN! \n" + ex);
         } catch (JSONException ex) {
             LOGGER.error("Exception is occurred in checkSiteFEDSDN! \n" + ex);
         }
+        
+        try {
+            this.checkTenantFEDSDN(mapContainer, sClient, fedsdnURL,m);
+        } catch (WSException ex) {
+            LOGGER.error("Exception is occurred in checkTenantFEDSDN! \n" + ex);
+        } catch (JSONException ex) {
+            LOGGER.error("Exception is occurred in checkTenantFEDSDN! \n" + ex);
+        }
+        
         try {
             this.checkNetSegmentFEDSDN(mapContainer,sClient, nClient, fedsdnURL,tenant, m);
         } catch (WSException ex) {
@@ -423,6 +467,7 @@ public class FederationActionManager {
         } catch (JSONException ex) {
             LOGGER.error("Exception is occurred in checkNetSegmentFEDSDN! \n" + ex);
         }
+
         try {
             this.makeLinkOnFednet( fClient, tenant, fedsdnURL,  m);
         } catch (WSException ex) {
@@ -486,7 +531,8 @@ public class FederationActionManager {
                                         fedsdnURL,
                                         federationTenantID, 
                                         siteid,
-                                        m
+                                        m,
+                                        federationTenant
                                 );
                                 if (ok) {
                                     break;
@@ -528,7 +574,8 @@ public class FederationActionManager {
             String fedsdnURL,
             long fedTenantIDFEDSDN,
             int siteIdFEDSDN,
-            DBMongo m
+            DBMongo m,
+            String tenant
     )throws JSONException,WSException{
         JSONObject jo=new JSONObject();
         jo.put("name", name);
@@ -539,7 +586,7 @@ public class FederationActionManager {
         
         try {
             Response r=nClient.createNetSeg(jo, fedsdnURL, fedTenantIDFEDSDN, siteIdFEDSDN);
-            m.insertfedsdnNetSeg(r.readEntity(String.class));//Bsogna verificare realmente cosa viene restituito
+            m.insertfedsdnNetSeg(r.readEntity(String.class), tenant);//Bsogna verificare realmente cosa viene restituito
             
         } catch (WSException ex) {
             LOGGER.error("Exception is occurred in addSiteOnFedSDN for NetSegment: " + name + " on site with ID:"+siteIdFEDSDN+" for the tenant: "+fedTenantIDFEDSDN+ "\n" + ex);
@@ -569,14 +616,91 @@ public class FederationActionManager {
                 boolean ok=false;
                 for(int k=0;k<3;k++){
                 
-                    ok=this.addSiteOnFedSDN(siteNameToCheck,sClient,fedsdnURL,m);
+                    ok=this.addSiteOnFedSDN(siteNameToCheck,sClient,fedsdnURL,m, CloudId_To_OIC.get(siteNameToCheck).getTenant());
                     if (ok)
                         break;
-                    else if(k==3)
+                    else if(k==3){
                         LOGGER.error("Something going wrong! It's Impossible add site on FEDSDN"); 
+                        return false; //03/07/2017: inserito per bloccare il flusso nel caso in cui qualche sito non venga inserito !!!
+                    }
                 }
             }
         }
+        return true;
+    }
+    
+    
+        /**
+     * 
+     * @param mapContainer
+     * @param sClient
+     * @param fedsdnURL
+     * @return
+     * @throws WSException
+     * @throws JSONException 
+     * @author gtricomi
+     */
+    private boolean checkTenantFEDSDN(FednetsLink  mapContainer,Site sClient,String fedsdnURL, DBMongo m) throws WSException, JSONException{
+        Response r=sClient.getAllSite(fedsdnURL);
+        JSONArray ja=new JSONArray(r.readEntity(String.class));
+        LinkedHashMap<String,OpenstackInfoContainer> CloudId_To_OIC=mapContainer.getCloudId_To_OIC();
+        
+        JSONArray inner = new JSONArray();
+        String tenant = null;
+        String tenant_password = null;
+        
+        for(int i=0;i<ja.length();i++){
+            JSONObject jo=(JSONObject)ja.get(i);
+            
+            String siteIdToCheck = (String)jo.get("id");
+            String siteNameToCheck = (String)jo.get("name");
+            
+
+            if(!(CloudId_To_OIC.containsKey(siteNameToCheck))){
+                
+                OpenstackInfoContainer oik = (OpenstackInfoContainer) CloudId_To_OIC.get(siteNameToCheck);
+                
+                String siteUsernameToCheck = oik.getUser();
+                String sitePasswordToCheck = oik.getPassword();
+                
+                String credentials = siteUsernameToCheck+":"+sitePasswordToCheck;
+
+                //03/07/2017: statically insert 0, but need to be checked !!!
+                String user_id_insite = "0";
+                
+                JSONObject inner_jo = new JSONObject("{\"site_id\" :\""+siteIdToCheck+"\",\"user_id_in_site\":\""+user_id_insite+"\" ,\"credentials\":\""+credentials+"\"}");
+                inner.put(inner_jo);
+                
+                tenant = oik.getTenant();
+                
+                //03/07/2017: federation password for the tenant is set equal to the openstack site !!!
+                tenant_password = sitePasswordToCheck;
+            }
+        }
+        
+        //03/07/2017: verify username management like structure "NotManagedUser@userFederation@UME" !!!
+        JSONObject tenant_jo = new JSONObject("{\"name\" :\""+tenant+"\",\"password\":\""+tenant_password+"\" ,\"type\":\"user\",\"valid_sites\": \""+inner+"\"}");
+        m.insertTenantTables(tenant, tenant_jo.toString());
+        
+        //03-07-2017 : hardcoded credential for tenant
+        Tenant t=new Tenant("root","fedsdn");
+        boolean ok = false;
+        for (int k = 0; k < inner.length(); k++) {
+            try {
+                r = t.createTen(tenant_jo, fedsdnURL);
+            } catch (WSException ex) {
+                LOGGER.error("Exception is occurred in checkTenantFEDSDN for tenant: " + tenant + "\n" + ex);
+                ok = false;
+            }
+            ok = true;
+            if (ok)
+                break;
+            else if (k == 3) {
+                LOGGER.error("Something going wrong! It's Impossible add site on FEDSDN");
+                return false; //03/07/2017: inserito per bloccare il flusso nel caso in cui qualche sito non venga inserito !!!
+            }
+        }
+        
         return true;
     }
     
@@ -588,12 +712,12 @@ public class FederationActionManager {
      * @return
      * @author gtricomi
      */
-    private boolean addSiteOnFedSDN(String siteName,Site sClient,String fedsdnURL,DBMongo m)throws JSONException{
+    private boolean addSiteOnFedSDN(String siteName,Site sClient,String fedsdnURL,DBMongo m, String tenant)throws JSONException{
         String type = (new JSONObject(m.getfedsdnSite(siteName))).getString("type");
         try {
             String cmp_endpoint=m.getInfo_Endpoint("entity", "osffm");//sicuri?
             Response r = sClient.createSite(siteName, cmp_endpoint, type, fedsdnURL);
-            m.insertfedsdnSite(r.readEntity(String.class));
+            m.insertfedsdnSite(r.readEntity(String.class), tenant); 
         } catch (WSException ex) {
             LOGGER.error("Exception is occurred in addSiteOnFedSDN for site: " + siteName + "\n" + ex);
             return false;
@@ -614,7 +738,8 @@ public class FederationActionManager {
             r=fClient.getNetinfo(fedsdnURL,jo.getString("name"));
             JSONObject tmp=new JSONObject(r.readEntity(String.class));
             tmp.append("federationTenantName", federtenant);
-            m.insertfedsdnFednet(tmp.toString());
+            //m.insertfedsdnFednet(tmp.toString());
+            m.insertfedsdnFednet(tmp.toString(), federtenant);
         }catch (WSException ex) {
             LOGGER.error("Exception is occurred in makeLinkOnFednet for fedenetID: " + ((Double)jo.get("id")).toString() + " owned from federation tenant: "+federtenant+"\n" + ex);
             return false;
@@ -693,21 +818,43 @@ public class FederationActionManager {
      * @throws JSONException 
      * @author gtricomi
      */
-    private void prepareTables4link(FednetsLink fednetContainer,DBMongo m) throws JSONException{//aggiungere gestione delle tabelle dei siti
+    private HashMap prepareTables4link(FednetsLink fednetContainer,DBMongo m) throws JSONException{//aggiungere gestione delle tabelle dei siti
         Collection<KeystoneTest>kar=null;
         try{
-            kar=(Collection<KeystoneTest>)fednetContainer.getkMcloudId_To_Keystone().values();
+            kar=(Collection<KeystoneTest>)fednetContainer.getkMcloudId_To_Keystone().values();//inutile?
+            
         }
         catch(Exception e){
             LOGGER.error("Something is going wrong. "+e.getMessage());
         }
         ArrayList<String> Site= new ArrayList<>();
+        
+        HashMap resultingTable= new HashMap();
+        
         Set<String> s=fednetContainer.getCloudId_To_OIC().keySet();
         JSONArray siteUpdatedTable=null;
         JSONArray netUpdatedTable=null;
         LinkedHashMap<String,Object> mapsitenetbody=new LinkedHashMap<String,Object>();      
         for(String cloudID: s){//scorre il set per selezionare la home
+            resultingTable.put(cloudID, new HashMap());
+            /*************************************
+            Pre ogni sito servono tre tabelle da mandare ai FA di OpenStack
+            * TENANT: {'name': u'admin', 'id': u'aa146d1022fe4dd1a29042c2f234d84b'}
+            * SITO:  [
+            *           { 'name' : site2_name, 'tenant_id' : u'aa146d1022fe4dd1a29042c2f234d84b', 'fa_url' : 10.9.1.169, 'site_proxy' : [{'ip' : 10.9.1.169, 'port' : 4897}] },
+            *           { 'name' : site1_name, 'tenant_id' : u'aa146d1022fe4dd1a29042c2f234d847', 'fa_url' : 10.9.1.159, 'site_proxy' : [{'ip' : 10.9.1.159, 'port' : 4897}] },
+            *        ]
+            * NETTABLES: {
+            *       'table' : [
+            *                   {'tenant_id': u'aa146d1022fe4dd1a29042c2f234d84b','site_name': 'site2', 'name': u'private', 'vnid': u'7fdb464c-11db-4b7f-9f60-4382ed9a76e8'},
+            *                   {'tenant_id': u'aa146d1022fe4dd1a29042c2f234d847', 'site_name': 'site1', 'name': u'private', 'vnid': u'b906abbd-ed90-4cd0-bb3a-bd7c9119dfb9'}
+            *                 ],
+            *       'version' : 115
+            * }
+            **************************************
+            */
             String ten=fednetContainer.getCloudId_To_OIC().get(cloudID).getTenant();
+            
             NeutronTest neutronhome=new NeutronTest(
                     fednetContainer.getCloudId_To_OIC().get(cloudID).getEndpoint(),
                     fednetContainer.getCloudId_To_OIC().get(cloudID).getTenant(),
@@ -717,23 +864,32 @@ public class FederationActionManager {
             );
             JSONObject updatedSiteTable=fednetContainer.getOldsiteTablesMap().get(cloudID);
             JSONObject updatedNetTable=fednetContainer.getOldnetTablesMap().get(cloudID);
-            /*try{
-                siteUpdatedTable=updatedSiteTable.getJSONArray("table");
+        ////Aggringere dei controlli per verificare se l'ogg restituito è null, in tal caso non è presente una vecchia tabella per il sito in questione
+            try{
+//02/07/2017 gt: verificare questo controllo non sono sicuro che il valore sia null nel caso sia vuoto                
+                if(updatedSiteTable==null)
+                    siteUpdatedTable=new JSONArray();
+                else    
+                    siteUpdatedTable=updatedSiteTable.getJSONArray("table");
             }
             catch(Exception eSite){
                 LOGGER.error("Something is going wrong. "+eSite.getMessage());
             }
-            JSONObject updatedNetTable=fednetContainer.getOldnetTablesMap().get(cloudID);
             try{
-                netUpdatedTable=updatedNetTable.getJSONArray("table");
+//02/07/2017 gt: verificare questo controllo non sono sicuro che il valore sia null nel caso sia vuoto                 
+                if(updatedNetTable==null)
+                    netUpdatedTable= new JSONArray();
+                else
+                    netUpdatedTable=updatedNetTable.getJSONArray("table");
             }catch(Exception eNet){
                 LOGGER.error("Something is going wrong. "+eNet.getMessage());
-            }*/
+            }
             String tmp=fednetContainer.getCloudId_To_OIC().get(cloudID).getEndpoint();
             FederationAgentInfo fah=fednetContainer.getEndpoint_To_FAInfo().get(tmp);
+            String tenantID=fednetContainer.getEndpoint_to_tenantid().get(fednetContainer.getCloudId_To_OIC().get(cloudID).getEndpoint());
             String siteEntryhome=this.createSiteTableEntry(
                     cloudID,
-                    fednetContainer.getEndpoint_to_tenantid().get(fednetContainer.getCloudId_To_OIC().get(cloudID).getEndpoint()),
+                    tenantID,
                     fah.getSite_proxyip(),
                     fah.getIp()+":"+fah.getPort(),
                     fah.getSite_proxyport()
@@ -741,7 +897,7 @@ public class FederationActionManager {
             JSONObject sEh=new JSONObject(siteEntryhome);
             siteUpdatedTable=this.insertEntry_in_SiteTable(siteUpdatedTable,sEh);
             System.out.println("$$$$$s1");
-                for(String cloudID2: s){//scorre il set per la creazione tabella
+                for(String cloudID2: s){//scorre il set per la creazione tabella 
                     if(!cloudID2.equals(cloudID))
                     {
                         NeutronTest neutron=new NeutronTest(
@@ -793,13 +949,18 @@ public class FederationActionManager {
             System.out.println("$$$$$s2");
             KeystoneTest homeKey = (KeystoneTest) fednetContainer.getkMcloudId_To_Keystone().get(cloudID);
             FA_ScriptInvoke fi = new FA_ScriptInvoke(homeKey.getVarEndpoint(), fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint()), "admin", "0penstack");
-            try {
+            
+//02/07/2017 gt: questo comanda richiama lo script che fà lo share completo tra i testbed OpenStack modificato con una funzione che invochi le funzioni del FA;
+//ad ogni modo tutta la logica di interazione con il FA è stata spostata al di fuori di questa funzione quindi qst pezzo viene commentato
+/*            try {
                 fi.FAScript(fah.getIp() + ":5051");
 
             } catch (WSException wse) {
                 //something here
 
             }
+*/
+
             FA_client4Sites fas = new FA_client4Sites(homeKey.getVarEndpoint(), fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint()), "admin", "0penstack");
             FA_client4Network fan = new FA_client4Network(
                     homeKey.getVarEndpoint(),
@@ -808,11 +969,18 @@ public class FederationActionManager {
                     homeKey.getVarCredential()
             );
             String body = fas.constructSiteTableJSON(siteUpdatedTable);
-                //FederationAgentInfo fai=fednetContainer.getEndpoint_To_FAInfo(siteUpdatedTable).get(fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint()));
-    /*PARTE MOMENTANEAMENTE COMMENTATA 
+            
+            
+            ((HashMap)resultingTable.get(cloudID)).put("tenantTable", "{ \"name\": \""+ ten+ "\",\"tenant_id\": \"" + tenantID + "\" }" );
+            ((HashMap)resultingTable.get(cloudID)).put("siteTable", body);
+            
+            
+//FederationAgentInfo fai=fednetContainer.getEndpoint_To_FAInfo(siteUpdatedTable).get(fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint()));
+//02/07/2017 GT:
+/*PARTE COMMENTATA IN QUANTO LA FUNZIONALITA' DOVRA' ESSERE SPOSTATA ALTROVE, QUESTA FUNZIONE DEVE PREPARARE LE TABELLE PER LA PARTE OPENSTACK
              try{
              fas.createSiteTable(fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint()), fah.getIp()+":"+fah.getPort(), body);
-             //   m.insertSiteTables(homeKey.getVarIdentity().split(":")[0], cloudID, updatedSiteTable.put("table", siteUpdatedTable).toString());
+             m.insertSiteTables(homeKey.getVarIdentity().split(":")[0], cloudID, updatedSiteTable.put("table", siteUpdatedTable).toString());
                     
                     
              }
@@ -820,12 +988,19 @@ public class FederationActionManager {
              //something here
                     
              }
+*/
              if(updatedNetTable==null)
-             body=fan.constructNetworkTableJSON(netUpdatedTable, 114);
+             body=fan.constructNetworkTableJSON(netUpdatedTable, 114);//dovrebbe essere 1 è diventato 114 per testing
              else
              body=fan.constructNetworkTableJSON(netUpdatedTable, (updatedNetTable.getInt("version"))+1);
              mapsitenetbody.put(cloudID,new FANContainer(fan,body,fah.getIp(),fah.getPort(),fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint())));
-             /*try{
+             
+             
+             ((HashMap)resultingTable.get(cloudID)).put("netTable", body);
+
+//02/07/2017 GT:
+/*PARTE COMMENTATA IN QUANTO LA FUNZIONALITA' DOVRA' ESSERE SPOSTATA ALTROVE, QUESTA FUNZIONE DEVE PREPARARE LE TABELLE PER LA PARTE OPENSTACK
+             try{
              Response r=fan.createNetTable(fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint()), fah.getIp()+":"+fah.getPort(), body);
              //JSONObject answer=r.readEntity(JSONObject.class);
              //m.insertNetTables(homeKey.getVarIdentity().split(":")[0], cloudID, updatedNetTable.put("table", netUpdatedTable).toString(),(double)answer.get("version"));//rivedere entrambe
@@ -834,12 +1009,14 @@ public class FederationActionManager {
              catch(WSException wse){
              //something here
                     
-             }*/
+             }
+*/
 
                 //Inserimento mappe dentro FednetContainer
             //BEACON>>>Add Management of structure to update fedsdn information
         }
-        /*PARTE MOMENTANEAMENTE COMMENTATA
+//02/07/2017 GT:
+/*PARTE COMMENTATA IN QUANTO LA FUNZIONALITA' DOVRA' ESSERE SPOSTATA ALTROVE, QUESTA FUNZIONE DEVE PREPARARE LE TABELLE PER LA PARTE OPENSTACK
          for(String cloudID: s) {
          try{
             
@@ -855,7 +1032,8 @@ public class FederationActionManager {
                     
                 }
         }
-      */  
+*/
+        return resultingTable;
     }
     
     /**

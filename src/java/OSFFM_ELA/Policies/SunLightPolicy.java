@@ -48,18 +48,20 @@ public class SunLightPolicy implements Policy,Runnable{
     private String fileConf="/webapps/OSFFM/WEB-INF/configuration_SunLightPolicy.xml";//this path starts from the tomcat home
     private long granularityCheck=20000;//3600000;//default value is 1 hour
     private int actualDCGap;
-    private int threshold=19;//default value is 19 (7pm)
+    private int threshold=17;//default value is 17 (5pm)
     private DBMongo mongo;
     private String tenant,userFederation,pswFederation;
-    private HashBiMap<String,ArrayList<String>> datacenterMap;
+    private HashMap<String,ArrayList<String>> datacenterMap;
     private int minimumGap=-8;//default value is -8 hours
     private ArrayList<String> monitoredVM;
     private OrchestrationManager om;
-    private HashBiMap<Integer,Boolean> index;
+    private HashMap<String,Boolean> index;
     private String firstCloudID;
+    private String templateName, stack;
+    
     
     public SunLightPolicy(HashMap<String,Object> paramsMap)throws ElasticityPolicyException {
-        //paramsMap.get(this) // I need to understand which parameters need here
+             //paramsMap.get(this) // I need to understand which parameters need here
         this.tenant=(String)paramsMap.get("tenantName");
         this.mongo=(DBMongo)paramsMap.get("mongoConnector");
         this.om=(OrchestrationManager)paramsMap.get("OrchestrationManager");
@@ -68,14 +70,16 @@ public class SunLightPolicy implements Policy,Runnable{
         String tmpminimumGap=(String)paramsMap.get("minimumGap");
         this.minimumGap=Integer.parseInt(tmpminimumGap);
         this.firstCloudID=(String)paramsMap.get("firstCloudID");
+        this.templateName= (String)paramsMap.get("templateName");
+        this.stack=(String)paramsMap.get("stack");
+        this.monitoredVM=new ArrayList<String>();
         this.init();
         this.constructDCMap((ArrayList<ArrayList<String>>)paramsMap.get("dcList"));
-        
     }
     
     public void init(){
         Element params;
-        this.datacenterMap=HashBiMap.create();
+        this.datacenterMap=new HashMap<String,ArrayList<String>>();
         try {
         /*String file=System.getenv("HOME");
         ParserXML parser = new ParserXML(new File(file+fileConf));
@@ -130,26 +134,33 @@ public class SunLightPolicy implements Policy,Runnable{
      * @param params 
      */
     @Override
-    public void migrationAlertManager(HashBiMap params){
-        HashBiMap elem = this.selectNewDatacenter(null);
+    public void migrationAlertManager(HashMap params){
+        HashMap elem = this.selectNewDatacenter(null);
         String tmpDCID=(String)elem.get("dcID");
+        try{
         if(tmpDCID!=null){
             ArrayList<String> newMonitoredVMs=new ArrayList<String>();
             for (String targetVM : this.monitoredVM) {
-                String twinVM = this.mongo.findResourceMate(this.tenant, targetVM, tmpDCID);
+                
+                JSONObject jo=new JSONObject(tmpDCID);
+                String twinVM = this.mongo.findResourceMate(this.tenant, targetVM, jo.getString("cloudId"));
+                System.out.println("TwinVM: "+twinVM);
                 if (twinVM == null) {
                     LOGGER.error("Something going wrong it's imppossible find a twinVM for: " + targetVM + ".The migration for that VM is aborted!");
                     newMonitoredVMs.add(targetVM);
                     continue;
                 } else {
-                    HashBiMap<String, Object> param = HashBiMap.create();
+                    System.out.println("TwinVM FOUND");
+                    HashMap<String, Object> param = new HashMap<String, Object>();
                     param.put("vm2shut", targetVM);
-                    param.put("vm2Act", twinVM);
+                    String twinVMUUID=(new JSONObject(twinVM)).getString("phisicalResourceId");
+                    param.put("vm2Act", twinVMUUID);
                     if (!this.moveVM(param)) {
                         LOGGER.error("error occurred in migration VM " + targetVM);//sistemare qst logger
                         newMonitoredVMs.add(targetVM);
+                        
                     }
-                    newMonitoredVMs.add(twinVM);
+                    newMonitoredVMs.add(twinVMUUID);
                 }
             }
             this.actualDCGap=(Integer)elem.get("newgap");
@@ -158,6 +169,9 @@ public class SunLightPolicy implements Policy,Runnable{
         else{
             LOGGER.error("Something going wrong it's impossible find a twinVM for VMs monitored.The migration aborted");
         }
+        }catch(JSONException je){
+           LOGGER.error("Something going wrong it's impossible parse Datacenter inofo JSON");
+       }
     }
     /**
      * This function is based on the workflow of the sunlight demo for beacon.
@@ -167,86 +181,120 @@ public class SunLightPolicy implements Policy,Runnable{
      * @return 
      */
     @Override
-    public HashBiMap selectNewDatacenter(Integer val){
-        HashBiMap<String,Object> element=HashBiMap.create();
-        Integer searchedGap;
-        if (val == null)
-            searchedGap = this.actualDCGap + minimumGap;
-        else
-            searchedGap = val - 1;
-        if ((searchedGap < -12) || (searchedGap > 14)) {
-            if (searchedGap < -12) {
-                searchedGap = searchedGap + 24;
+    public HashMap selectNewDatacenter(Integer val) {
+        try {
+            String tmpGap="";
+            HashMap<String,Object> element=new HashMap<String,Object>();
+            Integer searchedGap;
+            if (val == null) {
+                searchedGap = this.actualDCGap + minimumGap;
             } else {
-                searchedGap = searchedGap - 24;
+                searchedGap = val - 1;
             }
-        }
-        if(index!=null){
-            if (!index.get(searchedGap))
-                return null;
-        }
-        else
-            index=HashBiMap.create();
-        if (this.datacenterMap.containsKey(searchedGap)) {
-            ArrayList<String> ar = this.datacenterMap.get(searchedGap);//Take array and and findcorrect DC
-            Iterator i = ar.iterator();
-            boolean end=false;
-            while (i.hasNext()&&(!end)) {
-                String tmpDCID = (String) i.next();
-                //07/09/2016 basandosi sulla sunlight demo di BEACON basta identificare il DC su cui è presente una VM del gruppo e tutte le altre saranno spostate(attivate) di conseguenza
-                ////in alternativa si dovrebbe prendere il datacenter adatto per ogni VM da monitorare
-                for (String targetVM : this.monitoredVM) {
-                    String twinVM = this.mongo.findResourceMate(this.tenant, targetVM, tmpDCID);
-                    if(twinVM==null)
-                        break;
-                    else{
-                        end = true;
-                        element.put("dcID", tmpDCID);
-                        element.put("newgap", searchedGap);
-                        index.put(searchedGap,true);
-                        return element;
+            if ((searchedGap < -12) || (searchedGap > 14)) {
+                if (searchedGap < -12) {
+                    searchedGap = searchedGap + 24;
+                } else {
+                    searchedGap = searchedGap - 24;
+                }
+            }
+            if (index != null) {
+                if (!index.containsKey(searchedGap.toString())) {
+                    System.out.println("QUIT" + searchedGap + this.firstCloudID);
+                    index.put(searchedGap.toString(), Boolean.FALSE);
+
+                } else {
+                    return null;
+                }
+            } else {
+                index = new HashMap<String, Boolean>();
+                index.put(searchedGap.toString(), Boolean.FALSE);
+            }
+            if (searchedGap > 0) {
+                tmpGap = "+" + searchedGap.toString();
+            } else {
+                tmpGap = searchedGap.toString();
+            }
+            if (this.datacenterMap.containsKey(tmpGap)) {
+                ArrayList<String> ar = this.datacenterMap.get(tmpGap);//Take array and and findcorrect DC
+                Iterator i = ar.iterator();
+                boolean end = false;
+                while (i.hasNext() && (!end)) {
+                    String tmpDCID = (String) i.next();
+                    //07/09/2016 basandosi sulla sunlight demo di BEACON basta identificare il DC su cui è presente una VM del gruppo e tutte le altre saranno spostate(attivate) di conseguenza
+                    ////in alternativa si dovrebbe prendere il datacenter adatto per ogni VM da monitorare
+                    for (String targetVM : this.monitoredVM) {
+                        JSONObject jo=new JSONObject(tmpDCID);
+                        String twinVM = this.mongo.findResourceMate(this.tenant, targetVM, jo.getString("cloudId"));
+                        if (twinVM == null) {
+                            break;
+                        } else {
+                            end = true;
+                            element.put("dcID", tmpDCID);
+                            element.put("newgap", searchedGap);
+                            index.replace(tmpGap,true);
+                            return element;
+                        }
+                    }
+                    if (!end) {
+                        LOGGER.error("Something going wrong it's impossible find a twinVM for VMs monitored.The migration for that VM is moved on another DC");
+                        index.put(searchedGap.toString(), false);
+                        return this.selectNewDatacenter(searchedGap);
                     }
                 }
-                if(!end)
-                {
-                    LOGGER.error("Something going wrong it's impossible find a twinVM for VMs monitored.The migration for that VM is moved on another DC");
-                    index.put(searchedGap,false);
-                    return this.selectNewDatacenter(searchedGap);
-                }
+            } else {
+                return this.selectNewDatacenter(searchedGap);
             }
-        } else {
-            return this.selectNewDatacenter(searchedGap);
+        } catch (Exception e) {
+            System.err.println("EXCEPTION" + e.getMessage());
+            e.printStackTrace();
         }
         return null;
     }
-    
+
     
     /**
      * This function is used to move a VM
      * @param params
      * @return 
      */
-    public boolean moveVM(HashBiMap params){
+    public boolean moveVM(HashMap params){
         //this function have to invoke OrchestrationManager.migrationProcedure
-        try{
-           // this.om.migrationProcedure((String)params.get("vm2shut"), this.tenant, this.userFederation, (String)params.get("vm2Act"), this.pswFederation, this.mongo, "RegionOne");//BEACON>>> Region field need to be managed?
-            this.migrationProcedure((String)params.get("vm2shut"), this.tenant, this.userFederation, (String)params.get("vm2Act"), this.pswFederation,"RegionOne");//BEACON>>> Region field need to be managed?
-        }
-        catch(Exception e){
-            LOGGER.error("Error occurred in moveVM:"+e.getMessage());
+        try {
+            // this.om.migrationProcedure((String)params.get("vm2shut"), this.tenant, this.userFederation, (String)params.get("vm2Act"), this.pswFederation, this.mongo, "RegionOne");//BEACON>>> Region field need to be managed?
+            //System.out.println("I WILL MIGRATE VM : " + (String) params.get("vm2shut"));
+            this.migrationProcedure((String) params.get("vm2shut"), this.tenant, this.userFederation, (String) params.get("vm2Act"), this.pswFederation, "RegionOne");//BEACON>>> Region field need to be managed?
+            //System.out.println("I HAVE ACTIVATED THE TWINVM ");
+        } catch (Exception e) {
+            LOGGER.error("Error occurred in moveVM:" + e.getMessage());
             return false;
         }
         return true;
+    }
+    
+    
+    private void takeMonVMs(){
+        try{
+            ArrayList<String> tmp=this.mongo.getRunTimeInfos(this.tenant,this.firstCloudID , this.templateName, this.stack);
+            for(String obj:tmp){
+                JSONObject jo=new JSONObject(obj);
+                this.monitoredVM.add((String)jo.get("phisicalResourceId"));
+            }
+        }
+        catch(Exception e){
+            LOGGER.error("Something going wrong it's create monitoredVM ArrayList.");
+        }
     }
     
     /**
      * Take from Mongo the DCGap for selected Datacenter.
      */
     private void getDCtimeGap() {
-        int dcgap=+0;
+        Integer dcgap=+0;
         try{
             JSONObject json=new JSONObject(this.mongo.getDatacenter(this.tenant,this.firstCloudID ));
             String gapIndex=(String)json.get("gap");
+            dcgap=Integer.parseInt(gapIndex);
         }
                 catch(JSONException je){
                     LOGGER.error("Impossible manage the Datacenter information Stored on MongoDb for the Tenant "+this.tenant+"; Datacenter information doesn't contain gap info for Datacenter!");
@@ -261,28 +309,53 @@ public class SunLightPolicy implements Policy,Runnable{
     
     
     /**
-     * This Stars and verify if the UTCtime+Datacenter gap is greater of the threshold.
-     * Positive answer begin migration of the monitored VM, negative send thread in sleepmode for granularityCheck milliseconds.
+     * This Stars and verify if the UTCtime+Datacenter gap is greater of the
+     * threshold. Positive answer begin migration of the monitored VM, negative
+     * send thread in sleepmode for granularityCheck milliseconds.
      */
     @Override
-    public synchronized void run(){
-        boolean stop=false;
+    public synchronized void run() {
+        boolean stop = true;
+        this.takeMonVMs();
         while (stop) {
             this.getDCtimeGap();
             Clock clock = Clock.systemUTC();
-            LocalTime osffmTime=LocalTime.now(clock);
-            if(osffmTime.getHour()+this.actualDCGap>this.threshold){
+            LocalTime osffmTime = LocalTime.now(clock);
+            System.out.println("checked time in : " + this.firstCloudID + " is " + osffmTime.getHour() + this.actualDCGap);
+            //System.out.println(osffmTime.getHour()+this.actualDCGap);
+            //System.out.println(osffmTime.getHour()+this.actualDCGap>this.threshold);
+            if ((osffmTime.getHour() + this.actualDCGap) > (this.threshold + this.actualDCGap)) {
                 //StartMigration
+                System.out.println("I am starting migration");
                 this.migrationAlertManager(null);
+                /*         JSONObject j;
+                String targetVM="";
+                String twinVM="";
+                try {
+                    j = new JSONObject(this.mongo.getRunTimeInfo(this.tenant, "CETIC", this.templateName, this.stack));
+                    targetVM=j.getString("phisicalResourceId");
+                    j= new JSONObject(this.mongo.findResourceMate(this.tenant, targetVM,"UME"));
+                    twinVM= j.getString("phisicalResourceId");
+                } catch (JSONException ex) {
+                    java.util.logging.Logger.getLogger(SunLightPolicy.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                
+                System.out.println("target and twin: "+targetVM+" "+twinVM);
+                HashMap param=new HashMap();
+                param.put("vm2shut", targetVM);
+                    param.put("vm2Act", twinVM);
+                this.moveVM(param);
+                stop=false;
+                 */
             }
             try {
                 Thread.sleep(this.granularityCheck);
             } catch (InterruptedException ex) {
                 LOGGER.error("InterruptedException with Thread.sleep inside a sunlight policy Thread!" + ex.getMessage());
+                stop=false;
             }
         }
     }
-    
     /**
      * Function invocated when an elasticity action have to be started; this function 
      * shutdown the VM with some problem and start one of the Twin VM of that.

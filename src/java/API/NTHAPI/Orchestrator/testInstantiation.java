@@ -75,7 +75,7 @@ public class testInstantiation {
         //String home=System.getProperty("java.home");      //Removed, unused
         //String fs=System.getProperty("file.separator");   //Removed, unused
         //String prepath=home+fs+"subrepoTemplate";
-        String tenant="yamlTest2";
+        String tenant="review";
         String templateRef="null";
         String userFederation="",passwordFederation="";
         String prepath="./subrepoTemplate/"+tenant;
@@ -85,7 +85,7 @@ public class testInstantiation {
         String templateUUID="";
         boolean cont=false;
         DBMongo m= new DBMongo();
-        m.connectLocale("10.9.0.42");
+        m.connectLocale("10.9.240.1");
         HashMap<String,String> table_UUID_ten=new HashMap<String, String>();
         testInstantiation dh=new testInstantiation();
          Splitter spli=new Splitter(m);
@@ -100,26 +100,26 @@ public class testInstantiation {
             while(tenant.equals("")){
                 tenant=dh.consoleRequest("Insert tenant name","");//beacon
             }*/
-          
-            Object result= spli.loadFromFile("./templateTOupload/ONEFLtemplateYAML2.yaml","yamlTest2");//path, tenant);//da rivedere gestione assocazione
-            if(result ==null){
+          //"./templateTOupload/ONEFLtemplateYAML2.yaml","yamlTest2"
+            Object result = spli.loadFromFile("./templateTOupload/SummitYAML.yaml", "review");//path, tenant);//da rivedere gestione assocazione
+            if (result == null) {
                 System.err.println("Somethings are went wrong with ");
                 break;
-            }
-            else{
-                System.out.println("Manifest is stored with UUID = "+result);
-                templateUUID=(String)result;
-                templatename=templateUUID;
-               try {
-                   System.out.println((m.retrieveONEFlowTemplate("yamlTest2", templateUUID, "prova")));
+            } else {
+                System.out.println("Manifest is stored with UUID = " + result);
+                templateUUID = (String) result;
+                templatename = templateUUID;
+                /* try {
+                 System.out.println((m.retrieveONEFlowTemplate("review", templateUUID, "prova")));
                } catch (MDBIException ex) {
                    java.util.logging.Logger.getLogger(testInstantiation.class.getName()).log(Level.SEVERE, null, ex);
                }
-                if((dh.consoleRequest("Insert another Manifest?(default:no)[yes or no]","no")).equals("yes")){
+                 */
+ /*if((dh.consoleRequest("Insert another Manifest?(default:no)[yes or no]","no")).equals("yes")){
                     cont=true;
                     table_UUID_ten.put((String)result, tenant);
                     
-                }
+                }*/
             }
             
         }
@@ -169,7 +169,11 @@ public class testInstantiation {
         }
         
         HashMap<String, ArrayList<ArrayList<OpenstackInfoContainer>>> tmpMapcred = om.managementRetrieveCredential(tmpMap, m, tenant, userFederation, passwordFederation, "RegionOne");
+        /////////////////////////////////////////////////////////////TOSCATEMPLATE MANAGEMENT
+        //INSERIRE QUI LA PARTE CHE GESTISCE I TEMPLATE PER SFC/VNF
+      //  om.istantiateTOSCA_Templates(manifestName, tmpMapcred, tmpMap, m, tenant);
         //////////////////////////////////////////////////////////////////////////////////SERGROUP MANAGEMENT
+       
         Set<String> setStack = om.getSGList(manifestName);
         //BEACON>>> this step it will be substitude by a function that analize the manifest and retireve the ServiceManagementGroups 
             //stored inside global manifest
@@ -179,10 +183,10 @@ public class testInstantiation {
             String template = ff.readFromFile(prepath + "/" + tenant + manifestName + "_" + stack);
             
             ElasticitysuppContainer tmpsupp=om.deployManifest(template, stack, tmpMapcred, tmpMap, m,manifestName);
-            ArrayList<ArrayList<HashMap<String, ArrayList<Port>>>> arMapRes= tmpsupp.getInfo();
+//            ArrayList<ArrayList<HashMap<String, ArrayList<Port>>>> arMapRes= tmpsupp.getInfo();
             //BEACON:>>> It is needed decide what do with the info returned from om.deployManifest inside strucure arMapRes
             ////INSERIRE LA PARTE CHE GESTISCA L'ISTANZIAZIONE DEL SUNLIGHT POLICY THREAD
-         /*  try{
+/*            try{
                 if(om.getELaContainer(manifestName, stack)!=null){
                     String i=om.getELaContainer(manifestName, stack).getMinimumgap();
                     ela=ela.startMonitoringThreads(this.m,tenant, stack, tmpMap, userFederation,passwordFederation,i,tmpsupp.getFirstCloudId() );
@@ -191,11 +195,13 @@ public class testInstantiation {
             catch(Exception e){
                 
                 System.err.println("Error occurred in elasticity Thread launching; OPERATION ABORTED."+e.getMessage());
-            }*/
+            }
+*/
         }
+        
         /////////////////////////////////////////////////////////////ONEFLOWTEMPLATE MANAGEMENT
         //INSERIRE QUI LA PARTE CHE GESTISCE I TEMPLATE PER ONEFLOW
-        om.istantiateONE_Templates(manifestName, tmpMapcred, tmpMap, m, tenant);
+      //  om.istantiateONE_Templates(manifestName, tmpMapcred, tmpMap, m, tenant);
         
         
         ////////////////////////////////////////////////////////////NETWORK LINK MANAGEMENT
@@ -205,7 +211,7 @@ public class testInstantiation {
             File currentFile = new File(f.getPath(),s);
             currentFile.delete();
         }
-        f.delete();//at the end
+   //     f.delete();//at the end
         
     }
     

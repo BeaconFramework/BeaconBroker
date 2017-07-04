@@ -46,7 +46,7 @@ public class ManifestManager implements Runnable{
     JSONObject resource,outputs, parameters;
     LinkedHashMap<String,LinkedHashMap> table_resourceset;
     GeoManager geo_man;
-    HashMap<String,Object> georef_table,serGr_table,oneTem_table,ElaPolicies=null;
+    HashMap<String,Object> georef_table,serGr_table,oneTem_table,ttManTable,ElaPolicies=null;
     String tempVers="2014-10-16",description="empty_descr";
     FednetsLink fnl;
     static Logger LOGGER = Logger.getLogger(ManifestManager.class);
@@ -91,9 +91,11 @@ public class ManifestManager implements Runnable{
         this.table_resourceset.put("OS::Beacon::ScalingPolicy",new LinkedHashMap<String,JSONObject>());
         this.table_resourceset.put("OS::Beacon::Georeferenced_deploy",new LinkedHashMap<String,JSONObject>());
         this.table_resourceset.put("ONE::Beacon::OneFlowTemplate",new LinkedHashMap<String,JSONObject>());
+        this.table_resourceset.put("TOSCA::Beacon::vnf_sfc_manifests",new LinkedHashMap<String,JSONObject>());
         this.geo_man=new GeoManager();
-        this.serGr_table=new HashMap<>();
-        this.oneTem_table=new HashMap<>();
+        this.serGr_table=new HashMap<String,Object>();
+        this.oneTem_table=new HashMap<String,Object>();
+        this.ttManTable=new HashMap<String,Object>();
         this.fnl=new FednetsLink();
     }
     //</editor-fold>
@@ -124,10 +126,16 @@ public class ManifestManager implements Runnable{
             String resName=(String)it_keyset.next();
             this.elaborateOneTemp(oneObj,(JSONObject)this.table_resourceset.get("ONE::Beacon::OneFlowTemplate").get(resName), resName);
             this.oneTem_table.put(resName, oneObj);
-        }//27/02  TESTARE
+        }
+        it_keyset=this.table_resourceset.get("TOSCA::Beacon::vnf_sfc_manifests").keySet().iterator();
+        while(it_keyset.hasNext()){
+            TTResourceManager ttObj=new TTResourceManager();
+            String resName=(String)it_keyset.next();
+            this.elaborateTTres(ttObj,(JSONObject)this.table_resourceset.get("TOSCA::Beacon::vnf_sfc_manifests").get(resName), resName);
+            this.ttManTable.put(resName, ttObj);
+        }
         try {
-
-            this.elaborateElaRef();
+         //   this.elaborateElaRef();
             //INSERIRE QUI FUNZIONE CHE AVVIA I THREAD RELATIVI ALL'ELASTICITY
             //fedNetManagement Analisys
             //this.prepareFednetLinkMap();//Not used right now
@@ -180,6 +188,10 @@ public class ManifestManager implements Runnable{
                 }
                 case "ONE::Beacon::OneFlowTemplate":{
                     this.table_resourceset.get("ONE::Beacon::OneFlowTemplate").put(key, tmp);
+                    break;
+                }
+                case "TOSCA::Beacon::vnf_sfc_manifests":{
+                    this.table_resourceset.get("TOSCA::Beacon::vnf_sfc_manifests").put(key, tmp);
                     break;
                 }
                 default :{
@@ -258,6 +270,80 @@ public class ManifestManager implements Runnable{
         
     }
 //</editor-fold>
+  
+//<editor-fold defaultstate="collapsed" desc="TOSCA Template resource management Functions">    
+    /**
+     * This function is called to analyze the manifest in order to identify and pass the resource/parameter/output 
+     * elements connected at the service group to SerGrManager Object.
+     * @param sgObj, SerGrManager that will be used to manage the information of the service group
+     * @param sg, JSONObject took from manifest that describe service group
+     * @param sgName, String that represent name of service group
+     */
+    private void elaborateTTres(TTResourceManager ttObj,JSONObject tm,String sttName)throws JSONException{
+        JSONObject properties=tm.getJSONObject("properties");
+        ttObj.setGroupName(sttName);
+        ttObj.consumeTosman(properties); //this takes "properties" field from the resource tm and put it on the inner element of the TTResourceManager
+        ArrayList<String> innres=ttObj.getInnerResource(); //it returns the arraylist of all Beacon manifest resources involved in the VNF/SFC manifests reconstruction
+        for(int index=0;index<innres.size();index++){
+            String tmpA=innres.get(index);
+            if(this.resource.has(tmpA))
+            {
+                JSONObject tmp=this.resource.getJSONObject(tmpA);//verificare se c'è oggetto oppure no e cosa restituisce se non trova nulla
+                ttObj.insertResContainer(tmp,tmpA);
+                
+                //this.resourceRecursiveDeepInspection(tmp.getJSONObject("properties"),ttObj); //Non è necessario fare una recursivedeepInspection per questo tipo di risorse
+                //questo inserisce parameter e risorse nel container se richiamati dalla risorsa, bisogna aggiungere la gestione dell'output
+            }
+        }
+        JSONObject nodetemp = new JSONObject(ttObj.getVnfd().getNodeTemplates());
+        ttObj.getVnfd().addINtopologytemplates("node_templates", nodetemp);
+        nodetemp = new JSONObject(ttObj.getVnffg().getNodeTemplates());
+        ttObj.getVnffg().addINtopologytemplates("node_templates", nodetemp);
+        ttObj.getVnffg().addINtopologytemplates("description", ttObj.getVnffg().getTTdescription());
+        ttObj.getVnffg().addINtopologytemplates("groups", ttObj.getVnffg().getGroups());
+        //this.outputAnalisys(sgObj);
+    }
+
+    /**
+     * Returns VNFD template.
+     * @param sttName
+     * @return
+     * @throws JSONException 
+     */
+    public String getVNFDManifest(String sttName)throws JSONException{
+        TTResourceManager ttObj=(TTResourceManager)this.ttManTable.get(sttName);
+        String result="";
+        if(ttObj!=null){
+            try {
+                result=ttObj.getVnfd().getTemplate();
+            } catch (JSONException ex) {
+                System.err.println("Error in retrievement of VNFD Template for Tosca Manifest named:"+sttName);
+                throw ex;
+            }
+        }
+        return result;
+    }
+    /**
+     * Returns VNFFG template.
+     * @param sttName
+     * @return
+     * @throws JSONException 
+     */
+    public String getVNFFGManifest(String sttName)throws JSONException{
+        TTResourceManager ttObj=(TTResourceManager)this.ttManTable.get(sttName);
+        String result="";
+        if(ttObj!=null){
+            try {
+                result=ttObj.getVnffg().getTemplate();
+            } catch (JSONException ex) {
+                System.err.println("Error in retrievement of VNFFG Template for Tosca Manifest named:"+sttName);
+                throw ex;
+            }
+        }
+        return result;
+    }
+//</editor-fold>    
+    
     
 //<editor-fold defaultstate="collapsed" desc="Service Group management Functions">    
     /**
@@ -470,7 +556,7 @@ public class ManifestManager implements Runnable{
      * @param sgObj
      * @throws JSONException 
      */
-    private void resourceRecursiveDeepInspection(JSONObject properties,SerGrManager sgObj)throws JSONException{
+    private void resourceRecursiveDeepInspection(JSONObject properties,GenericResourceManager sgObj)throws JSONException{//modified 29/3/2017: this transformation enable the function to work also with tacker manifest 
         //analizzo l'elemento(di certo bisogna verificare nella key della mappa) alla ricerca di get_param, get_resource,get_attr e passandoli all'opportuna funzione di management 
         Iterator it=properties.keys();
         while(it.hasNext()){

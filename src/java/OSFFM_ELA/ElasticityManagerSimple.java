@@ -34,25 +34,28 @@ public class ElasticityManagerSimple {
         this.m=new DBMongo();
         //this.m.init();
        // this.m.init("../webapps/OSFFM/WEB-INF/Configuration_bit");
-        this.m.connectLocale("10.9.0.42");//this.m.connectLocale(this.m.getMdbIp());
+        this.m.connectLocale("10.9.240.1");//this.m.connectLocale("10.9.0.42");//this.m.connectLocale(this.m.getMdbIp());
     }
     public ElasticityManagerSimple(DBMongo m) {
         this.m=m;
         
     }
     
-    public ElasticityManagerSimple startMonitoringThreads(DBMongo mongo,String tenant,String stack,HashMap<String,ArrayList<ArrayList<String>>> dcList,String userFederation, String pswFederation,String minimumgap,String firstCloudID) throws ElasticityPolicyException{
+    public ElasticityManagerSimple startMonitoringThreads(DBMongo mongo,String tenant,String stack,HashMap<String,ArrayList<ArrayList<String>>> dcList,String userFederation, String pswFederation,String minimumgap,String firstCloudID,String templateName) throws ElasticityPolicyException{
         HashMap <String,SunLightPolicy> monitoringPolicy=new HashMap<String,SunLightPolicy>();
         HashMap<String, Object> paramsMap=new HashMap<String, Object>();
         paramsMap.put("tenantName", tenant);
+        paramsMap.put("templateName", templateName);
+        paramsMap.put("stack", stack);
         paramsMap.put("dcList", dcList.get(stack));
         paramsMap.put("mongoConnector", mongo); 
         paramsMap.put("userFederation", userFederation);
         paramsMap.put("pswFederation",pswFederation);
         paramsMap.put("minimumGap",minimumgap);
-        SunLightPolicy slp=new SunLightPolicy(paramsMap);
         paramsMap.put("firstCloudID",firstCloudID);
+        SunLightPolicy slp=new SunLightPolicy(paramsMap);
         monitoringPolicy.put(stack, new SunLightPolicy(paramsMap));
+        System.out.println("Starting Monitoring Thread");
         slp.run();
         tenantHash.put(tenant,monitoringPolicy);
         return this;

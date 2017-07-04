@@ -80,7 +80,7 @@ public class DemoHAIFA {
             if(path.equals(""))
                 path=defPath;
             m= new DBMongo();
-            m.connectLocale();
+            m.connectLocale("10.9.240.1");//10.9.0.42");
             
             s=new Splitter(m);
             while(tenant.equals("")){
@@ -154,7 +154,7 @@ public class DemoHAIFA {
                         psw = ((OpenstackInfoContainer) tmpArDC1).getPassword(); //new JSONObject((String)tmpArCr.get(index)).getString("federatedPassword");
                         */
                         //System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"+template);
-                        boolean resultIS=om.stackInstantiate(template,(OpenstackInfoContainer) tmpArCrob,m,stackName,manifestName);//BEACON>>> in final version of OSFFM
+                       boolean resultIS=om.stackInstantiate(template,(OpenstackInfoContainer) tmpArCrob,m,stackName,manifestName);//BEACON>>> in final version of OSFFM
                         //we will use variable result to understand if the stack is deployed inside the federated cloud
                         
                         region=dh.consoleRequest("Insert region name:[Deafult: RegionOne]","RegionOne");//this element it will be analized in second 

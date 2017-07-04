@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <writeOnCfgFolder>yes</writeOnCfgFolder> 
+  <pluginParams>
+    <fedSDNTarget>URI_OF_FEDERATED_SDN</fedSDNTarget>
+  </pluginParams>
+</root>

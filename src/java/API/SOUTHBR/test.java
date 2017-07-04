@@ -154,8 +154,9 @@ public class test {
         m.connectLocale(m.getMdbIp());
         //qui si stà condividendo la stessa table con entrambe le cloud quindi si dovrà memorizzare la stessa tabella per entrambe le cloud federate. 
         ////Il caso genericon prevede che si inserisca per ogni sito una tabella diversa che può ontenere anche riferimenti precedentemente presenti riferiti a link verso altre cloud
-        m.insertNetTable(t1name, body);
-        m.insertNetTable(t2name, body);
+        
+        m.insertNetTable(t1name,"site1", body);
+        m.insertNetTable(t2name,"site2", body);
             System.out.println(body);
         Response r=fan1.createNetTable(t1Id, "10.9.240.21:4567", body);
             System.out.println(r.toString());

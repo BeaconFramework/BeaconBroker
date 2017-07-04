@@ -26,22 +26,22 @@ import javax.ws.rs.DELETE;
  * This class is generated for future use and it will be used to manage the information storing procedure if this is needed(or it will be removed).
  * @author gtricomi
  */
-public class NetworkSegmentResource {
+public class NetworkSegmentResourceFact {
 
     /**
      * Creates a new instance of NetworkSegmentResource
      */
-    private NetworkSegmentResource() {
+    private NetworkSegmentResourceFact() {
         
     }
 
     /**
      * Get instance of the NetworkSegmentResource
      */
-    public static NetworkSegmentResource getInstance() {
+    public static NetworkSegmentResourceFact getInstance() {
         // The user may use some kind of persistence mechanism
         // to store and restore instances of NetworkSegmentResource class.
-        return new NetworkSegmentResource();
+        return new NetworkSegmentResourceFact();
     }
 
     /**

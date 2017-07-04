@@ -257,7 +257,7 @@ System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n" +
             uuidsList.add(uuid);
             try {
                 figlio = jsonObject.getJSONObject(key);
-
+//forzatura creata prima della sistemazione fatta da Antonio
                 figlio.put("nome", key);
                 figlio.put("uuid", uuid);
 
@@ -354,7 +354,7 @@ System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n" +
     }
 
     /**
-     *
+     * Returns Heat Manifest stored in Mongo.
      * @param uuid
      * @param tenant
      * @return
@@ -451,7 +451,52 @@ System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n" +
         }
         return elemToRetrive.toString();
     }
+    
+    
+    /*public String ricomponiSFCManifest(String uuid, String tenant) throws MDBIException {
+        String elemento;
+        String parameters = "parameters";
+        String resources = "resources";
+        String output = "outputs";
+        JSONObject query = new JSONObject();
+        JSONObject manifest = null;
+        JSONArray resUuidList, parUuidList, outUuidList;
+        String outputti = null;
 
+        try {
+            query.put("masterKey", uuid);
+            try{
+                manifest = new JSONObject(mongoAdapter.getObj(tenant, "master", query.toString()));
+            }
+            catch(MDBIException e){
+                throw e;
+            }
+            manifest.remove("masterKey");
+
+            resUuidList = (JSONArray) manifest.remove(resources);
+            elemento = this.ricomponiFigli(resUuidList, resources, tenant);
+            manifest.put(resources, new JSONObject(elemento));
+
+            parUuidList = (JSONArray) manifest.remove(parameters);
+            elemento = this.ricomponiFigli(parUuidList, parameters, tenant);
+            manifest.put(parameters, new JSONObject(elemento));
+
+            outUuidList = (JSONArray) manifest.remove(output);
+            elemento = this.ricomponiFigli(outUuidList, output, tenant);
+            manifest.put(output, new JSONObject(elemento));
+
+            Yaml yaml = new Yaml();
+            String prettyJSONString = manifest.toString();
+            Map<String, Object> map2 = (Map<String, Object>) yaml.load(prettyJSONString);
+            outputti = yaml.dump(map2);
+
+        } catch (JSONException ex) {
+            //BEACON>>> inserire logger
+            ex.printStackTrace();
+        }
+        System.out.println(outputti);
+        return outputti;
+    }*/
     /* 
      public void intersectPoint(long latitude, long longitude,String tenant){
     

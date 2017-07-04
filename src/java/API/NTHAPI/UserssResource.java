@@ -47,7 +47,7 @@ public class UserssResource {
 
     @Context
     private UriInfo context;
-    private String Config_file="/webapps/OSFFM/WEB-INF/Configuration_NTHBR_WS.xml";
+    private String Config_file="/NetBeansProjects/BB/web/WEB-INF/Configuration_NTHBR_WS.xml";//"/webapps/OSFFM/WEB-INF/Configuration_NTHBR_WS.xml";
     static final Logger LOGGER = Logger.getLogger(UserssResource.class);
     private ParserXML parser;
     private String fedSDNTarget; //it will be used to make request to web service with Client4WS class

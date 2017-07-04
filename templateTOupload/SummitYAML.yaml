@@ -31,15 +31,15 @@ parameters:
   image-A:
     type: string
     description: description
-    default: cirros-0.3.4-x86_64-uec
+    default: cirros
   image-B:
     type: string
     description: description
-    default: cirros-0.3.4-x86_64-uec
+    default: cirros
   cirros:
     type: string
     description: description
-    default: cirros-0.3.4-x86_64-uec            
+    default: cirros            
   key_name:
     default: heat_key
     description: Name of keypair to assign to servers
@@ -48,7 +48,7 @@ parameters:
     type: string
     label: Private network name or ID
     description: Network to attach instance to.
-    default: private
+    default: reviewPrivate
   public_network:
     type: string
     label: Public network name or ID
@@ -85,11 +85,10 @@ resources:
     type: OS::Nova::Server
     properties:
       name: VM-A
-      metadata: {'cloudwave-migrate': 'true'}
       key_name: { get_param: key_name }
       image: { get_param: image-A }
       flavor: { get_param: flavor }
-      networks: [{"fixed_ip": 10.0.0.61, "network": { get_param: private_network } }]
+      networks: [{"fixed_ip": 80.0.0.61, "network": { get_param: private_network } }]
       security_groups:  [{ get_resource: server_security_group }]
       user_data: |
           #!/bin/bash
@@ -113,6 +112,7 @@ resources:
       name: test
       key_name: {get_param: key_name }
       image: {get_param: cirros }
+      networks: [{"fixed_ip": 80.0.0.62, "network": { get_param: private_network } }]
       flavor: m1.tiny
 
   server_security_group:
@@ -151,45 +151,12 @@ resources:
       name: GroupName
       geo_deploy: { get_resource: geoshape_2}
       resource:
-        groups:  {get_resource: [ B, A] }    
+        groups:  {get_resource:  B}    
 
-  federation2:
-    type: OS::Beacon::ServiceGroupManagement
+  elasticity_location_policy:
+    type: OS::Beacon::ScalingPolicy
     properties:
-      name: GroupName
-      geo_deploy: { get_resource: geoshape_1}
-      resource:
-        groups:  {get_resource: B}
-               
-  fedNetworklink:
-    type: OS::Beacon::fedNetManagement
-    properties:
-      monitored_Group: stateless_VM
-      connected_VM: 
-        - res_1_name
-        - res_2_name
-
-  fedSecGroup:
-    type: OS::Beacon::fedSecManagement
-    properties: 
-      monitored_resource:
-        - federation
-        - res_1_name
-      fw_rules: [{ get_resource: server_security_group }]
-      policies: [{ get_resource: xacml_security_group }]
-
-  xacml_security_group:
-    type:  OS::Beacon::PoliciesAccManagement
-    properties:
-      rules:
-        - value 
-
-        
-        
-  prova:
-    type:  ONE::Beacon::OneFlowTemplate
-    properties:
-        name: GroupName
-        geo_deploy: { get_resource: geoshape_1}
-        onetemplate: {"name": "Scalability1","deployment": "none","roles": [ { "name": "frontend","cardinality": 2,"vm_template": 0,"min_vms" : 1,"max_vms" : 5,"elasticity_policies" : [ {              "expression": "ATT > 50","type" : "CHANGE","adjust" : 2,"period_number" : 3,"period" : 10},{"expression" : "ATT < 20","type" : "PERCENTAGE_CHANGE","adjust" : -10,"min_adjust_step" : 2}]}]}
-        
+      policy_type: SunLight
+      geo_deploy: {get_resource: geoshape_2}
+      groupmonitored: {get_resource: federation}
+      min_gap: "-8"

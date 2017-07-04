@@ -86,7 +86,55 @@ public class RESTClient {
         this.userName=userName;
     }
     
-
+    public Response request4Keystone(String url, String body, String type){
+        ClientConfig config = new ClientConfig();
+        Client client = ClientBuilder.newClient(config);
+        WebTarget target;
+        target = client.target(getBaseURI(url));
+        Invocation.Builder invocationBuilder = target.request();
+        MultivaluedHashMap<String, Object> mm = new MultivaluedHashMap<String, Object>();
+        mm.add("content-type", "application/json");
+        mm.add("Accept", "application/json");
+        //mm.add("charsets", "utf-8");
+        invocationBuilder.headers(mm);
+        Response plainAnswer = null;
+        switch (type) {
+            case "post": {
+                plainAnswer = invocationBuilder
+                        .post(Entity.entity(body, MediaType.APPLICATION_JSON));
+                break;
+            }
+                  default: {
+                //nothing to do
+            }
+        }
+        return plainAnswer;
+    }
+    
+    public Response request4OSgenericService(String url, String token, String type){
+        ClientConfig config = new ClientConfig();
+        Client client = ClientBuilder.newClient(config);
+        WebTarget target;
+        target = client.target(getBaseURI(url));
+        Invocation.Builder invocationBuilder = target.request();
+        MultivaluedHashMap<String, Object> mm = new MultivaluedHashMap<String, Object>();
+        //mm.add("content-type", "application/json");
+        mm.add("X-Auth-Token", token);
+        //mm.add("charsets", "utf-8");
+        invocationBuilder.headers(mm);
+        Response plainAnswer = null;
+        switch (type) {
+            case "get": {
+                plainAnswer = invocationBuilder
+                        .get();//Entity.entity("", MediaType.APPLICATION_JSON));
+                break;
+            }
+                  default: {
+                //nothing to do
+            }
+        }
+        return plainAnswer;
+    }
     
     public Response makeSimpleRequest(String urlFEDSDN, String body, String type) {
         HttpBasicAuthFilter auth = new HttpBasicAuthFilter(this.userName, this.password);

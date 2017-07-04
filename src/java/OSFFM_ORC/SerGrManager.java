@@ -37,14 +37,14 @@ import org.json.JSONObject;
  * to target HEAT.
  * @author Giuseppe Tricomi
  */
-public class SerGrManager {
+public class SerGrManager extends GenericResourceManager{
      
 //<editor-fold defaultstate="collapsed" desc="Constructor">
     /**
      * Constructor.
      */ 
     public SerGrManager(){
-        this.georeference= "";
+        this.setGeoreference("");//super(); has the same behaviour of this call.
         this.container=new SerGrInfoContainer();
         this.groupName="";
         this.serviceGroup=new JSONObject();
@@ -74,7 +74,13 @@ public class SerGrManager {
         ArrayList<String> resources=new ArrayList<String>();
         Iterator it=this.serviceGroup.keys();
         while(it.hasNext()){
-            resources.add(this.serviceGroup.getJSONObject((String)it.next()).getString("get_resource"));
+            Object ob=this.serviceGroup.getJSONObject((String)it.next()).get("get_resource");
+            if(ob.getClass()==String.class)
+                resources.add((String)ob);
+            else if(ob.getClass()==JSONArray.class){
+                for(int r=0;r<((JSONArray)ob).length();r++)
+                    resources.add(((JSONArray)ob).getString(r));
+            }
         }
         return resources;
     }
@@ -128,17 +134,16 @@ public class SerGrManager {
     public HashMap<String,JSONObject> getOutContainer(){
         return this.container.returnStringOutputs();
     }
-    
+    /*//30-03: moved in father class 
     public String getGeoreference() {
         return georeference;
     }
     
     private void setGeoreference(String georeference) {
         this.georeference = georeference;
-    }
+    }*/
 //<editor-fold defaultstate="collapsed" desc="Variable">
-    private String georeference; //questo serve come parametro per la chiamata da inoltrare al manifest manger per ottenere il
-                                //luoghi dove effettuare il deploy
+    
     private String groupName;
     private JSONObject serviceGroup; //It contains the resource object that will be treated by osffm to manage this service group
     private SerGrInfoContainer container; //it contains the resource that will be composed in YAML file and passed to target HEAT

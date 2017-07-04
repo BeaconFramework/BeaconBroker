@@ -83,7 +83,7 @@ public class DemoHAIFA1 {
             if(path.equals(""))
                 path=defPath;
             m= new DBMongo();
-            m.connectLocale("10.9.0.42");
+            m.connectLocale("10.9.240.1");
             
             spli=new Splitter(m);
             while(tenant.equals("")){
@@ -189,7 +189,7 @@ public class DemoHAIFA1 {
             try{
                 if(om.getELaContainer(manifestName, stack)!=null){
                     String i=om.getELaContainer(manifestName, stack).getMinimumgap();
-                    ela=ela.startMonitoringThreads(m,tenant, stack, tmpMap, userFederation,passwordFederation,i,tmpsupp.getFirstCloudId() );
+                    ela=ela.startMonitoringThreads(m,tenant, stack, tmpMap, userFederation,passwordFederation,i,tmpsupp.getFirstCloudId(),manifestName );
                 }
             }
             catch(Exception e){

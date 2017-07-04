@@ -67,8 +67,8 @@ public GlanceTest(DBMongo mongo) {
         Iterable<Module> modules = ImmutableSet.<Module>of( );
         this.mongo=mongo;
         String provider = "openstack-glance";
-        String identity = "demo:admin"; // tenantName:userName
-        String credential = "password";
+        String identity = "admin:admin";//"demo:admin"; // tenantName:userName
+        String credential = "0penstack!";//"password";
 
         glanceApi = ContextBuilder.newBuilder(provider)
                 .endpoint("http://172.17.4.113:5000/v2.0")
@@ -84,15 +84,15 @@ public GlanceTest(DBMongo mongo) {
         //Iterable<Module> modules = ImmutableSet.<Module>of( );
         // this.mongo=mongo;
         String provider = "openstack-glance";
-        String identity = "demo:admin"; // tenantName:userName
-        String credential = "password";
+        String identity = "admin:admin";//"demo:admin"; // tenantName:userName
+        String credential = "0penstack";//"password";
 
         overrides = new Properties();
         overrides.setProperty(PROPERTY_LOGGER_WIRE_LOG_SENSITIVE_INFO, "true");
 
         glanceApi = ContextBuilder.newBuilder(provider)
                // .endpoint("http://172.17.1.217:5000/v2.0")
-                .endpoint("http://172.17.3.142:8000/test")
+                .endpoint("http://10.9.1.165:5000/v2.0/")//("http://10.9.1.211:5000/v2.0/")//"http://172.17.3.142:8000/test")
                 .credentials(identity, credential)
                 .modules(modules)
                 .overrides(overrides)

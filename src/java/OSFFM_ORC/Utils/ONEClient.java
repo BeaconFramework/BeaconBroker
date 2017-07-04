@@ -103,7 +103,7 @@ public class ONEClient extends RESTClient{
             System.out.println(body.toString());
        
         
-        Response r=this.makeSimpleRequest(ONEFlowURL+"/servce_template", body.toString(), "post");
+        Response r=this.makeSimpleRequest(ONEFlowURL+"/service_template", body.toString(), "post");
         try{
                 this.checkResponse(r);
                 
@@ -133,7 +133,7 @@ public class ONEClient extends RESTClient{
             System.out.println(body.toString());
        
         
-        Response r=this.makeSimpleRequest(ONEFlowURL+"/servce_template/"+id+"/action", body.toString(), "post");
+        Response r=this.makeSimpleRequest(ONEFlowURL+"/service_template/"+id+"/action", body.toString(), "post");
         try{
                 this.checkResponse(r);
                 

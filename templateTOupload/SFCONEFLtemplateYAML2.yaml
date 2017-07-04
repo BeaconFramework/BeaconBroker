@@ -184,8 +184,83 @@ resources:
       rules:
         - value 
 
-        
-        
+  vnfsfcglobalResource:
+    type: TOSCA::Beacon::vnf_sfc_manifests
+    properties:
+      geo_deploy: { get_resource: geoshape_2}
+      vnfd_version: version_____
+      vnfd_description: description
+      vnfd_templatename: template_name
+      vnffg_version: version_____
+      vnffg_description: description
+      vnffg_toplogy_template_description: description
+      resource: 
+        innerres: {get_resource : [ VDU1,CP1,VL1,Forwarding_path1,VNFFG1]}
+  
+  VDU1:
+    type: tosca.nodes.nfv.VDU.Tacker
+    capabilities:
+      nfv_compute:
+        properties:
+          num_cpus: 1
+          mem_size: 512 MB
+          disk_size: 1 GB
+    properties:
+      image: cirros-0.3.5-x86_64-disk
+      availability_zone: nova
+      mgmt_driver: noop
+      config: |
+        param0: key1
+        param1: key2
+  
+  CP1:
+    type: tosca.nodes.nfv.CP.Tacker
+    properties:
+      management: true
+      order: 0
+      anti_spoofing_protection: false
+    requirements:
+      - virtualLink:
+          node: VL1
+      - virtualBinding:
+          node: VDU1
+          
+  VL1:
+    type: tosca.nodes.nfv.VL
+    properties:
+      network_name: net_mgmt
+      vendor: Tacker
+      
+  Forwarding_path1:
+    type: tosca.nodes.nfv.FP.Tacker
+    description: creates path (CP12->CP22)
+    properties:
+      id: 51
+      policy:
+        type: ACL
+        criteria:
+          - network_src_port_id: 640dfd77-c92b-45a3-b8fc-22712de480e1
+          - destination_port_range: 80-1024
+          - ip_proto: 6
+          - ip_dst_prefix: 192.168.1.2/24
+      path:
+        - forwarder: VNFD1
+          capability: CP12
+        - forwarder: VNFD2
+          capability: CP22
+
+  VNFFG1:
+    type: tosca.groups.nfv.VNFFG
+    description: HTTP to Corporate Net
+    properties:
+      vendor: tacker
+      version: 1.0
+      number_of_endpoints: 5
+      dependent_virtual_link: [VL12,VL22]
+      connection_point: [CP12,CP22]
+      constituent_vnfs: [VNFD1,VNFD2]
+    members: [Forwarding_path1]
+      
   prova:
     type:  ONE::Beacon::OneFlowTemplate
     properties:

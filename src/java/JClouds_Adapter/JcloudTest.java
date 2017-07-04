@@ -15,6 +15,7 @@
 package JClouds_Adapter;
 
 import com.google.common.collect.UnmodifiableIterator;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import org.jclouds.openstack.keystone.v2_0.domain.Tenant;
@@ -23,6 +24,7 @@ import org.jclouds.openstack.neutron.v2.domain.Network;
 import org.jclouds.openstack.neutron.v2.domain.NetworkSegment;
 import org.jclouds.openstack.neutron.v2.domain.Networks;
 import org.jclouds.openstack.neutron.v2.domain.Subnet;
+import org.jclouds.openstack.nova.v2_0.domain.Server;
 
 /**
  * This class need to be reviewed.
@@ -36,25 +38,25 @@ public class JcloudTest {
     public static void main(String[] args) {
 
         
-     //   DBMongo mongo=new DBMongo();
-     //   mongo.init("./cfg/configuration_bigDataPlugin.xml");
+     // DBMongo mongo=new DBMongo();
+     //  mongo.init("./cfg/configuration_bigDataPlugin.xml");
         
         //       KeystoneTest key=new KeystoneTest(mongo);
 
-        KeystoneTest key=new KeystoneTest("admin","admin","0penstack","http://10.9.1.155:5000/v2.0");
+        KeystoneTest key=new KeystoneTest("admin","admin","0penstack!","http://10.9.1.211:5000/v2.0/");//"http://10.9.1.155:5000/v2.0");
      //   System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-        key.autenticate("demo", "admin", "0penstack");
+        key.autenticate("admin", "admin", "0penstack!");
 //key.serviceGet("test");
-   //     key.servicetList();
-    //    key.listRole();
+     //   key.servicetList();
+     //   key.listRole();
    //   Tenant t=key.createTenant();
    //   key.createUser(t);
-    //  key.listUser();
-   //   key.listRole();
-        key.listTenant();
-        System.out.println(key.getTenantId("demo"));
+    // key.listUser();
+      key.endpointLists();
+    //    key.listTenant();
+      // System.out.println(key.getTenantId("admin"));
    
-             //   GlanceTest glance=new GlanceTest();
+   //             GlanceTest glance=new GlanceTest();
 
        //    GlanceTest glance=new GlanceTest(mongo);
         
@@ -70,23 +72,29 @@ public class JcloudTest {
       //  glance.deleteImage();
      //   glance.listImagesdatails();
    // glance.listImages();
-        
-  //      NovaTest nova=new NovaTest(mongo);
+        //"http://10.9.1.165:5000/v2.0/","admin","admin","0penstack","RegionOne"
+       NovaTest nova=new NovaTest("http://10.9.1.211:35357/v2.0/","admin","admin","0penstack!","RegionOne");//(mongo);
   //      nova.testQuota();
-        //  nova.listServer2();
+         ArrayList<Server> arr=nova.listServer2();
+         for(Server s : arr)
+             s.getUuid();
+         
       //  nova.listServer2Mongo();
        // nova.stopVm();
       //  nova.startVm();
         
       // // nova.createFlavor();
-     //   nova.listFlavors();
+        nova.listFlavors();
       //   nova.createvm();
     //   nova.getStatus();
         
        
-        
-     //NeutronTest neutron = new NeutronTest("http://172.17.1.217:35357/v2.0","demo","admin","password","RegionOne");
-     // neutron.listNetworks();
+//"http://10.9.1.165:5000/v2.0/","admin","admin","0penstack","RegionOne"
+     NeutronTest neutron = new NeutronTest("http://10.9.1.165:5000/v2.0/","admin","admin","0penstack","RegionOne");//"http://172.17.1.217:35357/v2.0","demo","admin","password","RegionOne");
+    // neutron.printListSubnet();
+        System.out.println(neutron.getStatus("private").toString());
+//neutron.printListNetworks();
+//neutron.listNetworks();
 //neutron.listRegions();
         //neutron.createRouter("prova","RegionOne","f225b4d8-9da8-422f-a637-9427a4f64a7a","62da5ef7-87ed-4e49-8cd7-1bad78257080");
        // neutron.deleteNetworks();
