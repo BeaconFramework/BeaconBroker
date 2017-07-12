@@ -83,9 +83,9 @@ public class TestApiFEDSDNINTERACTION {
             try {
                 System.out.println("NETSEGALL: \n"+nt.getAllNetSegm(fedsdnURL,5,8).readEntity(String.class));        //TESTED
                 String tenantname="MyFirstSite2";
-                //System.out.println(t.getInofesNetSegm(fedsdnURL,1,4,2).readEntity(String.class));
+                //System.out.println(nt.getInofesNetSegm(fedsdnURL,1,4,2).readEntity(String.class));
                 long tenantid=1;
-                /*System.out.println(t.getInofesTenant(fedsdnURL, tenantid).readEntity(String.class));    
+                /*System.out.println(nt.getInofesTenant(fedsdnURL, tenantid).readEntity(String.class));    
                 String cmp_endpoint="http://opennebula.cloud.org:2633/RPC2";
                 String type="openstack";
                 tenantname="MyFirstSiteTEst";*/
@@ -97,9 +97,6 @@ public class TestApiFEDSDNINTERACTION {
                     " \"valid_sites\": [{\"site_id\" : \"3\",\"user_id_in_site\": \"1\", \"credentials\": \"oneadmin:opennebula\"}]}");*/
                 
                 //System.out.println(nt.createNetSeg(j, fedsdnURL,5,8).readEntity(String.class));//CREATE    
-                /*tenantid=3;
-                System.out.println(t.updateTen(j, fedsdnURL, tenantid).readEntity(String.class));//UPDATE     
-                System.out.println(t.delTen(fedsdnURL, tenantid).readEntity(String.class));//DELETE   */  
             } 
             catch (WSException ex) {
                 Logger.getLogger(TestApiFEDSDNINTERACTION.class.getName()).log(Level.SEVERE, null, ex);
@@ -116,7 +113,7 @@ public class TestApiFEDSDNINTERACTION {
                 String tenantname=user;
                 System.out.println(t.getTenantInfoes(fedsdnURL, tenantname).readEntity(String.class));
                 long tenantid=1;
-                System.out.println(t.getInofesTenant(fedsdnURL, tenantid).readEntity(String.class));    
+                System.out.println(t.getInfoTenant(fedsdnURL, tenantid).readEntity(String.class));    
                 String cmp_endpoint="http://opennebula.cloud.org:2633/RPC2";
                 //String type="openstack";
                 //tenantname="MyFirstSiteTEst";
