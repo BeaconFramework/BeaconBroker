@@ -62,8 +62,8 @@ public class Tenant extends EastBrRESTClient{
      * @return
      * @throws WSException 
      */
-    public Response getInofesTenant(String baseFEDSDNURL,long tenId)throws WSException {
-        Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/"+tenId, "", "get");
+    public Response getInfoTenant(String baseFEDSDNURL,long tenId)throws WSException {
+        Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/tenant/"+tenId, "", "get");
         try{
                 this.checkResponse(r);
             }
@@ -104,6 +104,7 @@ public class Tenant extends EastBrRESTClient{
      * @throws WSException 
      */
     public Response updateTen(JSONObject params,String baseFEDSDNURL,long tenId) throws WSException, JSONException {
+
         Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/tenant/"+tenId, this.constructBody(params), "put");
         try{
                 this.checkResponse(r);//as answer we expect a status code 200

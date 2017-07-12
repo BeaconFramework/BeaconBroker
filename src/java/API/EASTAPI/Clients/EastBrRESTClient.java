@@ -151,7 +151,9 @@ public class EastBrRESTClient {
      * @author gtricomi
      */  
     protected Response checkResponse(Response plainAnswer) throws WSException{
-        if(plainAnswer!=null)
+        if(plainAnswer!=null){
+            String error_message = null;
+            
             switch(plainAnswer.getStatus()){
                 //good answers
                 case 200: {
@@ -169,51 +171,67 @@ public class EastBrRESTClient {
                 }//NO_CONTENT
                 //bad answers
                 case 400: {
-                    throw new WSException400("BAD REQUEST! The action can't be completed");
+                    error_message = plainAnswer.readEntity(String.class);
+                    throw new WSException400("BAD REQUEST! The action can't be completed\n" +error_message);
                 }//BAD_REQUEST 
                 case 409: {
-                    throw new WSException409("CONFLICT! The action can't be completed");
+                    error_message = plainAnswer.readEntity(String.class);
+                    throw new WSException409("CONFLICT! The action can't be completed\n" +error_message);
                 }//CONFLICT 
                 case 403: {
-                    throw new WSException403("FORBIDDEN!The action can't be completed");
+                    error_message = plainAnswer.readEntity(String.class);
+                    throw new WSException403("FORBIDDEN!The action can't be completed\n" +error_message);
                 }//FORBIDDEN 
                 case 410: {
-                    throw new WSException410("GONE! The action can't be completed");
+                    error_message = plainAnswer.readEntity(String.class);
+                    throw new WSException410("GONE! The action can't be completed\n" +error_message);
                 }//GONE
                 case 500: {
-                    throw new WSException500("INTERNAL_SERVER_ERROR! The action can't be completed");
+                    error_message = plainAnswer.readEntity(String.class);
+                    throw new WSException500("INTERNAL_SERVER_ERROR! The action can't be completed\n" +error_message);
                 }//INTERNAL_SERVER_ERROR 
                 case 301: {
-                    throw new WSException301("MOVED_PERMANENTLY! The action can't be completed");
+                    error_message = plainAnswer.readEntity(String.class);
+                    throw new WSException301("MOVED_PERMANENTLY! The action can't be completed\n" +error_message);
                 }//MOVED_PERMANENTLY 
                 case 406: {
-                    throw new WSException406("NOT_ACCEPTABLE! The action can't be completed");
+                    error_message = plainAnswer.readEntity(String.class);
+                    throw new WSException406("NOT_ACCEPTABLE! The action can't be completed\n" +error_message);
                 }//NOT_ACCEPTABLE
                 case 404: {
-                    throw new WSException404("NOT_FOUND! The action can't be completed");
+                    error_message = plainAnswer.readEntity(String.class);
+                    throw new WSException404("NOT_FOUND! The action can't be completed\n" +error_message);
                 }//NOT_FOUND
                 case 304: {
-                    throw new WSException304("NOT_MODIFIED! The action can't be completed");
+                    error_message = plainAnswer.readEntity(String.class);
+                    throw new WSException304("NOT_MODIFIED! The action can't be completed\n" +error_message);
                 }//NOT_MODIFIED 
                 case 412: {
-                    throw new WSException412("PRECONDITION_FAILED! The action can't be completed");
+                    error_message = plainAnswer.readEntity(String.class);
+                    throw new WSException412("PRECONDITION_FAILED! The action can't be completed\n" +error_message);
                 }//PRECONDITION_FAILED 
                 case 303: {
-                    throw new WSException303("SEE_OTHER! The action can't be completed");
+                    error_message = plainAnswer.readEntity(String.class);
+                    throw new WSException303("SEE_OTHER! The action can't be completed\n" +error_message);
                 }//SEE_OTHER
                 case 503: {
-                    throw new WSException503("SERVICE_UNAVAILABLE! The action can't be completed");
+                    error_message = plainAnswer.readEntity(String.class);
+                    throw new WSException503("SERVICE_UNAVAILABLE! The action can't be completed\n" +error_message);
                 }//SERVICE_UNAVAILABLE
                 case 307: {
-                    throw new WSException307("TEMPORARY_REDIRECT! The action can't be completed");
+                    error_message = plainAnswer.readEntity(String.class);
+                    throw new WSException307("TEMPORARY_REDIRECT! The action can't be completed\n" +error_message);
                 }//TEMPORARY_REDIRECT 
                 case 401: {
-                    throw new WSException401("UNAUTHORIZED! The action can't be completed");
+                    error_message = plainAnswer.readEntity(String.class);
+                    throw new WSException401("UNAUTHORIZED! The action can't be completed\n" +error_message);
                 }//UNAUTHORIZED 
                 case 415: {
-                    throw new WSException415("UNSUPPORTED_MEDIA_TYPE! The action can't be completed");
+                    error_message = plainAnswer.readEntity(String.class);
+                    throw new WSException415("UNSUPPORTED_MEDIA_TYPE! The action can't be completed\n" +error_message);
                 }//UNSUPPORTED_MEDIA_TYPE 
             }
+        }
         return plainAnswer;
     }
 }
