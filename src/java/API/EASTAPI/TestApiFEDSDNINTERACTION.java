@@ -28,11 +28,15 @@ public class TestApiFEDSDNINTERACTION {
      * @param args the command line arguments
      */
     public static void main(String[] args) throws JSONException {
-       
-            EastBrRESTClient ea= new EastBrRESTClient("NotManagedUser@userFederation@UME","passwordFederation");//("root","fedsdn");
+
+            String user="prova1";
+            String password="pass1";
+        
+            //EastBrRESTClient ea= new EastBrRESTClient("NotManagedUser@userFederation@UME","passwordFederation");//("root","fedsdn");
+            //EastBrRESTClient ea= new EastBrRESTClient("prova1","pass1");
             String fedsdnURL="http://10.9.0.14:6121";
-            String user="NotManagedUser@userFederation@UME",password="passwordFederation";
-            
+            //String user="NotManagedUser@userFederation@UME",password="passwordFederation";
+
             
             //SITE TESTING SECTION
             Site s=new Site(user,password);
@@ -105,25 +109,27 @@ public class TestApiFEDSDNINTERACTION {
             }
 
 
-//TENANT TESTING SECTION            
+            //TENANT TESTING SECTION            
             Tenant t=new Tenant(user,password);
             try {
-                //System.out.println(t.getAllTenant(fedsdnURL).readEntity(String.class));        //TESTED
-                String tenantname="MyFirstSite2";
-                //System.out.println(t.getTenantInfoes(fedsdnURL, tenantname).readEntity(String.class));
+                System.out.println(t.getAllTenant(fedsdnURL).readEntity(String.class));        //TESTED
+                String tenantname=user;
+                System.out.println(t.getTenantInfoes(fedsdnURL, tenantname).readEntity(String.class));
                 long tenantid=1;
-                //System.out.println(t.getInofesTenant(fedsdnURL, tenantid).readEntity(String.class));    
+                System.out.println(t.getInofesTenant(fedsdnURL, tenantid).readEntity(String.class));    
                 String cmp_endpoint="http://opennebula.cloud.org:2633/RPC2";
-                String type="openstack";
-                tenantname="MyFirstSiteTEst";
-                JSONObject j=new JSONObject("{\"name\" : \"NotManagedUser@userFederation@UME\"," +
-                    " \"password\": \"passwordFederation\"," +
+                //String type="openstack";
+                //tenantname="MyFirstSiteTEst";
+                JSONObject j=new JSONObject("{\"name\" : \""+user+"\"," +
+                    " \"password\": \""+password+"\"," +
                     " \"type\": \"admin\"," +
                     " \"valid_sites\": [{\"site_id\" : \"8\",\"user_id_in_site\": \"26\", \"credentials\": \"admin@admin:prova\"}]}");
+                /*
                 System.out.println(t.createTen(j, fedsdnURL).readEntity(String.class));//CREATE    
                 tenantid=5;
                 System.out.println(t.updateTen(j, fedsdnURL, tenantid).readEntity(String.class));//UPDATE     
                 //System.out.println(t.delTen(fedsdnURL, tenantid).readEntity(String.class));//DELETE     
+                */
             } 
             catch (WSException ex) {
                 Logger.getLogger(TestApiFEDSDNINTERACTION.class.getName()).log(Level.SEVERE, null, ex);
