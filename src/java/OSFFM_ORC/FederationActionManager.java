@@ -401,16 +401,23 @@ public class FederationActionManager {
 //04/07/2017 gt: la seguente funzione salva all'interno di MongoDB le tables ottenute che verranno usate durante la fase di instaurazione del link
         this.saveTablesOnMongo(al,tenantname,m);
         //if(startfromTemplate)
+//13/07/2017 gt: modificare la funzione seguente
         this.updatestateOnFEDSDN(tenantname,fe, m);
     }
     
+    /**
+     * This function sve on MongoDB the tables created by Beacon Broker for the creation of the Network federated.
+     * @param resultingTables
+     * @param tenant
+     * @param m 
+     * @author gtricomi
+     */
     private void saveTablesOnMongo(HashMap<String,HashMap<String,Object>> resultingTables, String tenant,DBMongo m){
         Set<String> s=resultingTables.keySet();
         JSONObject tenantTab=null;
         JSONArray siteTab=null;
         JSONObject netTab=null;
         for(String idCloud: s){
-            
             HashMap<String,Object> innerMap=(HashMap<String,Object>)resultingTables.get(idCloud);
             try{
                 tenantTab=new JSONObject((String)innerMap.get("tenantTable"));
@@ -429,7 +436,8 @@ public class FederationActionManager {
     }
     //<editor-fold defaultstate="collapsed" desc="FedSDN Interaction and Management Functions">
     /**
-     * 
+     * This function store elements useful for federated Network creation by the BNM.
+     * It will use EASTAPI clients to contact BNM.
      * @param tenant
      * @param mapContainer
      * @param m 
@@ -989,14 +997,15 @@ public class FederationActionManager {
                     
              }
 */
-             if(updatedNetTable==null)
-             body=fan.constructNetworkTableJSON(netUpdatedTable, 114);//dovrebbe essere 1 è diventato 114 per testing
-             else
-             body=fan.constructNetworkTableJSON(netUpdatedTable, (updatedNetTable.getInt("version"))+1);
-             mapsitenetbody.put(cloudID,new FANContainer(fan,body,fah.getIp(),fah.getPort(),fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint())));
-             
-             
-             ((HashMap)resultingTable.get(cloudID)).put("netTable", body);
+            if (updatedNetTable == null) {
+                body = fan.constructNetworkTableJSON(netUpdatedTable, 114);//dovrebbe essere 1 è diventato 114 per testing
+            } else {
+//12/07/2017 gt: aggiungere funzione che crea la tabella tenendo conto della tabella preesistente               
+                body = fan.constructNetworkTableJSON(netUpdatedTable, (updatedNetTable.getInt("version")) + 1);
+            }
+            mapsitenetbody.put(cloudID, new FANContainer(fan, body, fah.getIp(), fah.getPort(), fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint())));
+
+            ((HashMap)resultingTable.get(cloudID)).put("netTable", body);
 
 //02/07/2017 GT:
 /*PARTE COMMENTATA IN QUANTO LA FUNZIONALITA' DOVRA' ESSERE SPOSTATA ALTROVE, QUESTA FUNZIONE DEVE PREPARARE LE TABELLE PER LA PARTE OPENSTACK

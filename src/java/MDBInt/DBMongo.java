@@ -678,7 +678,7 @@ public class DBMongo {
     public void connectLocale() {
 
         try {
-            mongoClient = new MongoClient("172.17.2.32");//("172.17.3.142");
+            mongoClient = new MongoClient("10.9.240.1");//("172.17.3.142");
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -1500,7 +1500,8 @@ public String getMapInfo(String dbName, String uuidTemplate) {
        DBCollection collection = database.getCollection("Federation_Credential");
        BasicDBObject researchField = new BasicDBObject(field, value);
        DBObject risultato = collection.findOne(researchField);
-       String tenantDbName=(String)risultato.get("dbname");
+//06/07/2017 gt: il nome del tenant corrisponde al nome db quindi il campo da ricercare deve essere modificato in federationTenant       
+       String tenantDbName=(String)risultato.get("federationTenant");//("dbname");
        return tenantDbName;
     }
     
@@ -1530,7 +1531,12 @@ public String getMapInfo(String dbName, String uuidTemplate) {
        String tenantName=(String)risultato.get("token");
        return tenantName;
     }
-    
+    /**
+     * This function provides the endpoint of the component used inside the architecture.
+     * @param field
+     * @param value
+     * @return 
+     */
     public String getInfo_Endpoint(String field,String value){
        DB database = this.getDB(this.identityDB);
        DBCollection collection = database.getCollection("SystemInfos");
