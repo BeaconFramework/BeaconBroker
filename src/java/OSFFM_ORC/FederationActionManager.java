@@ -30,6 +30,7 @@ import MDBInt.DBMongo;
 import MDBInt.FederatedUser;
 import MDBInt.FederationAgentInfo;
 import MDBInt.FederationUser;
+import MDBInt.MDBIException;
 import OSFFM_ORC.Utils.FANContainer;
 import OSFFM_ORC.Utils.FednetsLink;
 import com.google.common.collect.UnmodifiableIterator;
@@ -451,7 +452,7 @@ public class FederationActionManager {
         Fednet fClient=new Fednet(tenant,fedsdnpassword);
 
         try {
-            if(!this.checkSiteFEDSDN(mapContainer, sClient, fedsdnURL,m)){
+            if(!this.checkSiteandInsertFEDSDN(mapContainer, sClient, fedsdnURL,m)){
                 LOGGER.error("It was not possible to insert the site inside the BNM! \n");
             }
         } catch (WSException ex) {
@@ -459,9 +460,9 @@ public class FederationActionManager {
         } catch (JSONException ex) {
             LOGGER.error("Exception is occurred in checkSiteFEDSDN! \n" + ex);
         }
-        
+//14/07/2017 gt: continuare da qui!        
         try {
-            this.checkTenantFEDSDN(mapContainer, sClient, fedsdnURL,m);
+            this.checkTenantandInsertFEDSDN(mapContainer, sClient, fedsdnURL,m);
         } catch (WSException ex) {
             LOGGER.error("Exception is occurred in checkTenantFEDSDN! \n" + ex);
         } catch (JSONException ex) {
@@ -469,12 +470,14 @@ public class FederationActionManager {
         }
         
         try {
-            this.checkNetSegmentFEDSDN(mapContainer,sClient, nClient, fedsdnURL,tenant, m);
+            this.checkNetSegmentandInsertFEDSDN(mapContainer,sClient, nClient, fedsdnURL,tenant, m);
         } catch (WSException ex) {
             LOGGER.error("Exception is occurred in checkNetSegmentFEDSDN! \n" + ex);
         } catch (JSONException ex) {
             LOGGER.error("Exception is occurred in checkNetSegmentFEDSDN! \n" + ex);
         }
+        
+//14/07/2017 gt: valutare possibili modifiche
 
         try {
             this.makeLinkOnFednet( fClient, tenant, fedsdnURL,  m);
@@ -499,7 +502,7 @@ public class FederationActionManager {
      * @throws JSONException 
      * @author gtricomi
      */
-    private void checkNetSegmentFEDSDN(FednetsLink  mapContainer,Site sClient,NetworkSegment nClient,String fedsdnURL,String federationTenant, DBMongo m)throws WSException, JSONException{
+    private void checkNetSegmentandInsertFEDSDN(FednetsLink  mapContainer,Site sClient,NetworkSegment nClient,String fedsdnURL,String federationTenant, DBMongo m)throws WSException, JSONException{
         Response r=sClient.getAllSite(fedsdnURL);
         JSONArray ja=new JSONArray(r.readEntity(String.class));
         FederationAgentInfo fa=null;
@@ -604,7 +607,7 @@ public class FederationActionManager {
     }
     
     /**
-     * 
+     * This function verify if the site is present and if it isn't it adds it.
      * @param mapContainer
      * @param sClient
      * @param fedsdnURL
@@ -613,7 +616,7 @@ public class FederationActionManager {
      * @throws JSONException 
      * @author gtricomi
      */
-    private boolean checkSiteFEDSDN(FednetsLink  mapContainer,Site sClient,String fedsdnURL, DBMongo m) throws WSException, JSONException{
+    private boolean checkSiteandInsertFEDSDN(FednetsLink  mapContainer,Site sClient,String fedsdnURL, DBMongo m) throws WSException, JSONException{
         Response r=sClient.getAllSite(fedsdnURL);
         JSONArray ja=new JSONArray(r.readEntity(String.class));
         LinkedHashMap<String,OpenstackInfoContainer> CloudId_To_OIC=mapContainer.getCloudId_To_OIC();
@@ -624,9 +627,10 @@ public class FederationActionManager {
                 boolean ok=false;
                 for(int k=0;k<3;k++){
                 
-                    ok=this.addSiteOnFedSDN(siteNameToCheck,sClient,fedsdnURL,m, CloudId_To_OIC.get(siteNameToCheck).getTenant());
-                    if (ok)
+                    ok=this.addSiteOnFedSDN(siteNameToCheck,sClient,CloudId_To_OIC.get(siteNameToCheck).getEndpoint(),m, CloudId_To_OIC.get(siteNameToCheck).getTenant());
+                    if (ok){
                         break;
+                    }
                     else if(k==3){
                         LOGGER.error("Something going wrong! It's Impossible add site on FEDSDN"); 
                         return false; //03/07/2017: inserito per bloccare il flusso nel caso in cui qualche sito non venga inserito !!!
@@ -648,7 +652,7 @@ public class FederationActionManager {
      * @throws JSONException 
      * @author gtricomi
      */
-    private boolean checkTenantFEDSDN(FednetsLink  mapContainer,Site sClient,String fedsdnURL, DBMongo m) throws WSException, JSONException{
+    private boolean checkTenantandInsertFEDSDN(FednetsLink  mapContainer,Site sClient,String fedsdnURL, DBMongo m) throws WSException, JSONException{
         Response r=sClient.getAllSite(fedsdnURL);
         JSONArray ja=new JSONArray(r.readEntity(String.class));
         LinkedHashMap<String,OpenstackInfoContainer> CloudId_To_OIC=mapContainer.getCloudId_To_OIC();
@@ -720,19 +724,32 @@ public class FederationActionManager {
      * @return
      * @author gtricomi
      */
-    private boolean addSiteOnFedSDN(String siteName,Site sClient,String fedsdnURL,DBMongo m, String tenant)throws JSONException{
-        String type = (new JSONObject(m.getfedsdnSite(siteName))).getString("type");
+    private boolean addSiteOnFedSDN(String siteName,Site sClient,String cmp_endpoint,DBMongo m, String tenant)throws JSONException{
+        String type = "";
         try {
-            String cmp_endpoint=m.getInfo_Endpoint("entity", "osffm");//sicuri?
+            if (m.getDatacenter(tenant, siteName) != null) {
+                type = "openstack";
+            } else {
+                type = "opennebula";
+            }
+        } catch (MDBIException mbe) {
+            type = "opennebula";
+        }
+        try {
+            String fedsdnURL = m.getInfo_Endpoint("entity", "fedsdn");
             Response r = sClient.createSite(siteName, cmp_endpoint, type, fedsdnURL);
-            m.insertfedsdnSite(r.readEntity(String.class), tenant); 
+            JSONObject resp=new JSONObject(r.readEntity(String.class));
+            JSONObject entry=new JSONObject();
+            entry.put("siteID", (String)resp.remove("id"));
+            entry.put("siteEntry",resp);
+            m.insertfedsdnSite(entry.toString(0), tenant); 
         } catch (WSException ex) {
             LOGGER.error("Exception is occurred in addSiteOnFedSDN for site: " + siteName + "\n" + ex);
             return false;
         }
         return true;
     }
-    
+   
     
     private boolean makeLinkOnFednet(Fednet fClient,String federtenant,String fedsdnURL, DBMongo m)throws WSException, JSONException{//TBD
         //Sembrerebbe necessario dover richiamare il client fednet (con l'opportuno riferimento al fednet corretto PUT /fednet/fedentID con parametri (action=link, linktype=full_mesh)
