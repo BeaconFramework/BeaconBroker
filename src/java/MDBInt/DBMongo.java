@@ -307,7 +307,7 @@ public class DBMongo {
         BasicDBObject obj = (BasicDBObject) JSON.parse(docJSON);
         obj.append("referenceSite", faSite);
         obj.append("insertTimestamp", System.currentTimeMillis());
-        obj.append("version", version);
+      
         collezione.save(obj);
     }
     /**
@@ -326,6 +326,58 @@ public class DBMongo {
         collezione.save(obj);
         //this.insert(tenant, "NetTablesInfo", jsonTable);
         return true;
+    }
+    //ALFO
+    public boolean insertNetTables(String tenant, String jsonTable) {
+
+        DBCollection collezione = null;
+        try {
+
+            DB dataBase = this.getDB(tenant);
+            collezione = this.getCollection(dataBase, "netTables");
+            System.out.println("DOPO COLLEZIONE:" + collezione.toString());
+
+            if (collezione == null) {
+                DBObject options;
+                collezione = dataBase.createCollection("provaa", null);
+            }
+
+            BasicDBObject obj = (BasicDBObject) JSON.parse(jsonTable);
+            obj.append("insertTimestamp", System.currentTimeMillis());
+            collezione.save(obj);
+            //this.insert(tenant, "NetTablesInfo", jsonTable);
+            return true;
+        } catch (Exception e) {
+            System.err.println("Errore creazione tabella MONGO: " + collezione.toString());
+            return false;
+        }
+
+    }
+    public boolean insertTablesData(String tenant, String v, String idcloud, String jsonTable) {
+
+        DBCollection collezione = null;
+        try {
+
+            DB dataBase = this.getDB(tenant);
+            collezione = this.getCollection(dataBase, "netTables");
+            System.out.println("DOPO COLLEZIONE:" + collezione.toString());
+
+            if (collezione == null) {
+                DBObject options;
+                collezione = dataBase.createCollection("provaa", null);
+            }
+
+            BasicDBObject obj = (BasicDBObject) JSON.parse(jsonTable);
+            obj.append("referenceSite", idcloud);
+            obj.append("insertTimestamp", System.currentTimeMillis());
+            collezione.save(obj);
+            //this.insert(tenant, "NetTablesInfo", jsonTable);
+            return true;
+        } catch (Exception e) {
+            System.err.println("Errore creazione tabella MONGO: " + collezione.toString());
+            return false;
+        }
+
     }
      //</editor-fold>
     
@@ -712,7 +764,10 @@ public class DBMongo {
             ex.printStackTrace();
         }
     }
-
+    //ALfo per test
+    public DB getDB_(String name) {
+        return this.getDB(name);
+    }
     private DB getDB(String name) {
 
         DB database = null;
