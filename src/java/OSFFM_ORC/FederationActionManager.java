@@ -402,7 +402,7 @@ public class FederationActionManager {
 //04/07/2017 gt: la seguente funzione salva all'interno di MongoDB le tables ottenute che verranno usate durante la fase di instaurazione del link
         this.saveTablesOnMongo(al, tenantname, m);
         //if(startfromTemplate)
-        this.updatestateOnFEDSDN(tenantname, fe, m);
+        this.updatestateOnFEDSDN(tenantname,al, fe, m);
     }
 
     private void saveTablesOnMongo(HashMap<String, HashMap<String, Object>> resultingTables, String tenant, DBMongo m) {
@@ -478,7 +478,7 @@ public class FederationActionManager {
      * @param m
      * @author gtricomi
      */
-    public void updatestateOnFEDSDN(String tenant, FednetsLink mapContainer, DBMongo m) {
+    public void updatestateOnFEDSDN(String tenant,HashMap<String, HashMap<String, Object>> resultingTables, FednetsLink mapContainer, DBMongo m) {
         String fedsdnURL = m.getInfo_Endpoint("entity", "fedsdn");//"http://10.9.0.14:6121";
         String fedsdnpassword = m.getFederationCredential(tenant, tenant, "federationUser");
         Site sClient = new Site(tenant, fedsdnpassword);//Modificare le info dentro il fedsdn che al momento sono inserite sotto l'utente root e password fedsdn
@@ -494,7 +494,7 @@ public class FederationActionManager {
         } catch (JSONException ex) {
             LOGGER.error("Exception is occurred in checkSiteFEDSDN! \n" + ex);
         }
-//14/07/2017 gt: continuare da qui!        
+      
         try {
             this.checkTenantandInsertFEDSDN(mapContainer, sClient, fedsdnURL,m);
         } catch (WSException ex) {
@@ -502,17 +502,22 @@ public class FederationActionManager {
         } catch (JSONException ex) {
             LOGGER.error("Exception is occurred in checkTenantFEDSDN! \n" + ex);
         }
-
+//17/07/2017 gt: continuare da qui
+        try {
+            this.checkFednetandInsertFEDSDN(mapContainer,sClient, nClient, fedsdnURL,tenant, m);
+        } catch (WSException ex) {
+            LOGGER.error("Exception is occurred in checkNetSegmentFEDSDN! \n" + ex);
+        } catch (JSONException ex) {
+            LOGGER.error("Exception is occurred in checkNetSegmentFEDSDN! \n" + ex);
+        }
         try {
             this.checkNetSegmentandInsertFEDSDN(mapContainer,sClient, nClient, fedsdnURL,tenant, m);
         } catch (WSException ex) {
             LOGGER.error("Exception is occurred in checkNetSegmentFEDSDN! \n" + ex);
         } catch (JSONException ex) {
             LOGGER.error("Exception is occurred in checkNetSegmentFEDSDN! \n" + ex);
-        }
-        
+        }        
 //14/07/2017 gt: valutare possibili modifiche
-
         try {
             this.makeLinkOnFednet(fClient, tenant, fedsdnURL, m);
         } catch (WSException ex) {
@@ -522,6 +527,10 @@ public class FederationActionManager {
         }
     }
 
+    private void checkFednetandInsertFEDSDN(FednetsLink  mapContainer,Site sClient,NetworkSegment nClient,String fedsdnURL,String federationTenant, DBMongo m)throws WSException, JSONException{
+        
+    }
+    
     /**
      *
      * @param mapContainer
@@ -730,6 +739,11 @@ public class FederationActionManager {
         for (int k = 0; k < inner.length(); k++) {
             try {
                 r = t.createTen(tenant_jo, fedsdnURL);
+                JSONObject resp = new JSONObject(r.readEntity(String.class));
+                JSONObject entry = new JSONObject();
+                entry.put("tenantID", (String) resp.remove("id"));
+                entry.put("tenantEntry", resp);
+                m.insertfedsdnSite(entry.toString(0), tenant);
             } catch (WSException ex) {
                 LOGGER.error("Exception is occurred in checkTenantFEDSDN for tenant: " + tenant + "\n" + ex);
                 ok = false;
