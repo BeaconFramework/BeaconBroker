@@ -7,6 +7,7 @@
 package API.EASTAPI;
 
 import API.EASTAPI.Clients.*;
+import MDBInt.DBMongo;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.logging.Level;
@@ -34,7 +35,7 @@ public class TestApiFEDSDNINTERACTION {
         
             //EastBrRESTClient ea= new EastBrRESTClient("NotManagedUser@userFederation@UME","passwordFederation");//("root","fedsdn");
             //EastBrRESTClient ea= new EastBrRESTClient("prova1","pass1");
-            String fedsdnURL="http://10.9.0.14:6121";
+            String fedsdnURL="http://10.9.0.26:6121";
             //String user="NotManagedUser@userFederation@UME",password="passwordFederation";
 
             
@@ -48,7 +49,7 @@ public class TestApiFEDSDNINTERACTION {
                 long siteid=2;
                 //System.out.println(s.getSiteInfoes(fedsdnURL, siteid).readEntity(String.class));        //TESTED
                 String cmp_endpoint="http://172.17.1.217:35357/v2.0";
-                String type="openstack";
+               // String type="openstack";
                 sitename="realTest";
                 //System.out.println("CREATE\n\n"+s.createSite(sitename, cmp_endpoint, type, fedsdnURL).readEntity(String.class));//CREATE        //TESTED
                 siteid=3;
@@ -67,7 +68,7 @@ public class TestApiFEDSDNINTERACTION {
                 //System.out.println(f.getNetinfo(fedsdnURL,fedid ).readEntity(String.class));     //TESTED
                 fednetname="realtestFednet";
                 String linkType="FullMesh";
-                String type="L2";
+       //         String type="L2";
                 //System.out.println(f.createFednet(fednetname, linkType, type, fedsdnURL).readEntity(String.class));//CREATE        //TESTED
                 fedid=2;
                 //fednetname="ModifiedMyFirstFNbc";

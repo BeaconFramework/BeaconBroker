@@ -181,8 +181,17 @@ public class testInstantiation {
             
             FileFunction ff = new FileFunction();
             String template = ff.readFromFile(prepath + "/" + tenant + manifestName + "_" + stack);
-            
+            String i=om.getELaContainer(manifestName, stack).getMinimumgap();
             ElasticitysuppContainer tmpsupp=om.deployManifest(template, stack, tmpMapcred, tmpMap, m,manifestName);
+            JSONObject content= new JSONObject();
+                        content.put("tenant", tenant);
+                        content.put("stack",stack);
+                        content.put("geographical_Map", new JSONObject(tmpMap));
+                        content.put("userF",userFederation);
+                        content.put("passF",passwordFederation);
+                        content.put("minGap",i);
+                        content.put("firstC",tmpsupp.getFirstCloudId());
+                        content.put("manifestName",manifestName);
 //            ArrayList<ArrayList<HashMap<String, ArrayList<Port>>>> arMapRes= tmpsupp.getInfo();
             //BEACON:>>> It is needed decide what do with the info returned from om.deployManifest inside strucure arMapRes
             ////INSERIRE LA PARTE CHE GESTISCA L'ISTANZIAZIONE DEL SUNLIGHT POLICY THREAD
