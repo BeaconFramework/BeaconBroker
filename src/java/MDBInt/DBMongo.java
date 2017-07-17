@@ -328,55 +328,71 @@ public class DBMongo {
         return true;
     }
     //ALFO
-    public boolean insertNetTables(String tenant, String jsonTable) {
+    public void insertNetTables(String tenant, String jsonTable) throws MDBIException,JSONException{
 
         DBCollection collezione = null;
         try {
 
             DB dataBase = this.getDB(tenant);
-            collezione = this.getCollection(dataBase, "netTables");
+            collezione = this.getCollection(dataBase, "BNANetSeg");
             System.out.println("DOPO COLLEZIONE:" + collezione.toString());
 
             if (collezione == null) {
                 DBObject options;
-                collezione = dataBase.createCollection("provaa", null);
+                collezione = dataBase.createCollection("BNANetSeg", null);
             }
-
+        }
+        catch (Exception e) {
+            //System.err.println("Errore creazione tabella MONGO: " + collezione.toString());
+            throw new MDBIException("Error during creation table BNANetSeg");
+        }
+        try{
             BasicDBObject obj = (BasicDBObject) JSON.parse(jsonTable);
             obj.append("insertTimestamp", System.currentTimeMillis());
             collezione.save(obj);
+        }             
+
+           
             //this.insert(tenant, "NetTablesInfo", jsonTable);
-            return true;
-        } catch (Exception e) {
-            System.err.println("Errore creazione tabella MONGO: " + collezione.toString());
-            return false;
+            
+         catch (Exception e) {
+            //System.err.println("Errore creazione tabella MONGO: " + collezione.toString());
+            throw new MDBIException("Error during insertion value in table BNANetSeg");
         }
 
     }
-    public boolean insertTablesData(String tenant, String v, String idcloud, String jsonTable) {
+    public void insertTablesData(String uuid, String tenant, String v, String refSite, String fedNet) throws MDBIException, JSONException{
 
         DBCollection collezione = null;
         try {
 
             DB dataBase = this.getDB(tenant);
-            collezione = this.getCollection(dataBase, "netTables");
+            collezione = this.getCollection(dataBase, "BANTableData");
             System.out.println("DOPO COLLEZIONE:" + collezione.toString());
 
             if (collezione == null) {
                 DBObject options;
-                collezione = dataBase.createCollection("provaa", null);
+                collezione = dataBase.createCollection("BANTableData", null);
             }
+        } catch (Exception e) {
+            throw new MDBIException("Error during creation table BANTableData: " + collezione.toString());
+            
+        }
+        try{
+            BasicDBObject obj = new BasicDBObject("Fk", uuid);
+            obj.append("referenceSite", refSite);
+            obj.append("version", v);
+            obj.append("fedNet", fedNet);
 
-            BasicDBObject obj = (BasicDBObject) JSON.parse(jsonTable);
-            obj.append("referenceSite", idcloud);
             obj.append("insertTimestamp", System.currentTimeMillis());
             collezione.save(obj);
-            //this.insert(tenant, "NetTablesInfo", jsonTable);
-            return true;
-        } catch (Exception e) {
-            System.err.println("Errore creazione tabella MONGO: " + collezione.toString());
-            return false;
         }
+        catch(Exception e){
+        throw new MDBIException("Error during insertion value in table BANTableData");
+        }
+            //this.insert(tenant, "NetTablesInfo", jsonTable);
+           
+        
 
     }
      //</editor-fold>
