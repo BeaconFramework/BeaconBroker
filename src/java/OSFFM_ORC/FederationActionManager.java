@@ -29,6 +29,7 @@ import MDBInt.DBMongo;
 import MDBInt.FederatedUser;
 import MDBInt.FederationAgentInfo;
 import MDBInt.FederationUser;
+import MDBInt.MDBIException;
 import OSFFM_ORC.Utils.FANContainer;
 import OSFFM_ORC.Utils.FednetsLink;
 import com.google.common.collect.UnmodifiableIterator;
@@ -410,7 +411,7 @@ public class FederationActionManager {
         JSONArray siteTab = null;
         JSONObject netTab = null;
         JSONObject bnaSegTab = null;
-
+       
         for (String idCloud : s) { //reference site
 
             HashMap<String, Object> innerMap = (HashMap<String, Object>) resultingTables.get(idCloud);
@@ -419,10 +420,12 @@ public class FederationActionManager {
                 siteTab = new JSONArray((String) innerMap.get("siteTable"));
 
                 tenantTab.append("version", (Integer) netTab.get("version"));
+                
                 netTab = new JSONObject((String) innerMap.get("netTable"));
-
                 bnaSegTab = bnaNetSegCreate(netTab, m, idCloud, tenant);
-
+                
+                
+                
                 m.insertTenantTables(tenant, idCloud, tenantTab.toString(0));
                 m.insertSiteTables(tenant, idCloud, "{" + siteTab.toString(0) + "}");
                 // m.insertNetTable(tenant, idCloud,netTab.toString(0));
@@ -440,7 +443,11 @@ public class FederationActionManager {
         JSONObject subJSON = null;
         String version = "";
         UUID uuid = null;
+        String fedNet = "";
+        //boolean resultIns = false;
+
         try {
+            fedNet = tables.getString("name");
             version = tables.getString("version");
             segRow = (JSONArray) tables.get("table");
             //uuid=UUID.randomUUID();
@@ -454,19 +461,20 @@ public class FederationActionManager {
                     bnaSegTab.put("FK", uuid.toString());
                     // bnaSegTab.put("fedNet",objectJson.get("name"));
                     bnaSegTab.put("netEntry", objectJson);
-                    m.insertNetTables(tenant,  bnaSegTab.toString(0));
-                }
-                //m.insertTablesData(uuid.toString(),tenant, version, refSite, tenant);
+                    m.insertNetTables(tenant, bnaSegTab.toString(0));
 
+                }
+                m.insertTablesData(uuid.toString(), tenant, version, refSite, fedNet);
             }
 
         } catch (JSONException ex) {
-            LOGGER.error("_______:" + ex.getMessage());
+            LOGGER.error("-___-' Error: " + ex.getMessage());
+        } catch (MDBIException ex) {
+            LOGGER.error("Error : "+ex.getMessage());
         }
 
         return bnaSegTab;
-
-    }
+}
 
     //<editor-fold defaultstate="collapsed" desc="FedSDN Interaction and Management Functions">
     /**
