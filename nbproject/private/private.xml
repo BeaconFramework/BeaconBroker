@@ -34,5 +34,9 @@
             <file>file:/home/giuseppe/NetBeansProjects/BB/src/java/API/NTHAPI/Orchestrator/testInstantiation.java</file>
             <file>file:/home/giuseppe/NetBeansProjects/BB/src/java/API/EASTAPI/Clients/Tenant.java</file>
         </group>
+        <group>
+            <file>file:/home/apanarello/BeaconProject/newBBP/BB/src/java/API/EASTAPI/UsersResource.java</file>
+            <file>file:/home/apanarello/BeaconProject/newBBP/BB/src/java/OSFFM_ORC/FederationActionManager.java</file>
+        </group>
     </open-files>
 </project-private>
