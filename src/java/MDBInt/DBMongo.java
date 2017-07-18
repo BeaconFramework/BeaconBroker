@@ -367,12 +367,12 @@ public class DBMongo {
         try {
 
             DB dataBase = this.getDB(tenant);
-            collezione = this.getCollection(dataBase, "BANTableData");
+            collezione = this.getCollection(dataBase, "BNATableData");
             System.out.println("DOPO COLLEZIONE:" + collezione.toString());
 
             if (collezione == null) {
                 DBObject options;
-                collezione = dataBase.createCollection("BANTableData", null);
+                collezione = dataBase.createCollection("BNATableData", null);
             }
         } catch (Exception e) {
             throw new MDBIException("Error during creation table BANTableData: " + collezione.toString());

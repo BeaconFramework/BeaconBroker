@@ -36,6 +36,7 @@ import com.google.common.collect.UnmodifiableIterator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Random;
@@ -53,6 +54,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import utils.Exception.WSException;
+import utils.Exception.WSException500;
 
 /**
  * All action that will be done on each federated cloud is Managed inside this
@@ -511,7 +513,7 @@ public class FederationActionManager {
         }
 //17/07/2017 gt: continuare da qui
         try {
-            this.checkFednetandInsertFEDSDN(mapContainer,sClient, nClient, fedsdnURL,tenant, m);
+            this.checkFednetandInsertFEDSDN(resultingTables,mapContainer,fClient ,sClient, nClient, fedsdnURL,tenant, m);
         } catch (WSException ex) {
             LOGGER.error("Exception is occurred in checkNetSegmentFEDSDN! \n" + ex);
         } catch (JSONException ex) {
@@ -534,7 +536,46 @@ public class FederationActionManager {
         }
     }
 
-    private void checkFednetandInsertFEDSDN(FednetsLink  mapContainer,Site sClient,NetworkSegment nClient,String fedsdnURL,String federationTenant, DBMongo m)throws WSException, JSONException{
+    /**
+     * This function create a Fednet for each network present in the ResultingTables created from BB.
+     * @param resultingTables
+     * @param mapContainer
+     * @param sClient
+     * @param nClient
+     * @param fedsdnURL
+     * @param federationTenant
+     * @param m
+     * @throws WSException
+     * @throws JSONException 
+     */
+    private void checkFednetandInsertFEDSDN(HashMap<String, HashMap<String, Object>> resultingTables,FednetsLink  mapContainer,Fednet fClient,Site sClient,NetworkSegment nClient,String fedsdnURL,String federationTenant, DBMongo m)throws WSException, JSONException{
+        Set<String> siteSet=resultingTables.keySet();
+        String name="";
+        String linkType="FullMesh";
+        String type="L3";
+        HashSet dictFeds=new HashSet();
+        for( String s :siteSet){
+            
+        //ricerca esistenza fednet
+        //aggiunta fednet su fedsdn
+        ////
+        
+        
+        
+        try{
+            fClient.createFednet(name, linkType, type, fedsdnURL);
+        }catch(WSException500 wse){
+            //server Error matching della string restituita dal server se uguale a "unique bla bla bla" allora la rete era già presente
+        }catch(WSException ws){
+            //eccezione sconosciuta come gestire?
+        }
+        }
+        //aggiunta fednet su mongo
+        /*
+        
+        */
+        HashMap<String,ArrayList<String>> fednet=new HashMap<String,ArrayList<String>> ();
+        ArrayList<String> siteList=new ArrayList<String>();
         
     }
     
@@ -921,12 +962,12 @@ public class FederationActionManager {
              * : 4897}] }, { 'name' : site1_name, 'tenant_id' :
              * u'aa146d1022fe4dd1a29042c2f234d847', 'fa_url' : 10.9.1.159,
              * 'site_proxy' : [{'ip' : 10.9.1.159, 'port' : 4897}] }, ]
-             * NETTABLES: { 'table' : [ {'tenant_id':
+             * NETTABLES: { 'table' : [[ {'tenant_id':
              * u'aa146d1022fe4dd1a29042c2f234d84b','site_name': 'site2', 'name':
              * u'private', 'vnid': u'7fdb464c-11db-4b7f-9f60-4382ed9a76e8'},
              * {'tenant_id': u'aa146d1022fe4dd1a29042c2f234d847', 'site_name':
              * 'site1', 'name': u'private', 'vnid':
-             * u'b906abbd-ed90-4cd0-bb3a-bd7c9119dfb9'} ], 'version' : 115 }
+             * u'b906abbd-ed90-4cd0-bb3a-bd7c9119dfb9'}] ], 'version' : 115 }
              * *************************************
              */
             String ten = fednetContainer.getCloudId_To_OIC().get(cloudID).getTenant();
