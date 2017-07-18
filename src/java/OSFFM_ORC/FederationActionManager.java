@@ -33,6 +33,7 @@ import MDBInt.MDBIException;
 import OSFFM_ORC.Utils.FANContainer;
 import OSFFM_ORC.Utils.FednetsLink;
 import com.google.common.collect.UnmodifiableIterator;
+import com.mongodb.util.JSON;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -411,6 +412,8 @@ public class FederationActionManager {
         JSONArray siteTab = null;
         JSONObject netTab = null;
         JSONObject bnaSegTab = null;
+        Integer version = null;
+        String fednetsinsite = null;
        
         for (String idCloud : s) { //reference site
 
@@ -418,16 +421,29 @@ public class FederationActionManager {
             try {
                 tenantTab = new JSONObject((String) innerMap.get("tenantTable"));
                 siteTab = new JSONArray((String) innerMap.get("siteTable"));
-
-                tenantTab.append("version", (Integer) netTab.get("version"));
-                
                 netTab = new JSONObject((String) innerMap.get("netTable"));
+                
+                //tenantTab.append("version", (Integer) netTab.get("version"));
+                version = (Integer) netTab.get("version");
+                
+                
                 bnaSegTab = bnaNetSegCreate(netTab, m, idCloud, tenant);
+
+                //17/07/2017
+                //FROM
+                //m.insertTenantTables(tenant, idCloud, tenantTab.toString(0));
+                //TO
+                m.insertTenantTables(tenant, idCloud, version, tenantTab.toString(0));
+
+                fednetsinsite = m.getFednetsInSite(tenant, idCloud);
+                JSONObject obj = (JSONObject) JSON.parse(fednetsinsite);
+                //obj = {"referenceSite": "CETIC", "version": 1, "fednets": ["private", "public"]}
+                version = obj.getInt("version");
+                m.insertSiteTables(tenant, idCloud, "{" + siteTab.toString(0) + "}", version);
                 
                 
                 
-                m.insertTenantTables(tenant, idCloud, tenantTab.toString(0));
-                m.insertSiteTables(tenant, idCloud, "{" + siteTab.toString(0) + "}");
+                
                 // m.insertNetTable(tenant, idCloud,netTab.toString(0));
             } catch (JSONException ex) {
                 LOGGER.error("Exception occurred in the function saveTablesOnMongo, it is not possible cast tables calculated for BNA from String to JSON.\nException Message:" + ex.getMessage());
@@ -901,12 +917,14 @@ public class FederationActionManager {
              * ***********************************
              * Pre ogni sito servono tre tabelle da mandare ai FA di OpenStack
              * TENANT: {'name': u'admin', 'id':
-             * u'aa146d1022fe4dd1a29042c2f234d84b'} SITO: [ { 'name' :
-             * site2_name, 'tenant_id' : u'aa146d1022fe4dd1a29042c2f234d84b',
+             * u'aa146d1022fe4dd1a29042c2f234d84b'} 
+             * 
+             * SITO: [ { 'name' : site2_name, 'tenant_id' : u'aa146d1022fe4dd1a29042c2f234d84b',
              * 'fa_url' : 10.9.1.169, 'site_proxy' : [{'ip' : 10.9.1.169, 'port'
              * : 4897}] }, { 'name' : site1_name, 'tenant_id' :
              * u'aa146d1022fe4dd1a29042c2f234d847', 'fa_url' : 10.9.1.159,
              * 'site_proxy' : [{'ip' : 10.9.1.159, 'port' : 4897}] }, ]
+             * 
              * NETTABLES: { 'table' : [ {'tenant_id':
              * u'aa146d1022fe4dd1a29042c2f234d84b','site_name': 'site2', 'name':
              * u'private', 'vnid': u'7fdb464c-11db-4b7f-9f60-4382ed9a76e8'},
