@@ -38,8 +38,7 @@ import java.util.logging.Level;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+
 /**
  *
  * @author apanarello
@@ -51,21 +50,22 @@ public class TestMongo {
      */
     public static void main(String[] args) {
         DBMongo db= new DBMongo();
+        FederationActionManager fam = new FederationActionManager();
         db.init("/home/apanarello/BeaconProject/newBBP/BB/web/WEB-INF/configuration_bigDataPlugin.xml");
 
         db.connectLocale("10.9.240.1");
-        JSONParser jparser = new JSONParser();       
-        JSONObject table_=new JSONObject();
+        JSONObject table_=null;
+        try {
+            table_ = new JSONObject("{ \"table\" : [ [{\"tenant_id\":\"aa146d1022fe4dd1a29042c2f234d84b\",\"site_name\": \"site2\", \"name\":\"private\",\"vnid\":\"7fdb464c-11db-4b7f-9f60-4382ed9a76e8\"},{\"tenant_id\": \"aa146d1022fe4dd1a29042c2f234d847\", \"site_name\":\"site1\", \"name\": \"private\", \"vnid\":\"b906abbd-ed90-4cd0-bb3a-bd7c9119dfb9\"} ] ], \"version\" : 115 }");
+            fam.bnaNetSegCreate(table_, db, "UME", "review",true);
+
+        } catch (JSONException ex) {
+            System.out.println("errore parse:   "+ex.getMessage());
+        }
         //DB dataBase = db.getDB_("review");
         //DBCollection collezione = db.getCollection(dataBase, "provaa");
-        FederationActionManager fam = new FederationActionManager();
-        String table= ("{ 'table' : [ [{'tenant_id':     'aa146d1022fe4dd1a29042c2f234d84b','site_name': 'site2', 'name': 'private', 'vnid': '7fdb464c-11db-4b7f-9f60-4382ed9a76e8'},{'tenant_id': 'aa146d1022fe4dd1a29042c2f234d847', 'site_name':'site1', 'name': 'private', 'vnid':'b906abbd-ed90-4cd0-bb3a-bd7c9119dfb9'} ] ], 'version' : 115 }");
-        try {
-            table_=(JSONObject) jparser.parse(table);
-        } catch (ParseException ex) {
-            java.util.logging.Logger.getLogger(TestMongo.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        fam.bnaNetSegCreate(table_, db, "UME", "review",true);
+        
+      
         //System.out.println("DOPO COLLEZIONE"+collezione.toString());
      
         /*

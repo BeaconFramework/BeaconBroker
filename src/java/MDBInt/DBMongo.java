@@ -361,21 +361,21 @@ public class DBMongo {
         }
 
     }
-    public void insertTablesData(String uuid, String tenant, String v, String refSite, String fedNet) throws MDBIException, JSONException{
+    public void insertTablesData(String uuid, String tenant, Integer v, String refSite, String fedNet) throws MDBIException, JSONException{
 
         DBCollection collezione = null;
         try {
 
             DB dataBase = this.getDB(tenant);
-            collezione = this.getCollection(dataBase, "BANTableData");
+            collezione = this.getCollection(dataBase, "BNATableData");
             System.out.println("DOPO COLLEZIONE:" + collezione.toString());
 
             if (collezione == null) {
                 DBObject options;
-                collezione = dataBase.createCollection("BANTableData", null);
+                collezione = dataBase.createCollection("BNATableData", null);
             }
         } catch (Exception e) {
-            throw new MDBIException("Error during creation table BANTableData: " + collezione.toString());
+            throw new MDBIException("Error during creation table BNATableData: " + collezione.toString());
             
         }
         try{
@@ -469,19 +469,41 @@ public class DBMongo {
         }
     }
     
+    
+    /**
+     * This update Federation User with element. Table used by BNA
+     * @param dbName
+     * @param site, this is the cloud Id
+     * @author caromeo
+     */
+    //public void insertTenantTables(String dbName, String site, Integer version, String docJSON) {
+    
+    public String getFednetsInSite(String dbName, String site){
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("fednetsinSite");
+        BasicDBObject resQuery=new BasicDBObject("referenceSite",site);
+        BasicDBObject sortQuery=new BasicDBObject("version",-1);
+        
+        return this.conditionedResearch(collection,resQuery,sortQuery);
+    }
+    
+    
+    
     /**
      * This update Federation User with element. Table used by BNA
      * @param dbName
      * @param faSite, this is the cloud Id
      * @param docJSON 
-     * @author gtricomi
+     * @author gtricomi, caromeo
      */
-    public void insertSiteTables(String dbName,String faSite, String docJSON) {
+       
+    public void insertSiteTables(String dbName,String faSite, String docJSON, Integer version) {
 
         DB dataBase = this.getDB(dbName);
         DBCollection collezione = this.getCollection(dataBase, "siteTables");
         BasicDBObject obj = (BasicDBObject) JSON.parse(docJSON);
         obj.append("referenceSite", faSite);
+        obj.append("version", version);
         obj.append("insertTimestamp", System.currentTimeMillis());
         collezione.save(obj);
     }    
@@ -510,7 +532,8 @@ public class DBMongo {
      * This update Federation User with element. Used by BNA
      * @param dbName
      * @param faSite, this is the cloud Id
-     * @param docJSON 
+     * @param docJSON
+     * @deprecated old unsed
      * @author gtricomi
      */
     public void insertTenantTables(String dbName,String faSite, String docJSON) {
@@ -519,6 +542,26 @@ public class DBMongo {
         DBCollection collezione = this.getCollection(dataBase, "TenantTables");
         BasicDBObject obj = (BasicDBObject) JSON.parse(docJSON);
         obj.append("referenceSite", faSite);
+        obj.append("insertTimestamp", System.currentTimeMillis());
+        collezione.save(obj);
+    }
+
+    
+    /**
+     * This update Federation User with element. Used by BNA
+     * @param dbName
+     * @param site, this is the cloud Id
+     * @param version 
+     * @param docJSON 
+     * @author caromeo
+     */
+    public void insertTenantTables(String dbName, String site, Integer version, String docJSON) {
+        DB dataBase = this.getDB(dbName);
+        DBCollection collezione = this.getCollection(dataBase, "TenantTables");
+
+        BasicDBObject obj = new BasicDBObject("entryTenantTab", (BasicDBObject) JSON.parse(docJSON));
+        obj.append("referenceSite", site);
+        obj.append("version", version);
         obj.append("insertTimestamp", System.currentTimeMillis());
         collezione.save(obj);
     }

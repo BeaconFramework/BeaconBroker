@@ -33,6 +33,7 @@ import MDBInt.MDBIException;
 import OSFFM_ORC.Utils.FANContainer;
 import OSFFM_ORC.Utils.FednetsLink;
 import com.google.common.collect.UnmodifiableIterator;
+import com.mongodb.util.JSON;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -411,6 +412,8 @@ public class FederationActionManager {
         JSONArray siteTab = null;
         JSONObject netTab = null;
         JSONObject bnaSegTab = null;
+        Integer version = null;
+        String fednetsinsite = null;
        
         for (String idCloud : s) { //reference site
 
@@ -418,16 +421,29 @@ public class FederationActionManager {
             try {
                 tenantTab = new JSONObject((String) innerMap.get("tenantTable"));
                 siteTab = new JSONArray((String) innerMap.get("siteTable"));
-
-                tenantTab.append("version", (Integer) netTab.get("version"));
-                
                 netTab = new JSONObject((String) innerMap.get("netTable"));
+                
+                //tenantTab.append("version", (Integer) netTab.get("version"));
+                version = (Integer) netTab.get("version");
+                
+                
                 bnaSegTab = bnaNetSegCreate(netTab, m, idCloud, tenant);
+
+                //17/07/2017
+                //FROM
+                //m.insertTenantTables(tenant, idCloud, tenantTab.toString(0));
+                //TO
+                m.insertTenantTables(tenant, idCloud, version, tenantTab.toString(0));
+
+                fednetsinsite = m.getFednetsInSite(tenant, idCloud);
+                JSONObject obj = (JSONObject) JSON.parse(fednetsinsite);
+                //obj = {"referenceSite": "CETIC", "version": 1, "fednets": ["private", "public"]}
+                version = obj.getInt("version");
+                m.insertSiteTables(tenant, idCloud, "{" + siteTab.toString(0) + "}", version);
                 
                 
                 
-                m.insertTenantTables(tenant, idCloud, tenantTab.toString(0));
-                m.insertSiteTables(tenant, idCloud, "{" + siteTab.toString(0) + "}");
+                
                 // m.insertNetTable(tenant, idCloud,netTab.toString(0));
             } catch (JSONException ex) {
                 LOGGER.error("Exception occurred in the function saveTablesOnMongo, it is not possible cast tables calculated for BNA from String to JSON.\nException Message:" + ex.getMessage());
@@ -435,42 +451,47 @@ public class FederationActionManager {
 
         }
     }
+public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, String tenant, boolean b){
+    bnaNetSegCreate(table_, db, refSite, tenant);
 
+
+}
     private JSONObject bnaNetSegCreate(JSONObject tables, DBMongo m, String refSite, String tenant) {
 
         JSONObject bnaSegTab = new JSONObject();
         JSONArray segRow = null;
         JSONObject subJSON = null;
-        String version = "";
+        Integer version = null;
         UUID uuid = null;
         String fedNet = "";
         //boolean resultIns = false;
 
         try {
             //fedNet = tables.getString("name");
-            version = tables.getString("version");
-            segRow = (JSONArray) tables.get("table");
+            version = tables.getInt("version");
+            JSONArray bigArray = (JSONArray) tables.get("table");
             //uuid=UUID.randomUUID();
-
-            for (int i = 0; i < segRow.length(); i++) {
-                fedNet = tables.getString("name");
+           // JSONArray littleArray;
+            for (int i = 0; i < bigArray.length(); i++) {
+                
                 uuid = UUID.randomUUID();
-                JSONArray innerArray = (JSONArray) segRow.get(i);
+                JSONArray innerArray = (JSONArray) bigArray.get(i);
                 for (int j = 0; j < innerArray.length(); j++) {
                     JSONObject objectJson = (JSONObject) innerArray.get(j);
+                    fedNet=objectJson.getString("name"); //***ATTENZIONARE PERCHE NEL CASO DI OPENNEBULA LE FEDNET ALL'INTERNO DELL'INNERARRAY POTREBBERO AVERE NOMI DIVERSI DUNQUE SI PER L'INFORMAZIONE
                     bnaSegTab.put("FK", uuid.toString());
                     // bnaSegTab.put("fedNet",objectJson.get("name"));
                     bnaSegTab.put("netEntry", objectJson);
                     m.insertNetTables(tenant, bnaSegTab.toString(0));
 
                 }
-                m.insertTablesData(uuid.toString(), tenant, version, refSite, fedNet);
+                m.insertTablesData(uuid.toString(), tenant, version, refSite, fedNet); //ATTENZIONARE VEDI COMMENTO ***
             }
 
         } catch (JSONException ex) {
-            LOGGER.error("-___-' Error: " + ex.getMessage());
+            System.out.println("-___-' Error: " + ex.getMessage());
         } catch (MDBIException ex) {
-            LOGGER.error("Error : "+ex.getMessage());
+            System.out.println("-___-' Error: " + ex.getMessage());
         }
 
         return bnaSegTab;
@@ -901,12 +922,14 @@ public class FederationActionManager {
              * ***********************************
              * Pre ogni sito servono tre tabelle da mandare ai FA di OpenStack
              * TENANT: {'name': u'admin', 'id':
-             * u'aa146d1022fe4dd1a29042c2f234d84b'} SITO: [ { 'name' :
-             * site2_name, 'tenant_id' : u'aa146d1022fe4dd1a29042c2f234d84b',
+             * u'aa146d1022fe4dd1a29042c2f234d84b'} 
+             * 
+             * SITO: [ { 'name' : site2_name, 'tenant_id' : u'aa146d1022fe4dd1a29042c2f234d84b',
              * 'fa_url' : 10.9.1.169, 'site_proxy' : [{'ip' : 10.9.1.169, 'port'
              * : 4897}] }, { 'name' : site1_name, 'tenant_id' :
              * u'aa146d1022fe4dd1a29042c2f234d847', 'fa_url' : 10.9.1.159,
              * 'site_proxy' : [{'ip' : 10.9.1.159, 'port' : 4897}] }, ]
+             * 
              * NETTABLES: { 'table' : [ [{'tenant_id':
              * u'aa146d1022fe4dd1a29042c2f234d84b','site_name': 'site2', 'name':
              * u'private', 'vnid': u'7fdb464c-11db-4b7f-9f60-4382ed9a76e8'},
