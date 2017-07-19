@@ -3,20 +3,6 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group name="OSFederationFlowManager"/>
-        <group>
-            <file>file:/home/giuseppe/NetBeansProjects/BB/src/java/JClouds_Adapter/JcloudTest.java</file>
-            <file>file:/home/giuseppe/NetBeansProjects/BB/src/java/OSFFM_ORC/FederationActionManager.java</file>
-            <file>file:/home/giuseppe/NetBeansProjects/BB/src/java/API/NTHAPI/Orchestrator/IstantiateManifest.java</file>
-            <file>file:/home/giuseppe/NetBeansProjects/BB/src/java/OSFFM_ORC/Utils/ONEClient.java</file>
-            <file>file:/home/giuseppe/NetBeansProjects/BB/src/java/demoHAIFA/DemoHAIFA.java</file>
-            <file>file:/home/giuseppe/NetBeansProjects/BB/src/java/MDBInt/DBMongo.java</file>
-            <file>file:/home/giuseppe/NetBeansProjects/BB/src/java/OSFFM_ELA/Policies/SunLightPolicy.java</file>
-            <file>file:/home/giuseppe/NetBeansProjects/BB/src/java/OSFFM_ORC/OrchestrationManager.java</file>
-            <file>file:/home/giuseppe/NetBeansProjects/BB/src/java/API/NTHAPI/Orchestrator/testInstantiation.java</file>
-            <file>file:/home/giuseppe/NetBeansProjects/BB/src/java/MDBInt/Splitter.java</file>
-            <file>file:/home/giuseppe/NetBeansProjects/BB/src/java/OSFFM_ELA/ElasticityManagerSimple.java</file>
-            <file>file:/home/giuseppe/NetBeansProjects/BB/src/java/OSFFM_ELA/Policy.java</file>
-        </group>
         <group name="BEACON">
             <file>file:/home/giuseppe/NetBeansProjects/BB/src/java/JClouds_Adapter/JcloudTest.java</file>
             <file>file:/home/giuseppe/NetBeansProjects/BB/src/java/API/SOUTHBR/FA_client4Network.java</file>
@@ -36,8 +22,13 @@
             <file>file:/home/giuseppe/NetBeansProjects/BB/src/java/API/EASTAPI/Clients/Tenant.java</file>
         </group>
         <group>
-            <file>file:/home/apanarello/BeaconProject/newBBP/BB/src/java/API/EASTAPI/UsersResource.java</file>
-            <file>file:/home/apanarello/BeaconProject/newBBP/BB/src/java/OSFFM_ORC/FederationActionManager.java</file>
+            <file>file:/home/carmelo/NetBeansProjects/BB/src/java/API/SOUTHBR/FA_client4Sites.java</file>
+            <file>file:/home/carmelo/NetBeansProjects/BB/src/java/OSFFM_ORC/FederationActionManager.java</file>
+            <file>file:/home/carmelo/NetBeansProjects/BB/src/java/MDBInt/DBMongo.java</file>
+        </group>
+        <group>
+            <file>file:/home/carmelo/NetBeansProjects/BB/src/java/OSFFM_ORC/FederationActionManager.java</file>
+            <file>file:/home/carmelo/NetBeansProjects/BB/src/java/MDBInt/DBMongo.java</file>
         </group>
     </open-files>
 </project-private>
