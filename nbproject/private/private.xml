@@ -22,15 +22,15 @@
             <file>file:/home/giuseppe/NetBeansProjects/BB/src/java/API/EASTAPI/Clients/Tenant.java</file>
         </group>
         <group>
-            <file>file:/home/carmelo/NetBeansProjects/BB/src/java/API/SOUTHBR/FA_client4Sites.java</file>
             <file>file:/home/carmelo/NetBeansProjects/BB/src/java/OSFFM_ORC/FederationActionManager.java</file>
             <file>file:/home/carmelo/NetBeansProjects/BB/src/java/MDBInt/DBMongo.java</file>
         </group>
         <group>
-            <file>file:/home/carmelo/NetBeansProjects/BB/src/java/OSFFM_ORC/FederationActionManager.java</file>
-            <file>file:/home/carmelo/NetBeansProjects/BB/src/java/MDBInt/DBMongo.java</file>
+            <file>file:/home/apanarello/BeaconProject/newBBP/BB/src/java/OSFFM_ORC/FederationActionManager.java</file>
+            <file>file:/home/apanarello/BeaconProject/newBBP/BB/src/java/OSFFM_ORC/TestMongo.java</file>
         </group>
         <group>
+            <file>file:/home/apanarello/BeaconProject/newBBP/BB/src/java/MDBInt/DBMongo.java</file>
             <file>file:/home/apanarello/BeaconProject/newBBP/BB/src/java/OSFFM_ORC/FederationActionManager.java</file>
             <file>file:/home/apanarello/BeaconProject/newBBP/BB/src/java/OSFFM_ORC/TestMongo.java</file>
         </group>
