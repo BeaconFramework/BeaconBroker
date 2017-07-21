@@ -449,13 +449,13 @@ public class FederationActionManager {
         //boolean resultIns = false;
 
         try {
-            fedNet = tables.getString("name");
+            //fedNet = tables.getString("name");
             version = tables.getString("version");
             segRow = (JSONArray) tables.get("table");
             //uuid=UUID.randomUUID();
 
             for (int i = 0; i < segRow.length(); i++) {
-
+                fedNet = tables.getString("name");
                 uuid = UUID.randomUUID();
                 JSONArray innerArray = (JSONArray) segRow.get(i);
                 for (int j = 0; j < innerArray.length(); j++) {
@@ -555,6 +555,7 @@ public class FederationActionManager {
         String type="L3";
         HashSet dictFeds=new HashSet();
         for( String s :siteSet){
+            String arrayString= m.getFednetsInSite(federationTenant,s);
             
         //ricerca esistenza fednet
         //aggiunta fednet su fedsdn
@@ -962,12 +963,12 @@ public class FederationActionManager {
              * : 4897}] }, { 'name' : site1_name, 'tenant_id' :
              * u'aa146d1022fe4dd1a29042c2f234d847', 'fa_url' : 10.9.1.159,
              * 'site_proxy' : [{'ip' : 10.9.1.159, 'port' : 4897}] }, ]
-             * NETTABLES: { 'table' : [[ {'tenant_id':
+             * NETTABLES: { 'table' : [ [{'tenant_id':
              * u'aa146d1022fe4dd1a29042c2f234d84b','site_name': 'site2', 'name':
              * u'private', 'vnid': u'7fdb464c-11db-4b7f-9f60-4382ed9a76e8'},
              * {'tenant_id': u'aa146d1022fe4dd1a29042c2f234d847', 'site_name':
              * 'site1', 'name': u'private', 'vnid':
-             * u'b906abbd-ed90-4cd0-bb3a-bd7c9119dfb9'}] ], 'version' : 115 }
+             * u'b906abbd-ed90-4cd0-bb3a-bd7c9119dfb9'} ] ], 'version' : 115 }
              * *************************************
              */
             String ten = fednetContainer.getCloudId_To_OIC().get(cloudID).getTenant();
