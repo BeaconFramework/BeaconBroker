@@ -573,24 +573,27 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
         Set<String> siteSet=resultingTables.keySet();
         String name="";
         String linkType="FullMesh";
-        String type="L3";
-        HashSet dictFeds=new HashSet();
-        for( String s :siteSet){
-            String arrayString= m.getFednetsInSite(federationTenant,s);
+        String type = "L3";
+        HashSet dictFeds = new HashSet();
+        for (String s : siteSet) {
+            String arrayString = m.getFednetsInSite(federationTenant, s);
+            JSONArray ja = new JSONArray(arrayString);
+            for (int i = 0; i < ja.length(); i++) {
+                name = (String) ja.get(i);
+                try {
+//21/07/2017 gt: VERIFICARE QUESTA PARTE DI FUNZIONALITA'                    
+                    Response res=fClient.createFednet(name, linkType, type, fedsdnURL);
+                    JSONObject jsonresp= new JSONObject(res.readEntity(String.class));
+                 } catch (WSException500 wse) {
+                    //server Error matching della string restituita dal server se uguale a "unique bla bla bla" allora la rete era già presente
+                } catch (WSException ws) {
+                    //eccezione sconosciuta come gestire?
+                }
+            }
             
-        //ricerca esistenza fednet
-        //aggiunta fednet su fedsdn
-        ////
         
         
         
-        try{
-            fClient.createFednet(name, linkType, type, fedsdnURL);
-        }catch(WSException500 wse){
-            //server Error matching della string restituita dal server se uguale a "unique bla bla bla" allora la rete era già presente
-        }catch(WSException ws){
-            //eccezione sconosciuta come gestire?
-        }
         }
         //aggiunta fednet su mongo
         /*
