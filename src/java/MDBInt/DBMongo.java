@@ -1155,6 +1155,7 @@ public class DBMongo {
         if (obj != null) {
             query.put("localResourceName", obj.get("localResourceName"));
             query.put("stackName", obj.get("stackName"));
+            query.put("uuidTemplate", obj.get("uuidTemplate"));
             query.put("resourceName", obj.get("resourceName"));
             query.put("type", obj.get("type"));
             query.put("state", false);

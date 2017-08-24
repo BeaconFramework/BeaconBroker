@@ -65,6 +65,7 @@ public class ApplicationConfig extends Application {
         resources.add(API.NTHAPI.Users.class);
         resources.add(API.NTHAPI.UserssResource.class);
         resources.add(API.NTHAPI.elasticity.SufferingProc.class);
+        resources.add(API.SOUTHBR.BSA.CloudendpointResource.class);
     }
     
 }

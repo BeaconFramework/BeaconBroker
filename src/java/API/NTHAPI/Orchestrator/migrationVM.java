@@ -115,6 +115,7 @@ public class migrationVM {
                 return this.createErrorAnswer("parameter vm cannot be a null");
             }
             userFederation=(String)input.get("userFederation");
+            pswFederation=(String)input.get("pswFederation");
             tenant=(String)input.get("tenant");
             vmTwin=(String)input.get("vmTwin");
             if(vmTwin==null){
@@ -188,6 +189,74 @@ public class migrationVM {
         while(it_tmpar.hasNext())
             LOGGER.debug((String)it_tmpar.next());
         
+        return this.createValidAnswer();
+    }
+    
+    /**
+     * This function Istantiate all Stack described inside global Manifest.
+     * @param tenant
+     * @param jsonInput
+     * @return 
+     * @author gtricomi
+     */
+    @POST
+    @Path("/activatetwin/")
+    @Consumes("application/json")
+    public Response activatetwin(String jsonInput)
+    {
+        //String vm,String tenant,String userFederation,String vmTwin,String pswFederation,String region
+        String tenant="";
+        String userFederation="";
+        String vmTwin="";
+        String pswFederation="";
+        String region="RegionOne";
+        JSONObject input=new JSONObject();
+        org.json.simple.JSONObject reply=new org.json.simple.JSONObject();
+        JSONParser jp=new JSONParser();
+        try{
+            input=(JSONObject)jp.parse(jsonInput);
+            userFederation=(String)input.get("userFederation");
+            pswFederation=(String)input.get("pswFederation");
+            tenant=(String)input.get("tenant");
+            vmTwin=(String)input.get("vmTwin");
+            if(vmTwin==null){
+                LOGGER.error("parameter vmTwin cannot be a null");
+                return this.createErrorAnswer("parameter vmTwin cannot be a null");
+            }
+               
+        }catch(Exception e){
+            LOGGER.error("JSON  input received for web service activateTwin is not parsable.\n"+e.getMessage());
+            return this.createErrorAnswer("INPUT_JSON_UNPARSABLE: OPERATION ABORTED "+e.getMessage());
+        }
+        String idClo="",endpoint="",cred="", twinUUID="";
+        JSONObject credJobj=null,runJobj=null;
+      
+        OpenstackInfoContainer credential2=null;
+        // identificazione nuova vm
+        try{
+            twinUUID=vmTwin;
+            ////recupero runtimeinfo
+            String runTime=this.m.getRunTimeInfo(tenant, twinUUID);
+            runJobj=new JSONObject(runTime);
+            ////recupero idCloud
+            idClo=runJobj.getString("idCloud");
+            ////recupero le credenziali passando da quelle di federazione
+            cred=this.m.getFederatedCredential(tenant, userFederation, pswFederation,idClo);
+            credJobj=new JSONObject(cred);
+            try {
+                endpoint=(new JSONObject(this.m.getDatacenter(tenant, idClo))).getString("idmEndpoint");
+            } catch (MDBIException ex) {
+               LOGGER.error(ex);
+            }
+            credential2=new OpenstackInfoContainer(idClo,endpoint,tenant,credJobj.getString("federatedUser"),credJobj.getString("federatedPassword"),region);
+        }
+        catch(JSONException je){
+             LOGGER.error("An error is occourred in JSON crederntial manipulation.");
+             return this.createErrorAnswer("An error is occourred in JSON crederntial manipulation."+je.getMessage());
+        }
+        //accensione vm idenitificata
+        NovaTest nova=new NovaTest(credential2.getEndpoint(),credential2.getTenant(), credential2.getUser(),credential2.getPassword(),credential2.getRegion());
+        nova.startVm(twinUUID);
         return this.createValidAnswer();
     }
     
