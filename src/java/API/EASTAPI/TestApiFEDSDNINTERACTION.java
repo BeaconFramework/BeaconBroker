@@ -62,9 +62,9 @@ public class TestApiFEDSDNINTERACTION {
             Fednet f=new Fednet(user,password);
             try {
                 //System.out.println(f.getAllNet(fedsdnURL).readEntity(String.class));   //TESTED
-                String fednetname="FNPr55555ova";
+                String fednetname="FNProva";
                 System.out.println("$$$$$$$$$$$");
-              //  System.out.println(f.getNetinfo(fedsdnURL,fednetname ).readEntity(String.class));    //TESTED
+                System.out.println(f.getNetinfo(fedsdnURL,fednetname ).readEntity(String.class));    //TESTED
                 long fedid=1;
                 //System.out.println(f.getNetinfo(fedsdnURL,fedid ).readEntity(String.class));     //TESTED
                 fednetname="stanco";

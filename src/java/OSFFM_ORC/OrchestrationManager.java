@@ -809,7 +809,7 @@ public class OrchestrationManager {
             Iterator it_res = resources.iterator();
             while (it_res.hasNext()) {
                           String id_res = (String) it_res.next();
-                          LOGGER.debug("nome risorsaa "+id_res);
+                          LOGGER.debug("nome risorsa "+id_res);
                     if (!first) {
                         nova.stopVm(id_res);
                         m.updateStateRunTimeInfo(credential.getTenant(), id_res, first);
@@ -1067,22 +1067,20 @@ public class OrchestrationManager {
             DBMongo m
     ){
         //1 Retrieve NetMap version from Mongo for each DC and create LinkedHashMap for FederationActionManager
-        FednetsLink mapcontainer=this.retrieveTablesStored(tenantname,tmpMapcred,m);
+        FednetsLink mapcontainer = this.retrieveTablesStored(tenantname, tmpMapcred, m);
         //2 create new NetTables this action is forwarded to FederactionActionManager
         System.out.println("STO PER RICHIAMARE IL FederationActionManager");
-        try{
-        OSFFM_ORC.FederationActionManager fam;
+        try {
+            OSFFM_ORC.FederationActionManager fam;
             fam = new OSFFM_ORC.FederationActionManager();
-        if(template.equals(""))
-            fam.prepareNetTables4completeSharing( tenantname,mapcontainer,tmpMapcred,m,false);
-        else
-           fam.prepareNetTables4completeSharing( tenantname,mapcontainer,tmpMapcred,m,false);//true);
-        }catch(Exception ex){
-            System.err.println("richiamato IL FederationActionManager si ha: "+ ex.getMessage() );
+
+            fam.prepareNetTables4completeSharing(tenantname, mapcontainer, tmpMapcred, m, false);//l'elemento "false" era relativo ad una parte di flusso ormai deprecata, in cui il BNM interagiva con il BB per la parte di NetWorkinge quindi le chiamate potevano arrvare anche senza l'identificativo del template 
+        } catch (Exception ex) {
+            System.err.println("richiamato IL FederationActionManager si ha: " + ex.getMessage());
             ex.printStackTrace();
         }
-    }
-    
+}
+
     /**
      * This function retrieve NetTablesStored for all Datacenter involved. 
      * @param tenantname

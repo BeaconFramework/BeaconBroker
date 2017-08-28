@@ -575,7 +575,7 @@ public class DBMongo {
     public void insertTenantTables(String dbName, String docJSON) {
 
         DB dataBase = this.getDB(dbName);
-        DBCollection collezione = this.getCollection(dataBase, "FedSDNTenantTables");
+        DBCollection collezione = this.getCollection(dataBase, "fedsdnTenant");
         BasicDBObject obj = (BasicDBObject) JSON.parse(docJSON);
         obj.append("insertTimestamp", System.currentTimeMillis());
         collezione.save(obj);
@@ -590,7 +590,7 @@ public class DBMongo {
     public String getTenantTables(String dbName) {
 
         DB database = this.getDB(dbName);
-        DBCollection collection = database.getCollection("FedSDNTenantTables");
+        DBCollection collection = database.getCollection("fedsdnTenant");
         
  //04/07/2017 gt: eliminare la sort query, questa collezione dovrebbe avere un solo elemento(nel caso in cui si gestisca solo il tenant di federazione, diversamente se si
  //gestiscono anche gli user allora si deve aggiungere una variabile tra i parametri della funzione da usare come filtro per la resQuery da usare nella conditionedResearch commentata.
@@ -598,6 +598,33 @@ public class DBMongo {
         try{
             DBCursor b= collection.find().sort(sortQuery).limit(1);
             return b.next().toString();
+        }catch(Exception e){
+            LOGGER.error("Conditioned Research for collection: "+collection+", sortQuery "+sortQuery);
+            return null;
+        }
+        //return this.conditionedResearch(collection,resQuery,sortQuery);
+    }
+    /**
+     * Used by BNM
+     * @param dbName
+     * @param faSite, this is the cloud Id
+     * @return 
+     * @author gtricomi
+     */
+    public String getfedsdnTenantid(String dbName,String tenName) {
+
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("fedsdnTenant");
+        
+ //04/07/2017 gt: eliminare la sort query, questa collezione dovrebbe avere un solo elemento(nel caso in cui si gestisca solo il tenant di federazione, diversamente se si
+ //gestiscono anche gli user allora si deve aggiungere una variabile tra i parametri della funzione da usare come filtro per la resQuery da usare nella conditionedResearch commentata.
+        BasicDBObject sortQuery=new BasicDBObject("version",-1);
+        try{
+            BasicDBObject qid=new BasicDBObject("tenantEntry.name",tenName);
+            DBCursor b= collection.find(qid).sort(sortQuery).limit(1);
+            DBObject ttt=b.next();
+            Integer i=new Integer(((Double)ttt.get("tenantID")).intValue());
+            return i.toString();
         }catch(Exception e){
             LOGGER.error("Conditioned Research for collection: "+collection+", sortQuery "+sortQuery);
             return null;
@@ -1763,7 +1790,7 @@ public String getMapInfo(String dbName, String uuidTemplate) {
     }
      
     //verificare se la parte dei netsegment và qui o và memorizzata nel DB del tenant
-    public void insertfedsdnNetSeg(String json){
+    /*public void insertfedsdnNetSeg(String json){
         
         DB dataBase = this.getDB(this.identityDB);
         DBCollection collezione = dataBase.getCollection("fedsdnNetSeg");
@@ -1787,7 +1814,7 @@ public String getMapInfo(String dbName, String uuidTemplate) {
        
        return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
     }
-     
+    */ 
     public void insertfedsdnNetSeg(String json, String tenant){
         
         DB dataBase = this.getDB(tenant);

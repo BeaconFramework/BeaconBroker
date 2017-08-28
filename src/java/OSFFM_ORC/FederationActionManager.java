@@ -548,7 +548,7 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
         } catch (JSONException ex) {
             LOGGER.error("Exception is occurred in checkNetSegmentFEDSDN! \n" + ex);
         }        
-//14/07/2017 gt: valutare possibili modifiche
+//BEACON>>>>> 14/07/2017 gt: valutare possibili modifiche al flusso di creazione della rete federata. Queste impatteranno sicuramente su questa parte di codice
         try {
             this.makeLinkOnFednet(fClient, tenant, fedsdnURL, m);
         } catch (WSException ex) {
@@ -1154,7 +1154,7 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
              }
 */
             if (updatedNetTable == null) {
-                body = fan.constructNetworkTableJSON(netUpdatedTable, 114);//dovrebbe essere 1 è diventato 114 per testing
+                body = fan.constructNetworkTableJSON(netUpdatedTable, 1);//dovrebbe essere 1 è diventato 114 per testing
             } else {
 //12/07/2017 gt: aggiungere funzione che crea la tabella tenendo conto della tabella preesistente               
                 body = fan.constructNetworkTableJSON(netUpdatedTable, (updatedNetTable.getInt("version")) + 1);
