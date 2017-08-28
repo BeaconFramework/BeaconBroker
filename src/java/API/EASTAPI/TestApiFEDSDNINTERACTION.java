@@ -61,22 +61,29 @@ public class TestApiFEDSDNINTERACTION {
             //FEDNET TESTING SECTION
             Fednet f=new Fednet(user,password);
             try {
-                System.out.println(f.getAllNet(fedsdnURL).readEntity(String.class));   //TESTED
-                String fednetname="realtestFednet";
-                System.out.println(f.getNetinfo(fedsdnURL,fednetname ).readEntity(String.class));    //TESTED
+                //System.out.println(f.getAllNet(fedsdnURL).readEntity(String.class));   //TESTED
+                String fednetname="FNPr55555ova";
+                System.out.println("$$$$$$$$$$$");
+              //  System.out.println(f.getNetinfo(fedsdnURL,fednetname ).readEntity(String.class));    //TESTED
                 long fedid=1;
                 //System.out.println(f.getNetinfo(fedsdnURL,fedid ).readEntity(String.class));     //TESTED
-                fednetname="realtestFednet";
+                fednetname="stanco";
                 String linkType="FullMesh";
-       //         String type="L2";
-                //System.out.println(f.createFednet(fednetname, linkType, type, fedsdnURL).readEntity(String.class));//CREATE        //TESTED
+                String type="L2";
+                String test=f.createFednet(fednetname, linkType, type, fedsdnURL).readEntity(String.class);
+                System.out.println(test);//CREATE        //TESTED
+                JSONObject jjjj=new JSONObject(test);
                 fedid=2;
                 //fednetname="ModifiedMyFirstFNbc";
                 //System.out.println(f.updateFednet(fedid, fednetname, linkType, type, fedsdnURL,null).readEntity(String.class));//UPDATE        //TESTED
                 //fedid=3;
                 System.out.println(f.getAllNet(fedsdnURL).readEntity(String.class));   //TESTED
                 //System.out.println(f.delNetwork(fedsdnURL, fedid).readEntity(String.class));//DELETE        //TESTED
-            } catch (WSException ex) {
+            } catch ( utils.Exception.WSException500 wse){
+                System.out.println("$$$$$$$$$$$");
+                System.out.println(wse.getMessage());
+            }
+            catch (WSException ex) {
                 Logger.getLogger(TestApiFEDSDNINTERACTION.class.getName()).log(Level.SEVERE, null, ex);
             }
             //NETSEGMENT SECTION

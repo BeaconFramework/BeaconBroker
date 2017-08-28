@@ -514,6 +514,7 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
         Site sClient = new Site(tenant, fedsdnpassword);//Modificare le info dentro il fedsdn che al momento sono inserite sotto l'utente root e password fedsdn
         NetworkSegment nClient = new NetworkSegment(tenant, fedsdnpassword);
         Fednet fClient = new Fednet(tenant, fedsdnpassword);
+        HashMap fednetknown=new HashMap();
 
         try {
             if(!this.checkSiteandInsertFEDSDN(mapContainer, sClient, fedsdnURL,m)){
@@ -534,7 +535,7 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
         }
 //17/07/2017 gt: continuare da qui
         try {
-            this.checkFednetandInsertFEDSDN(resultingTables,mapContainer,fClient ,sClient, nClient, fedsdnURL,tenant, m);
+            this.checkFednetandInsertFEDSDN(resultingTables,mapContainer,fClient ,sClient, nClient, fedsdnURL,tenant, m,fednetknown);
         } catch (WSException ex) {
             LOGGER.error("Exception is occurred in checkNetSegmentFEDSDN! \n" + ex);
         } catch (JSONException ex) {
@@ -569,7 +570,7 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
      * @throws WSException
      * @throws JSONException 
      */
-    private void checkFednetandInsertFEDSDN(HashMap<String, HashMap<String, Object>> resultingTables,FednetsLink  mapContainer,Fednet fClient,Site sClient,NetworkSegment nClient,String fedsdnURL,String federationTenant, DBMongo m)throws WSException, JSONException{
+    private void checkFednetandInsertFEDSDN(HashMap<String, HashMap<String, Object>> resultingTables,FednetsLink  mapContainer,Fednet fClient,Site sClient,NetworkSegment nClient,String fedsdnURL,String federationTenant, DBMongo m,HashMap hm)throws WSException, JSONException{
         Set<String> siteSet=resultingTables.keySet();
         String name="";
         String linkType="FullMesh";
@@ -580,14 +581,36 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
             JSONArray ja = new JSONArray(arrayString);
             for (int i = 0; i < ja.length(); i++) {
                 name = (String) ja.get(i);
-                try {
-//21/07/2017 gt: VERIFICARE QUESTA PARTE DI FUNZIONALITA'                    
-                    Response res=fClient.createFednet(name, linkType, type, fedsdnURL);
-                    JSONObject jsonresp= new JSONObject(res.readEntity(String.class));
-                 } catch (WSException500 wse) {
-                    //server Error matching della string restituita dal server se uguale a "unique bla bla bla" allora la rete era già presente
-                } catch (WSException ws) {
-                    //eccezione sconosciuta come gestire?
+                if(!hm.containsKey(name))
+                {
+                    try {
+    //21/07/2017 gt: VERIFICARE QUESTA PARTE DI FUNZIONALITA'                    
+                        Response res=fClient.createFednet(name, linkType, type, fedsdnURL);
+                        JSONObject jsonresp= new JSONObject(res.readEntity(String.class));
+                        /*OUTPUT ricevuto:
+                            {
+                              "id": 6,
+                              "owner": "prova1",
+                              "name": "stanco",
+                              "status": "unlinked",
+                              "linktype": "FullMesh",
+                              "topology": "",
+                              "type": "L2"
+                            }
+                            
+                        */
+                        
+                        //recuperare da owner id del tenant per inserirlo nella collezione in mongo
+                        //id del fednet và nel json esterno 
+                        //il resto delle info và nel json interno
+                        hm.put(name,"[IDFEDNETESTRATTO]");//modificare mettendo l'id ottenuto dal fedsdn
+                     } catch (WSException500 wse) {
+                        //server Error matching della string restituita dal server se uguale a "unique bla bla bla" allora la rete era già presente
+                        if(wse.getMessage().contains("Server exception: SQLite3::ConstraintException: column name is not unique"))
+                            continue;
+                    } catch (WSException ws) {
+                        //eccezione sconosciuta come gestire?
+                    }
                 }
             }
             
@@ -789,7 +812,7 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
 
                 String credentials = siteUsernameToCheck + ":" + sitePasswordToCheck;
 
-                //03/07/2017: statically insert 0, but need to be checked !!!
+                //>>>BEACON 03/07/2017: statically insert 0, but need to be checked !!!
                 String user_id_insite = "0";
 
                 JSONObject inner_jo = new JSONObject("{\"site_id\" :\"" + siteIdToCheck + "\",\"user_id_in_site\":\"" + user_id_insite + "\" ,\"credentials\":\"" + credentials + "\"}");
