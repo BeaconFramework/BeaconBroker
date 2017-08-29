@@ -508,7 +508,7 @@ public class OrchestrationManager {
         //fase1: verificare che lo stato della fednet sia "unlink", altrimenti nothing to do
         JSONObject jo, tmp;
         try {
-            jo = new JSONObject(m.getfedsdnFednet(federationTenant));
+            jo = new JSONObject(m.getfedsdnFednet(fednetId,federationTenant));
             if (((String) jo.get("status")).equals("linked")) {
                 return "ok";
             }

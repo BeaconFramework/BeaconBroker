@@ -1729,6 +1729,14 @@ public String getMapInfo(String dbName, String uuidTemplate) {
        DBObject risultato = collection.findOne(researchField);
        return risultato.toString();
     }
+    public String getfedsdnSite(int fedsdnSiteID, String tenant)throws JSONException{
+       DB database = this.getDB(tenant);
+       DBCollection collection = database.getCollection("fedsdnSite");
+       BasicDBObject researchField = new BasicDBObject("siteID", fedsdnSiteID);
+       DBObject risultato_tmp = collection.findOne(researchField);
+       JSONObject risultato = new JSONObject((String)risultato_tmp.get("siteEntry"));
+       return (String)risultato.get("name");
+    }
      public int getfedsdnSiteID(String name, String tenant){
        DB database = this.getDB(tenant);
        DBCollection collection = database.getCollection("fedsdnSite");
@@ -1738,7 +1746,7 @@ public String getMapInfo(String dbName, String uuidTemplate) {
        return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
     }
      
-     
+    /*
     public void insertfedsdnFednet(String json){
         
         DB dataBase = this.getDB(this.identityDB);
@@ -1747,7 +1755,7 @@ public String getMapInfo(String dbName, String uuidTemplate) {
         obj.append("insertTimestamp", System.currentTimeMillis());
         collezione.save(obj);
     }
-    
+    */
     public void insertfedsdnFednet(String json, String tenant){
         
         DB dataBase = this.getDB(tenant);
@@ -1756,7 +1764,7 @@ public String getMapInfo(String dbName, String uuidTemplate) {
         obj.append("insertTimestamp", System.currentTimeMillis());
         collezione.save(obj);
     }
-    
+    /*
     public String getfedsdnFednet(String federationTenantName){
        DB database = this.getDB(this.identityDB);
        DBCollection collection = database.getCollection("fedsdnFednet");
@@ -1769,23 +1777,37 @@ public String getMapInfo(String dbName, String uuidTemplate) {
        DBCollection collection = database.getCollection("fedsdnFednet");
        BasicDBObject researchField = new BasicDBObject("federationTenantName", federationTenantName);
        DBObject risultato = collection.findOne(researchField);
-       
        return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
-    }
+    }*/
      
     public String getfedsdnFednet(String fednet_name, String tenant){
        DB database = this.getDB(tenant);
        DBCollection collection = database.getCollection("fedsdnFednet");
-       BasicDBObject researchField = new BasicDBObject("federationTenantName", fednet_name);
+       BasicDBObject researchField = new BasicDBObject("fednetEntry.name", fednet_name);
        DBObject risultato = collection.findOne(researchField);
        return risultato.toString();
+    }
+    public String getfedsdnnameFednet(long fednetId, String tenant)throws JSONException{
+       DB database = this.getDB(tenant);
+       DBCollection collection = database.getCollection("fedsdnFednet");
+       BasicDBObject researchField = new BasicDBObject("fednetID", fednetId);
+       DBObject risultato = collection.findOne(researchField);
+       JSONObject finalres=new JSONObject((String)risultato.get("fednetEntry"));
+       return finalres.getString("name");
+    }
+    public String getfedsdnFednet(long fednetId, String tenant)throws JSONException{
+       DB database = this.getDB(tenant);
+       DBCollection collection = database.getCollection("fedsdnFednet");
+       BasicDBObject researchField = new BasicDBObject("fednetID", fednetId);
+       DBObject risultato = collection.findOne(researchField);
+       JSONObject finalres=new JSONObject((String)risultato.get("fednetEntry"));
+       return finalres.toString(0);
     }
      public int getfedsdnFednetID(String fednet_name, String tenant){
        DB database = this.getDB(tenant);
        DBCollection collection = database.getCollection("fedsdnFednet");
-       BasicDBObject researchField = new BasicDBObject("federationTenantName", fednet_name);
+       BasicDBObject researchField = new BasicDBObject("fednetEntry.name", fednet_name);
        DBObject risultato = collection.findOne(researchField);
-       
        return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
     }
      
@@ -1809,17 +1831,30 @@ public String getMapInfo(String dbName, String uuidTemplate) {
      public int getfedsdnNetSegID(String vnetName,String CloudID){
        DB database = this.getDB(this.identityDB);
        DBCollection collection = database.getCollection("fedsdnNetSeg");
-       BasicDBObject researchField = new BasicDBObject("CloudID", CloudID).append("vnetName", vnetName);
+       BasicDBObject researchField = new BasicDBObject("CloudID", CloudID).append("vnetName", vnetName);172.17.5.73
        DBObject risultato = collection.findOne(researchField);
        
        return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
     }
     */ 
-    public void insertfedsdnNetSeg(String json, String tenant){
-        
+    /**
+     * 
+     * @param json
+     * @param tenant
+     * @param siteID
+     * @param fednetID
+     * @param referenceSite 
+     */
+     public void insertfedsdnNetSeg(String json, String tenant,int siteID,int fednetID,String referenceSite,String netsegid){
         DB dataBase = this.getDB(tenant);
         DBCollection collezione = dataBase.getCollection("fedsdnNetSeg");
-        BasicDBObject obj = (BasicDBObject) JSON.parse(json);
+        BasicDBObject obj= new BasicDBObject();
+        obj.append("referenceSite", referenceSite);
+        obj.append("fednetID", fednetID);
+        obj.append("siteID", siteID);
+        BasicDBObject inner_obj = (BasicDBObject) JSON.parse(json);
+        obj.append("netsegID", netsegid);
+        obj.append("netsegEntry", inner_obj);
         obj.append("insertTimestamp", System.currentTimeMillis());
         collezione.save(obj);
     }
@@ -1827,16 +1862,15 @@ public String getMapInfo(String dbName, String uuidTemplate) {
     public String getfedsdnNetSeg(String vnetName,String CloudID, String tenant){
        DB database = this.getDB(tenant);
        DBCollection collection = database.getCollection("fedsdnNetSeg");
-       BasicDBObject researchField = new BasicDBObject("CloudID", CloudID).append("vnetName", vnetName);
+       BasicDBObject researchField = new BasicDBObject("referenceSite", CloudID).append("netsegEntry.name", vnetName);
        DBObject risultato = collection.findOne(researchField);
        return risultato.toString();
     }
      public int getfedsdnNetSegID(String vnetName,String CloudID, String tenant){
        DB database = this.getDB(tenant);
        DBCollection collection = database.getCollection("fedsdnNetSeg");
-       BasicDBObject researchField = new BasicDBObject("CloudID", CloudID).append("vnetName", vnetName);
+       BasicDBObject researchField = new BasicDBObject("referenceSite", CloudID).append("netsegEntry.name", vnetName);
        DBObject risultato = collection.findOne(researchField);
-       
        return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
     }
      

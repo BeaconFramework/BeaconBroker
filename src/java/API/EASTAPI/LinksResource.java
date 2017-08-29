@@ -80,6 +80,7 @@ public class LinksResource {
         try {
             DBMongo m = new DBMongo();
             String federationUser = m.getTenantName("token", lic.getToken());
+            
             Integer id = m.getfedsdnFednetID(federationUser);
             OrchestrationManager om = new OrchestrationManager();
             String result = om.makeLink(id.longValue(), federationUser, null, m);// null will be substituted with an ArrayList<JSONObject> netTables that correspond at lic.getNetwork_tables()

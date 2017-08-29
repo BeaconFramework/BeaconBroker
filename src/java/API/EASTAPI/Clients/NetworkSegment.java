@@ -23,7 +23,7 @@ import utils.Exception.WSException;
 import utils.Exception.WSException303;
 
 /**
- *
+ * Used to contact BNM netsegments APIs.
  * @author Giuseppe Tricomi
  */
 public class NetworkSegment extends EastBrRESTClient{
