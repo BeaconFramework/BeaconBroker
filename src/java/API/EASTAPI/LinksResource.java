@@ -31,6 +31,8 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import MDBInt.DBMongo;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * REST Web Service
@@ -62,7 +64,7 @@ public class LinksResource {
         JSONParser parser= new JSONParser();
         JSONObject input=null;
         LinkInfoContainers lic=new LinkInfoContainers();
-            
+        String fednetid=null;
         try 
         {
             input=(JSONObject) parser.parse(content);
@@ -71,6 +73,10 @@ public class LinksResource {
             lic.setCommand((String) input.get("Command"));
             lic.setFa_endpoints(((JSONArray) input.get("fa_endpoints")));
             lic.setNetwork_tables(((JSONArray) input.get("network_table")));//not used for this moment the tables are recalculated
+            if(input.containsKey("fednetID"))
+                fednetid=(String) input.get("fednetID");
+            else
+                fednetid=null;
         } catch (ParseException pe) {
             reply.put("returncode", 1);
             reply.put("errormesg", "INPUT_JSON_UNPARSABLE: OPERATION ABORTED");
@@ -80,15 +86,32 @@ public class LinksResource {
         try {
             DBMongo m = new DBMongo();
             String federationUser = m.getTenantName("token", lic.getToken());
-            
-            Integer id = m.getfedsdnFednetID(federationUser);
-            OrchestrationManager om = new OrchestrationManager();
-            String result = om.makeLink(id.longValue(), federationUser, null, m);// null will be substituted with an ArrayList<JSONObject> netTables that correspond at lic.getNetwork_tables()
-            if (!result.equals("ok")) {
-                reply.put("returncode", 1);
-                reply.put("errormesg", "Generic Exception: OPERATION ABORTED");
-                return reply.toJSONString();
+            //if no fednetID is provided for the link are doing all fednet of th
+           
+           OrchestrationManager om = new OrchestrationManager();
+            if (fednetid == null) {
+                ArrayList<Integer> ids = m.getfedsdnFednetIDs(federationUser);
+                Iterator it = ids.iterator();
+                while (it.hasNext()) {
+                    Integer tmp = ((Integer) it.next());
+                    String result = om.makeLink(tmp.longValue(), federationUser, null, m);// null will be substituted with an ArrayList<JSONObject> netTables that correspond at lic.getNetwork_tables()
+                    if (!result.equals("ok")) {
+                        reply.put("returncode", 1);
+                        String error=(String)reply.get("errormesg");
+                        error=error+"Generic Exception: OPERATION ABORTED for fednet with id: " + tmp.toString();
+                        reply.put("errormesg",error);
+                    }
+                }
+            } else {
+                Integer tmp=new Integer(fednetid);
+                String result = om.makeLink(tmp.longValue(), federationUser, null, m);// null will be substituted with an ArrayList<JSONObject> netTables that correspond at lic.getNetwork_tables()
+                    if (!result.equals("ok")) {
+                        reply.put("returncode", 1);
+                        reply.put("errormesg", "Generic Exception: OPERATION ABORTED for fednet with id: " + tmp.toString());
+                    }
+                
             }
+            
             
             //operation needed to complete link requests!
             ////LA FUNZIONE DELL'ORCHESTRATOR DOVRA': ritrovare la lista di tutte le cloud in federazione per il tenant
@@ -104,9 +127,12 @@ public class LinksResource {
             reply.put("errormesg", "Generic Exception: OPERATION ABORTED");
             return reply.toJSONString();
         }
-        reply.put("returncode", 0);
-        reply.put("errormesg", "None");
+        if (!reply.containsKey("returncode")) {
+            reply.put("returncode", 0);
+            reply.put("errormesg", "None");
+        }
         return reply.toJSONString();
+        
     }
 
     /**

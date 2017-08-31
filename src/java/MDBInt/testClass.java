@@ -22,6 +22,7 @@ public class testClass {
      public static void main(String[] args) {
          DBMongo m=new DBMongo();
          m.connectLocale("10.9.240.1");
+         m.getfedsdnFednetIDs("demo");
          DB database = m.getDB_(m.getIdentityDB());
        DBCollection collection = database.getCollection("Federation_Credential");
        BasicDBObject researchField = new BasicDBObject("federationTenant", "review").append("ff","eeee").append("eeee",21);

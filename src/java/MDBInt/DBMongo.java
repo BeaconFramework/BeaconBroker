@@ -1953,14 +1953,21 @@ public String getMapInfo(String dbName, String uuidTemplate) {
        BasicDBObject researchField = new BasicDBObject("federationTenantName", federationTenantName);
        DBObject risultato = collection.findOne(researchField);
        return risultato.toString();
-    }
-     public int getfedsdnFednetID(String federationTenantName){
+    }*/
+    
+    public ArrayList getfedsdnFednetIDs(String federationTenantName){
        DB database = this.getDB(this.identityDB);
        DBCollection collection = database.getCollection("fedsdnFednet");
        BasicDBObject researchField = new BasicDBObject("federationTenantName", federationTenantName);
-       DBObject risultato = collection.findOne(researchField);
-       return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
-    }*/
+       DBCursor risultato = collection.find(researchField);
+       Iterator it=risultato.iterator();
+       ArrayList<Integer> resList=new ArrayList();
+       while(it.hasNext()){
+       
+       resList.add(((Number) ((DBObject)it.next()).get("id")).intValue());
+       }
+       return resList;//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
+    }
      
     public String getfedsdnFednet(String fednet_name, String tenant){
        DB database = this.getDB(tenant);
