@@ -135,12 +135,11 @@ public class ManifestManager implements Runnable{
             this.ttManTable.put(resName, ttObj);
         }
         try {
-         //   this.elaborateElaRef();
+            this.elaborateElaRef();
             //INSERIRE QUI FUNZIONE CHE AVVIA I THREAD RELATIVI ALL'ELASTICITY
             //fedNetManagement Analisys
             //this.prepareFednetLinkMap();//Not used right now
-            
-            //BEACON>>> verificare se sono state richiamate tutte le funzioni
+         
         } catch (Exception ex) {
             System.err.println("Error in elaborateElasticityReference");
         }
@@ -774,5 +773,6 @@ public class ManifestManager implements Runnable{
         catch(Exception ex){
         }
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        System.out.println("");
     }
 }

@@ -78,7 +78,7 @@ public class OrchestrationManager {
     private String ip="10.9.1.108";//default value for internal testing(VM with service RMIServer, PINGServer
     private int port=1099;//default value for internal testing
     private String fileConf="/webapps/OSFFM/WEB-INF/configuration_Orchestrator.xml";//this path starts from the tomcat home
-    static HashMap<String,ManifestManager> mapManifestThr=new HashMap<String,ManifestManager>();//mappa che mantiene riferimenti manifest- manifest manager
+    static final HashMap<String,ManifestManager> mapManifestThr=new HashMap<String,ManifestManager>();//mappa che mantiene riferimenti manifest- manifest manager
     HashMap<String,ArrayList> globalTOfragmentsManif;//BEACON>>> this variable need to be used in splitting alghoritm
     static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(OrchestrationManager.class);
     //</editor-fold>
@@ -474,7 +474,8 @@ public class OrchestrationManager {
                     OpenstackInfoContainer credential=null;
                     try{
                         j=new JSONObject((String)tmp3.get(ind_int));
-                        jj=new JSONObject(db.getFederatedCredential(tenant, username, password,j.getString("cloudId")));
+                        String cloudID=j.getString("cloudId");
+                        jj=new JSONObject(db.getFederatedCredential(tenant, username, password,cloudID));
                         //LOGGER.debug(">>>>>>>>managementRetrieveCredential"+jj.toString());
                         credential=new OpenstackInfoContainer(j.getString("cloudId") ,j.getString("idmEndpoint"),tenant,jj.getString("federatedUser"),jj.getString("federatedPassword"),region);
                     }
@@ -664,14 +665,14 @@ public class OrchestrationManager {
         nova=new NovaTest(credential2.getEndpoint(),credential2.getTenant(), credential2.getUser(),credential2.getPassword(),credential2.getRegion());
         nova.startVm(twinUUID);
         //restituzione dettagli vm spenta- rete, vm accesa- rete
-        LOGGER.debug("Network infoes of the shutted down VM(identified by UUID:"+vm+"):");
-        Iterator it_tmpar=m.getportinfoes(tenant, vm).iterator();
+        //LOGGER.debug("Network infoes of the shutted down VM(identified by UUID:"+vm+"):");
+        /*Iterator it_tmpar=m.getportinfoes(tenant, vm).iterator();
         while(it_tmpar.hasNext())
             LOGGER.debug((String)it_tmpar.next());
         LOGGER.debug("Network infoes of the twin VM started(identified by UUID:"+twinUUID+"):");
         it_tmpar=m.getportinfoes(tenant, twinUUID).iterator();
         while(it_tmpar.hasNext())
-            LOGGER.debug((String)it_tmpar.next());
+            LOGGER.debug((String)it_tmpar.next());*/
     }
     
     /**
@@ -740,14 +741,14 @@ public class OrchestrationManager {
         nova=new NovaTest(credential2.getEndpoint(),credential2.getTenant(), credential2.getUser(),credential2.getPassword(),credential2.getRegion());
         nova.startVm(twinUUID);
         //restituzione dettagli vm spenta- rete, vm accesa- rete
-        LOGGER.debug("Network infoes of the shutted down VM(identified by UUID:"+vm+"):");
-        Iterator it_tmpar=m.getportinfoes(tenant, vm).iterator();
+        //LOGGER.debug("Network infoes of the shutted down VM(identified by UUID:"+vm+"):");
+        /*Iterator it_tmpar=m.getportinfoes(tenant, vm).iterator();
         while(it_tmpar.hasNext())
             LOGGER.debug((String)it_tmpar.next());
         LOGGER.debug("Network infoes of the twin VM started(identified by UUID:"+twinUUID+"):");
         it_tmpar=m.getportinfoes(tenant, twinUUID).iterator();
         while(it_tmpar.hasNext())
-            LOGGER.debug((String)it_tmpar.next());
+            LOGGER.debug((String)it_tmpar.next());*/
     }
    
     /**
@@ -814,14 +815,15 @@ public class OrchestrationManager {
                         nova.stopVm(id_res);
                         m.updateStateRunTimeInfo(credential.getTenant(), id_res, first);
                     }
-                    ArrayList<Port> arPort = neutron.getPortFromDeviceId(id_res);
+                    //BEACON>>>>01/09/2017: Parte commentata perchè dava dei problemi, non essendo mandatoria nonvà a bassa priorità la risoluzione di questo bug
+                    /*ArrayList<Port> arPort = neutron.getPortFromDeviceId(id_res);
                     //inserire in quest'array la lista delle porte di quella VM
                     mapResNet.put(id_res, arPort);
                     Iterator it_po = arPort.iterator();
                     while (it_po.hasNext()) {
                         LOGGER.debug("insert port");
                         m.insertPortInfo(credential.getTenant(), neutron.portToString((Port) it_po.next()));
-                    }
+                    }*/
                 }
             //System.out.println("map res "+mapResNet.size());
             return mapResNet;
@@ -870,7 +872,7 @@ public class OrchestrationManager {
                 String region = "RegionOne";
                 ((OpenstackInfoContainer) tmpArCrob).setRegion(region);
                 HashMap<String, ArrayList<Port>> map_res_port = this.sendShutSignalStack4DeployAction(stackName, (OpenstackInfoContainer) tmpArCrob, first, m);
-                if (true) {//result) {
+                if (first) {//result) {
                     firstDC=((OpenstackInfoContainer)tmpArCrob).getIdCloud();
                     first = false;//if first stack creation is successfully completed, the other stacks instantiated are not the First
                 }                        //and need different treatment.
@@ -1177,9 +1179,15 @@ public class OrchestrationManager {
      * @param stack
      * @return 
      */
-    public sunlightInfoContainer getELaContainer(String manifestname,String stack){
+    public sunlightInfoContainer getELaContainer(String manifestname,String stack)throws Exception {
+        try{
         sunlightInfoContainer sCont=(sunlightInfoContainer)(this.mapManifestThr.get(manifestname)).ElaPolicies.get(stack);
         return sCont;
+        }
+        catch(Exception e){
+            e.printStackTrace();
+            throw e;
+        }
     }
 }
 

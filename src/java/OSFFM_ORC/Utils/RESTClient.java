@@ -35,7 +35,8 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.net.util.Base64;
 import org.apache.log4j.Logger;
 import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.filter.HttpBasicAuthFilter;
+//import org.glassfish.jersey.client.filter.HttpBasicAuthFilter;
+import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.jclouds.domain.Credentials;
 import org.jclouds.rest.HttpClient;
 import org.json.JSONException;
@@ -87,8 +88,13 @@ public class RESTClient {
     }
     
     public Response request4Keystone(String url, String body, String type){
-        ClientConfig config = new ClientConfig();
-        Client client = ClientBuilder.newClient(config);
+        /*ClientConfig config = new ClientConfig();
+        Client client = ClientBuilder.newClient(config);*/
+        HttpAuthenticationFeature feature = HttpAuthenticationFeature.universal(this.getUserName(), this.getPassword());
+        //ClientConfig config = new ClientConfig();
+        //Client client = ClientBuilder.newClient(config);
+        Client client = ClientBuilder.newClient();
+        client.register(feature);
         WebTarget target;
         target = client.target(getBaseURI(url));
         Invocation.Builder invocationBuilder = target.request();
@@ -112,8 +118,12 @@ public class RESTClient {
     }
     
     public Response request4OSgenericService(String url, String token, String type){
-        ClientConfig config = new ClientConfig();
-        Client client = ClientBuilder.newClient(config);
+        /*ClientConfig config = new ClientConfig();
+        Client client = ClientBuilder.newClient(config);*/
+        HttpAuthenticationFeature feature = HttpAuthenticationFeature.universal(this.getUserName(), this.getPassword());
+        //Client client = ClientBuilder.newClient(config);
+        Client client = ClientBuilder.newClient();
+        client.register(feature);
         WebTarget target;
         target = client.target(getBaseURI(url));
         Invocation.Builder invocationBuilder = target.request();
@@ -137,11 +147,14 @@ public class RESTClient {
     }
     
     public Response makeSimpleRequest(String urlFEDSDN, String body, String type) {
-        HttpBasicAuthFilter auth = new HttpBasicAuthFilter(this.userName, this.password);
-        ClientConfig config = new ClientConfig();
-        Client client = ClientBuilder.newClient(config);
+        HttpAuthenticationFeature feature = HttpAuthenticationFeature.universal(this.getUserName(), this.getPassword());
+        //Client client = ClientBuilder.newClient(config);
+        Client client = ClientBuilder.newClient();
+        client.register(feature);
+        /*ClientConfig config = new ClientConfig();
+        Client client = ClientBuilder.newClient(config);*/
         WebTarget target;
-        client.register(auth);
+        //client.register(auth);
         target = client.target(getBaseURI(urlFEDSDN));
 
         Invocation.Builder invocationBuilder = target.request();

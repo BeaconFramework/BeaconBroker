@@ -18,6 +18,8 @@ package API.NTHAPI.Orchestrator;
 
 
 import API.NTHAPI.SitesResource;
+import API.WESTBR.BB_elaClient;
+import JClouds_Adapter.NeutronTest;
 import JClouds_Adapter.OpenstackInfoContainer;
 import MDBInt.DBMongo;
 import MDBInt.MDBIException;
@@ -47,6 +49,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 import org.apache.log4j.Logger;
+import org.jclouds.openstack.neutron.v2.domain.Networks;
 import org.jclouds.openstack.neutron.v2.domain.Port;
 import org.json.JSONException;
 import org.json.simple.JSONObject;
@@ -96,6 +99,8 @@ public class IstantiateManifest {
             @PathParam("tenant") String tenant,
             String jsonInput
     ) {
+        NeutronTest neutron = new NeutronTest("http://ctrl-t1:5000/v2.0","review","admin","0penstack","RegionOne");
+        Networks N = neutron.listNetworks();
         //BEACON>>> INSIDE THIS FUNCTION WE NEED TO ADD SOME AUTHENTICATION STUFF, FOR THE MOMENT IS A 
         //SIMPLE UNAUTHENTICATING OPERATION
         String templatename="";//templatename="cc228189-0f2f-4aa4-8336-88db88e477d2";
@@ -181,25 +186,26 @@ public class IstantiateManifest {
             FileFunction ff = new FileFunction();
             String template = ff.readFromFile(prepath + "/" + tenant + manifestName + "_" + stack);
             
-            ElasticitysuppContainer tmpsupp=om.deployManifest(template, stack, tmpMapcred, tmpMap, this.m,manifestName);
-            ArrayList<ArrayList<HashMap<String, ArrayList<Port>>>> arMapRes= tmpsupp.getInfo();
+          //  ElasticitysuppContainer tmpsupp=om.deployManifest(template, stack, tmpMapcred, tmpMap, this.m,manifestName);
+            //ArrayList<ArrayList<HashMap<String, ArrayList<Port>>>> arMapRes= tmpsupp.getInfo();
             //BEACON:>>> It is needed decide what do with the info returned from om.deployManifest inside strucure arMapRes
             ////INSERIRE LA PARTE CHE GESTISCA L'ISTANZIAZIONE DEL SUNLIGHT POLICY THREAD
             try{
                 if(om.getELaContainer(manifestName, stack)!=null){
                     String i=om.getELaContainer(manifestName, stack).getMinimumgap();
-                    ela=ela.startMonitoringThreads(this.m,tenant, stack, tmpMap, userFederation,passwordFederation,i,tmpsupp.getFirstCloudId(),manifestName );
-                    /*//PARTE CREATE PER INTERCONNETTERE IL BB AL BB_ELASTICITYMANAGER
-                        JSONObject content= new JSONObject();
+                    //ela=ela.startMonitoringThreads(this.m,tenant, stack, tmpMap, userFederation,passwordFederation,i,tmpsupp.getFirstCloudId(),manifestName );
+                    //PARTE CREATE PER INTERCONNETTERE IL BB AL BB_ELASTICITYMANAGER
+                        org.json.JSONObject content= new org.json.JSONObject();
                         content.put("tenant", tenant);
                         content.put("stack",stack);
                         content.put("geographical_Map", new JSONObject(tmpMap));
                         content.put("userF",userFederation);
                         content.put("passF",passwordFederation);
                         content.put("minGap",i);
-                        content.put("firstC",tmpsupp.getFirstCloudId());
+                     //   content.put("firstC",tmpsupp.getFirstCloudId());
                         content.put("manifestName",manifestName);
-                    */
+                    BB_elaClient bbela=new BB_elaClient("user","");
+                   // bbela.activateElaManager("http://localhost:8084/BBElasticityManager",content);
                     
                     
                 }
@@ -211,7 +217,7 @@ public class IstantiateManifest {
         }
         /////////////////////////////////////////////////////////////ONEFLOWTEMPLATE MANAGEMENT
         //INSERIRE QUI LA PARTE CHE GESTISCE I TEMPLATE PER ONEFLOW
-        om.istantiateONE_Templates(manifestName, tmpMapcred, tmpMap, m, tenant);
+     //   om.istantiateONE_Templates(manifestName, tmpMapcred, tmpMap, m, tenant);
         
         
         ////////////////////////////////////////////////////////////NETWORK LINK MANAGEMENT

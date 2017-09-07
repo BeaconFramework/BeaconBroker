@@ -45,14 +45,14 @@ public class JcloudTest {
 
         KeystoneTest key=new KeystoneTest("admin","admin","0penstack!","http://10.9.1.211:5000/v2.0/");//"http://10.9.1.155:5000/v2.0");
      //   System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-        key.autenticate("admin", "admin", "0penstack!");
+   //     key.autenticate("admin", "admin", "0penstack!");
 //key.serviceGet("test");
      //   key.servicetList();
      //   key.listRole();
    //   Tenant t=key.createTenant();
    //   key.createUser(t);
     // key.listUser();
-      key.endpointLists();
+    //  key.endpointLists();
     //    key.listTenant();
       // System.out.println(key.getTenantId("admin"));
    
@@ -73,28 +73,28 @@ public class JcloudTest {
      //   glance.listImagesdatails();
    // glance.listImages();
         //"http://10.9.1.165:5000/v2.0/","admin","admin","0penstack","RegionOne"
-       NovaTest nova=new NovaTest("http://10.9.1.211:35357/v2.0/","admin","admin","0penstack!","RegionOne");//(mongo);
+    //   NovaTest nova=new NovaTest("http://ctrl-t2:35357/v2.0/","admin","admin","0penstack!","RegionOne");//(mongo);
   //      nova.testQuota();
-         ArrayList<Server> arr=nova.listServer2();
-         for(Server s : arr)
-             s.getUuid();
+        // ArrayList<Server> arr=nova.listServer2();
+       //  for(Server s : arr)
+        //     s.getUuid();
          
       //  nova.listServer2Mongo();
        // nova.stopVm();
       //  nova.startVm();
         
       // // nova.createFlavor();
-        nova.listFlavors();
+     //   nova.listFlavors();
       //   nova.createvm();
     //   nova.getStatus();
         
        
 //"http://10.9.1.165:5000/v2.0/","admin","admin","0penstack","RegionOne"
-     NeutronTest neutron = new NeutronTest("http://10.9.1.165:5000/v2.0/","admin","admin","0penstack","RegionOne");//"http://172.17.1.217:35357/v2.0","demo","admin","password","RegionOne");
+     NeutronTest neutron = new NeutronTest("http://ctrl-t1:5000/v2.0","review","admin","0penstack","RegionOne");//"http://172.17.1.217:35357/v2.0","demo","admin","password","RegionOne");
     // neutron.printListSubnet();
-        System.out.println(neutron.getStatus("private").toString());
+     //   System.out.println(neutron.getStatus("private").toString());
 //neutron.printListNetworks();
-//neutron.listNetworks();
+neutron.listNetworks();
 //neutron.listRegions();
         //neutron.createRouter("prova","RegionOne","f225b4d8-9da8-422f-a637-9427a4f64a7a","62da5ef7-87ed-4e49-8cd7-1bad78257080");
        // neutron.deleteNetworks();

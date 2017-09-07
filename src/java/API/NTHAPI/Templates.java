@@ -116,7 +116,31 @@ public class Templates {
         }
     }
     
-    
+    /**
+     * Retrieves the template stored for the tenant pointed by uuidTemplate.
+     * @param uuidTemplate 
+     * @return an instance of java.lang.String
+     * @author gtricomi
+     */
+    @GET
+    @Path("/{uuidTemplate}/manifest")
+    @Produces("application/json")
+    public String getTemplateManifest(@PathParam("uuidTemplate") String uuidTemplate,@PathParam("tenant") String tenant){
+        JSONObject reply=new JSONObject();
+        try{
+            JSONParser p=new JSONParser();
+            reply.put("templates",new org.json.JSONObject(this.s.ricomponiJsonManifest(uuidTemplate, tenant)));//(JSONObject)p.parse(this.m.getTemplate(tenant, uuidTemplate)));
+            reply.put("returncode", 0); 
+            reply.put("errormesg", "None");
+            return reply.toJSONString();
+        }
+        catch(Exception e){
+            LOGGER.error("Exception is occurred in retrieve manifest template with UUID:"+uuidTemplate+".\n"+e.getMessage());
+            reply.put("returncode", 1); 
+            reply.put("errormesg", "Exception is occurred in retrieve manifest template with UUID:"+uuidTemplate+".\n"+e.getMessage());
+            return reply.toJSONString();
+        }
+    }
     /**
      * Retrieves the template stored for the tenant pointed by uuidTemplate.
      * @param uuidTemplate 

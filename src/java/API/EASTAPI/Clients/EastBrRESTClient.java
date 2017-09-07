@@ -88,7 +88,8 @@ public class EastBrRESTClient {
 
     
    public Response makeSimpleRequest(String urlFEDSDN,String body,String type){
-    HttpBasicAuthFilter auth=new HttpBasicAuthFilter(this.userName,this.password);
+        HttpBasicAuthFilter auth=new HttpBasicAuthFilter(this.userName,this.password);
+        //HttpAuthenticationFeature feature = HttpAuthenticationFeature.universal(this.getUserName(), this.getPassword());
         ClientConfig config = new ClientConfig();
         Client client = ClientBuilder.newClient(config);
         WebTarget target;

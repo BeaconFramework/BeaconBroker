@@ -180,7 +180,7 @@ public class migrationVM {
         nova=new NovaTest(credential2.getEndpoint(),credential2.getTenant(), credential2.getUser(),credential2.getPassword(),credential2.getRegion());
         nova.startVm(twinUUID);
         //restituzione dettagli vm spenta- rete, vm accesa- rete
-        LOGGER.debug("Network infoes of the shutted down VM(identified by UUID:"+vm+"):");
+        /*LOGGER.debug("Network infoes of the shutted down VM(identified by UUID:"+vm+"):");
         Iterator it_tmpar=this.m.getportinfoes(tenant, vm).iterator();
         while(it_tmpar.hasNext())
             LOGGER.debug((String)it_tmpar.next());
@@ -188,7 +188,7 @@ public class migrationVM {
         it_tmpar=this.m.getportinfoes(tenant, twinUUID).iterator();
         while(it_tmpar.hasNext())
             LOGGER.debug((String)it_tmpar.next());
-        
+        */
         return this.createValidAnswer();
     }
     

@@ -181,7 +181,12 @@ public class testInstantiation {
             
             FileFunction ff = new FileFunction();
             String template = ff.readFromFile(prepath + "/" + tenant + manifestName + "_" + stack);
-            String i=om.getELaContainer(manifestName, stack).getMinimumgap();
+            String i="";
+            try {
+                i = om.getELaContainer(manifestName, stack).getMinimumgap();
+            } catch (Exception ex) {
+                LOGGER.error(ex.getMessage());
+            }
             ElasticitysuppContainer tmpsupp=om.deployManifest(template, stack, tmpMapcred, tmpMap, m,manifestName);
             JSONObject content= new JSONObject();
                         content.put("tenant", tenant);
