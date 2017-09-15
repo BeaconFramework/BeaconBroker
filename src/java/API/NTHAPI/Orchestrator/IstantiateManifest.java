@@ -186,7 +186,7 @@ public class IstantiateManifest {
             FileFunction ff = new FileFunction();
             String template = ff.readFromFile(prepath + "/" + tenant + manifestName + "_" + stack);
             
-          //  ElasticitysuppContainer tmpsupp=om.deployManifest(template, stack, tmpMapcred, tmpMap, this.m,manifestName);
+            ElasticitysuppContainer tmpsupp=om.deployManifest(template, stack, tmpMapcred, tmpMap, this.m,manifestName);
             //ArrayList<ArrayList<HashMap<String, ArrayList<Port>>>> arMapRes= tmpsupp.getInfo();
             //BEACON:>>> It is needed decide what do with the info returned from om.deployManifest inside strucure arMapRes
             ////INSERIRE LA PARTE CHE GESTISCA L'ISTANZIAZIONE DEL SUNLIGHT POLICY THREAD

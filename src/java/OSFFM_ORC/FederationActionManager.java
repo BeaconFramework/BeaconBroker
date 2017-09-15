@@ -1081,10 +1081,11 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
                 if (updatedSiteTable == null) {
                     siteUpdatedTable = new JSONArray();
                 } else {
-                    siteUpdatedTable = updatedSiteTable.getJSONArray("table");
+                   // siteUpdatedTable = updatedSiteTable.getJSONObject("entrySiteTab");//INSERIRE il JSONObject nel JSONArray
+                   siteUpdatedTable.put(0, updatedSiteTable.getJSONObject("entrySiteTab"));//
                 }
             } catch (Exception eSite) {
-                LOGGER.error("Something is going wrong. " + eSite.getMessage());
+                LOGGER.error("Something is going wrong. siteUpdatedTable " + eSite.getMessage());
             }
             try {
 //02/07/2017 gt: verificare questo controllo non sono sicuro che il valore sia null nel caso sia vuoto                 
@@ -1094,7 +1095,7 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
                     netUpdatedTable = updatedNetTable.getJSONArray("table");
                 }
             } catch (Exception eNet) {
-                LOGGER.error("Something is going wrong. " + eNet.getMessage());
+                LOGGER.error("Something is going wrong. netUpdatedTable " + eNet.getMessage());
             }
             String tmp = fednetContainer.getCloudId_To_OIC().get(cloudID).getEndpoint();
             FederationAgentInfo fah = fednetContainer.getEndpoint_To_FAInfo().get(tmp);

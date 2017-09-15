@@ -816,14 +816,14 @@ public class OrchestrationManager {
                         m.updateStateRunTimeInfo(credential.getTenant(), id_res, first);
                     }
                     //BEACON>>>>01/09/2017: Parte commentata perchè dava dei problemi, non essendo mandatoria nonvà a bassa priorità la risoluzione di questo bug
-                    /*ArrayList<Port> arPort = neutron.getPortFromDeviceId(id_res);
+                    ArrayList<Port> arPort = neutron.getPortFromDeviceId(id_res);
                     //inserire in quest'array la lista delle porte di quella VM
                     mapResNet.put(id_res, arPort);
                     Iterator it_po = arPort.iterator();
                     while (it_po.hasNext()) {
                         LOGGER.debug("insert port");
                         m.insertPortInfo(credential.getTenant(), neutron.portToString((Port) it_po.next()));
-                    }*/
+                    }
                 }
             //System.out.println("map res "+mapResNet.size());
             return mapResNet;
