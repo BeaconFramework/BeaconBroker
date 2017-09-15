@@ -342,6 +342,27 @@ public class DBMongo {
         //this.insert(tenant, "NetTablesInfo", jsonTable);
         return true;
     }
+    /**
+     * 
+     * @param tenant
+     * @param referenceSite
+     * @param fednets
+     * @param version
+     * @return 
+     */
+    public boolean insertfednetsinSite(String tenant,String referenceSite,String fednets,int version){
+        DB dataBase = this.getDB(tenant);
+        DBCollection collezione = this.getCollection(dataBase, "fednetsinSite");
+        BasicDBObject obj = new BasicDBObject();
+        obj.append("referenceSite", referenceSite);
+        obj.append("version", version);
+        obj.append("fednets", fednets);
+        obj.append("insertTimestamp", System.currentTimeMillis());
+        collezione.save(obj);
+        //this.insert(tenant, "NetTablesInfo", jsonTable);
+        return true;
+    }
+    
     //ALFO
     public void insertNetTables(String tenant, String jsonTable) throws MDBIException,JSONException{
 
