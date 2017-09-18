@@ -52,7 +52,7 @@ public class JcloudTest {
    //   Tenant t=key.createTenant();
    //   key.createUser(t);
     
-  key.listUser();
+  //key.listUser();
     //  key.endpointLists();
         key.listTenant();
         key.getTenantId("admin");

@@ -509,11 +509,20 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
      * @author gtricomi
      */
     public void updatestateOnFEDSDN(String tenant,HashMap<String, HashMap<String, Object>> resultingTables, FednetsLink mapContainer, DBMongo m) {
-        String fedsdnURL = m.getInfo_Endpoint("entity", "fedsdn");//"http://10.9.0.14:6121";
-        String fedsdnpassword = m.getFederationCredential(tenant, tenant, "federationUser");
-        Site sClient = new Site(tenant, fedsdnpassword);//Modificare le info dentro il fedsdn che al momento sono inserite sotto l'utente root e password fedsdn
+        String fedsdnURL="";
+        String fedsdnpassword="";
+        try{
+            fedsdnURL= m.getInfo_Endpoint("entity", "fedsdn");//"http://10.9.0.26:6121";
+            JSONObject ob=m.getFedsdnCredential(tenant, tenant, "tenantName");
+            fedsdnpassword =(String) ob.get("tenantPass"); 
+        }
+        catch(JSONException j){
+            LOGGER.error("Exception occurred in FEDSDN information retrieving phase. FEDSDN updating aborted!"+j.getMessage());
+            return ;
+        }
+        Site sClient = new Site(tenant,  fedsdnpassword);//Modificare le info dentro il fedsdn che al momento sono inserite sotto l'utente root e password fedsdn
         NetworkSegment nClient = new NetworkSegment(tenant, fedsdnpassword);
-        Fednet fClient = new Fednet(tenant, fedsdnpassword);
+        Fednet fClient = new Fednet(tenant,fedsdnpassword);
         HashMap fednetknown=new HashMap();
         String fedsdnTenId="";
         try{
@@ -780,13 +789,18 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
         Response r=sClient.getAllSite(fedsdnURL);
         JSONArray ja=new JSONArray(r.readEntity(String.class));
         LinkedHashMap<String,OpenstackInfoContainer> CloudId_To_OIC=mapContainer.getCloudId_To_OIC();
+        Set siteSet=new HashSet();
         for(int i=0;i<ja.length();i++){
             JSONObject jo=(JSONObject)ja.get(i);
-            String siteNameToCheck=(String)jo.get("name");
-            if(!(CloudId_To_OIC.containsKey(siteNameToCheck))){
+            //
+            siteSet.add((String)jo.get("name"));
+        }
+        Iterator it= CloudId_To_OIC.keySet().iterator();
+        while(it.hasNext()){
+            String siteNameToCheck =(String)it.next();
+            if(!(siteSet.contains(siteNameToCheck))){
                 boolean ok=false;
                 for(int k=0;k<3;k++){
-                
                     ok=this.addSiteOnFedSDN(siteNameToCheck,sClient,CloudId_To_OIC.get(siteNameToCheck).getEndpoint(),m, CloudId_To_OIC.get(siteNameToCheck).getTenant());
                     if (ok){
                         break;
@@ -815,18 +829,29 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
         Response r=sClient.getAllSite(fedsdnURL);
         JSONArray ja=new JSONArray(r.readEntity(String.class));
         LinkedHashMap<String,OpenstackInfoContainer> CloudId_To_OIC=mapContainer.getCloudId_To_OIC();
-        
+        LinkedHashMap<String,JSONObject> tmpSiteList=new LinkedHashMap<String,JSONObject>();
         JSONArray inner = new JSONArray();
         String tenant = null;
         String tenant_password = null;
 
-        for (int i = 0; i < ja.length(); i++) {
-            JSONObject jo = (JSONObject) ja.get(i);
+        //for (int i = 0; i < ja.length(); i++) {
+            //JSONObject jo = (JSONObject) ja.get(i);
 
-            String siteIdToCheck = (String) jo.get("id");
+        Set siteNameSet=new HashSet();
+        //=new HashSet();
+        for(int i=0;i<ja.length();i++){
+            JSONObject jo=(JSONObject)ja.get(i);
+            /*String siteIdToCheck = (String) jo.get("id");
             String siteNameToCheck = (String) jo.get("name");
-
-            if (!(CloudId_To_OIC.containsKey(siteNameToCheck))) {
+            siteSet.add(siteIdToCheck+"@@@@::::@@@@"+siteNameToCheck);*/
+            //siteSet.add((String) jo.get("name"));
+            tmpSiteList.put((String) jo.get("name"), jo);
+        }
+        
+        Iterator it= CloudId_To_OIC.keySet().iterator();
+        while(it.hasNext()){
+            String siteNameToCheck =(String)it.next();
+            if ((tmpSiteList.containsKey(siteNameToCheck))) {
 
                 OpenstackInfoContainer oik = (OpenstackInfoContainer) CloudId_To_OIC.get(siteNameToCheck);
 
@@ -837,7 +862,7 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
 
                 //>>>BEACON 03/07/2017: statically insert 0, but need to be checked !!!
                 String user_id_insite = "0";
-
+                String siteIdToCheck=((JSONObject)tmpSiteList.get(siteNameToCheck)).getString("id");
                 JSONObject inner_jo = new JSONObject("{\"site_id\" :\"" + siteIdToCheck + "\",\"user_id_in_site\":\"" + user_id_insite + "\" ,\"credentials\":\"" + credentials + "\"}");
                 inner.put(inner_jo);
 
@@ -849,7 +874,7 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
         }
 
         //03/07/2017: verify username management like structure "NotManagedUser@userFederation@UME" !!!
-        JSONObject tenant_jo = new JSONObject("{\"name\" :\"" + tenant + "\",\"password\":\"" + tenant_password + "\" ,\"type\":\"user\",\"valid_sites\": \"" + inner + "\"}");
+        JSONObject tenant_jo = new JSONObject("{\"name\" :\"" + tenant + "\",\"password\":\"" + tenant_password + "\" ,\"type\":\"admin\",\"valid_sites\": \"" + inner + "\"}");
         m.insertTenantTables(tenant, tenant_jo.toString());
 
         //03-07-2017 : hardcoded credential for tenant
@@ -857,7 +882,7 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
         boolean ok = false;
         for (int k = 0; k < inner.length(); k++) {
             try {
-                r = t.createTen(tenant_jo, fedsdnURL);
+                r = t.updateTen(tenant_jo,tenant, fedsdnURL);
                 /*oggetto restituito:
                 {
                     "id": 7,

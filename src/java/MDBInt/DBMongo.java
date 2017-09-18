@@ -1572,7 +1572,7 @@ public class DBMongo {
         BasicDBList credList;
         Iterator it;
         BasicDBObject obj;
-        String result = "{";
+        //String result = "{";
         federationUser = collezione.findOne(query);
 
         if (federationUser == null) {
@@ -1583,7 +1583,34 @@ public class DBMongo {
         bo.append("federationPassword", (String) federationUser.get("federationPassword"));
         return bo.toString();//result;
     }
+    
+    /**
+     * Returns generic federation infoes.
+     * @param dbName
+     * @param value
+     * @param type
+     * @return 
+     */
+    public JSONObject getFedsdnCredential(String dbName, String value, String type) throws JSONException{
+        DB dataBase = this.getDB(dbName);
+        DBCollection collezione = this.getCollection(dataBase, "fedsdnCredential");
+        DBObject federationUser = null;
+        BasicDBObject query = new BasicDBObject(type, value);
+        BasicDBList credList;
+        Iterator it;
+        BasicDBObject obj;
+        //String result = "{";
+        federationUser = collezione.findOne(query);
 
+        if (federationUser == null) {
+            return null;
+        }
+        JSONObject bo = new JSONObject();
+        bo.put("tenantName", (String) federationUser.get("tenantName"));
+        bo.put("tenantPass", (String) federationUser.get("tenantPass"));
+        return bo;
+    }
+    
     private Iterable<DBObject> operate(String dbName, String collectionName, String campoMatch, String valoreMatch, String campoOperazione, String nomeOperazione, String operation) {
 
         DB database = this.getDB(dbName);

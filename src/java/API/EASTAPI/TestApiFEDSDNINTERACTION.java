@@ -30,8 +30,8 @@ public class TestApiFEDSDNINTERACTION {
      */
     public static void main(String[] args) throws JSONException {
 
-            String user="prova1";
-            String password="pass1";
+            String user="review";
+            String password="reviewpass";
         
             //EastBrRESTClient ea= new EastBrRESTClient("NotManagedUser@userFederation@UME","passwordFederation");//("root","fedsdn");
             //EastBrRESTClient ea= new EastBrRESTClient("prova1","pass1");
