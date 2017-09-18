@@ -309,10 +309,10 @@ public class KeystoneTest {
     
     while(iter.hasNext()){
         user=(User) iter.next();
-        System.out.println(user.toString());
-        System.out.println(user.getEmail());
-        System.out.println(user.getName());
-        System.out.println(user.getTenantId());
+        System.out.println("tostring"+user.toString());
+        System.out.println("email"+user.getEmail());
+        System.out.println("name"+user.getName());
+        System.out.println("tenid"+user.getTenantId());
     }
      
     

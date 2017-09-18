@@ -42,6 +42,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -415,8 +416,10 @@ public class FederationActionManager {
         JSONObject netTab = null;
         JSONObject bnaSegTab = null;
         Integer version = null;
+        JSONObject obj_;
         String fednetsinsite = null;
-       
+               HashMap <String, Object> updNet = new HashMap <String, Object> ();
+
         for (String idCloud : s) { //reference site
 
             HashMap<String, Object> innerMap = (HashMap<String, Object>) resultingTables.get(idCloud);
@@ -429,8 +432,9 @@ public class FederationActionManager {
                 version = (Integer) netTab.get("version");
                 
                 
-                bnaSegTab = bnaNetSegCreate(netTab, m, idCloud, tenant);
-
+                bnaSegTab = bnaNetSegCreate(netTab, m, idCloud, tenant, updNet);
+                
+                
                 //17/07/2017
                 //FROM
                 //m.insertTenantTables(tenant, idCloud, tenantTab.toString(0));
@@ -438,7 +442,7 @@ public class FederationActionManager {
                 m.insertTenantTables(tenant, idCloud, version, tenantTab.toString(0));
 
                 fednetsinsite = m.getFednetsInSite(tenant, idCloud);
-                JSONObject obj = (JSONObject) JSON.parse(fednetsinsite);
+                JSONObject obj = new JSONObject(fednetsinsite);
                 //obj = {"referenceSite": "CETIC", "version": 1, "fednets": ["private", "public"]}
                 version = obj.getInt("version");
                 m.insertSiteTables(tenant, idCloud, "{" + siteTab.toString(0) + "}", version);
@@ -452,13 +456,18 @@ public class FederationActionManager {
             }
 
         }
+        /*aggiorna valore tabella fednetinsite con le nuove net e versioni*/
+        obj_= new JSONObject(updNet);
+        for (String idCloud : s) {
+        m.insertfednetsinSite(tenant, idCloud, obj_, version);
+        }
     }
-public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, String tenant, boolean b){
-    bnaNetSegCreate(table_, db, refSite, tenant);
+public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, String tenant, boolean b, HashMap <String, Object> updNet){
+    bnaNetSegCreate(table_, db, refSite, tenant, updNet);
 
 
 }
-    private JSONObject bnaNetSegCreate(JSONObject tables, DBMongo m, String refSite, String tenant) {
+    private JSONObject bnaNetSegCreate(JSONObject tables, DBMongo m, String refSite, String tenant, HashMap <String, Object> updNet) {
 
         JSONObject bnaSegTab = new JSONObject();
         JSONArray segRow = null;
@@ -467,7 +476,7 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
         UUID uuid = null;
         String fedNet = "";
         //boolean resultIns = false;
-
+        TreeSet <String> fednets = new TreeSet<String>();
         try {
             //fedNet = tables.getString("name");
             version = tables.getInt("version");
@@ -479,22 +488,29 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
                 uuid = UUID.randomUUID();
                 JSONArray innerArray = (JSONArray) bigArray.get(i);
                 for (int j = 0; j < innerArray.length(); j++) {
+                    
                     JSONObject objectJson = (JSONObject) innerArray.get(j);
                     fedNet=objectJson.getString("name"); //***ATTENZIONARE PERCHE NEL CASO DI OPENNEBULA LE FEDNET ALL'INTERNO DELL'INNERARRAY POTREBBERO AVERE NOMI DIVERSI DUNQUE SI PER L'INFORMAZIONE
+                    fednets.add(fedNet);
                     bnaSegTab.put("FK", uuid.toString());
                     // bnaSegTab.put("fedNet",objectJson.get("name"));
-                    bnaSegTab.put("netEntry", objectJson);
-                    m.insertNetTables(tenant, bnaSegTab.toString(0));
+                    bnaSegTab.put("netEntry", objectJson);//QUESTO è objectJson: { "tenant_id" : "b0edb3a0ae3842b2a3f3969f07cd82f2", "site_name" : "CETIC", "vnid" : "d46a55d4-6cca-4d86-bf25-f03707680795", "name" : "provider" }
+                    //m.insertNetTables(tenant, bnaSegTab.toString(0));
 
                 }
-                m.insertTablesData(uuid.toString(), tenant, version, refSite, fedNet); //ATTENZIONARE VEDI COMMENTO ***
+               // m.insertTablesData(uuid.toString(), tenant, version, refSite, fedNet); //ATTENZIONARE VEDI COMMENTO ***
             }
-
+            updNet.put(refSite, fednets.clone());
+            Iterator iter = fednets.iterator();
+             while (iter.hasNext()) {
+            System.out.println(iter.next());
+}
+            fednets.clear();
         } catch (JSONException ex) {
             System.out.println("-___-' Error: " + ex.getMessage());
-        } catch (MDBIException ex) {
+        } /*catch (MDBIException ex) {
             System.out.println("-___-' Error: " + ex.getMessage());
-        }
+        }*/
 
         return bnaSegTab;
 }
@@ -1005,12 +1021,12 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
             OpenstackInfoContainer oictmp = fednetContainer.getCloudId_To_OIC().get(idcloud);
             KeystoneTest kt = new KeystoneTest(oictmp.getTenant(), oictmp.getUser(), oictmp.getPassword(), oictmp.getEndpoint());
             tmp.put(idcloud, kt);
-            //endpoint_to_tenantid.put(oictmp.getEndpoint(),kt.getTenantId(oictmp.getTenant()));
+            //endpoint_to_tenantid.put(oictmp.getEndpoint(),kt.getTenantId(oictmp.getTenant()));//15/09/2017 BEACON>>> VEDERE SE SI RIESCE A SISTEMARE O AGIRE ATTRAVERSO MONGODB
             //PEZZO INTRODOTTO DA ELIMINARE
             if (idcloud.equals("UME")) {
-                endpoint_to_tenantid.put(fednetContainer.getCloudId_To_OIC().get("UME").getEndpoint(), "3029a98f60c24ac1b4ef4636c4ee3006");
+                endpoint_to_tenantid.put(fednetContainer.getCloudId_To_OIC().get("UME").getEndpoint(), "aa477ca20d2f41a18f8c380db65990d5");
             } else if (idcloud.equals("CETIC")) {
-                endpoint_to_tenantid.put(fednetContainer.getCloudId_To_OIC().get("CETIC").getEndpoint(), "3029a98f60c24ac1b4ef4636c4ee3006");
+                endpoint_to_tenantid.put(fednetContainer.getCloudId_To_OIC().get("CETIC").getEndpoint(), "d044e4b3bc384a5daa3678b87f97e3c2");
             }
             //FINE PEZZO     
         }
@@ -1160,7 +1176,7 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
             }
             System.out.println("$$$$$s2");
             KeystoneTest homeKey = (KeystoneTest) fednetContainer.getkMcloudId_To_Keystone().get(cloudID);
-            FA_ScriptInvoke fi = new FA_ScriptInvoke(homeKey.getVarEndpoint(), fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint()), "admin", "0penstack");
+           // FA_ScriptInvoke fi = new FA_ScriptInvoke(homeKey.getVarEndpoint(), fednetContainer.getEndpoint_to_tenantid().get(homeKey.getVarEndpoint()), "admin", "0penstack");
 
 //02/07/2017 gt: questo comanda richiama lo script che fà lo share completo tra i testbed OpenStack modificato con una funzione che invochi le funzioni del FA;
 //ad ogni modo tutta la logica di interazione con il FA è stata spostata al di fuori di questa funzione quindi qst pezzo viene commentato

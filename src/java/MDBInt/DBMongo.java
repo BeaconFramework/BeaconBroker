@@ -41,6 +41,7 @@ import com.mongodb.AggregationOutput;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.logging.Level;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -342,6 +343,36 @@ public class DBMongo {
         //this.insert(tenant, "NetTablesInfo", jsonTable);
         return true;
     }
+    /**
+     * 
+     * @param tenant
+     * @param referenceSite
+     * @param fednets
+     * @param version
+     * @return 
+     */
+    public boolean insertfednetsinSite(String tenant,String referenceSite, JSONObject fednets,int version){
+        
+        try {
+            //String fednetlist;
+            DB dataBase = this.getDB(tenant);
+            DBCollection collezione = this.getCollection(dataBase, "fednetsinSite");
+            BasicDBObject obj = new BasicDBObject();
+            
+            //fednetlist=fednets.get(referenceSite).toString();
+            obj.append("referenceSite", referenceSite);
+            obj.append("version", version);
+            obj.append("fednets", fednets.get(referenceSite).toString());
+            obj.append("insertTimestamp", System.currentTimeMillis());
+            collezione.save(obj);
+            //this.insert(tenant, "NetTablesInfo", jsonTable);
+            
+        } catch (JSONException ex) {
+                        LOGGER.error("JSON error - extracting fedNets from JsonObject "+ex.getMessage());
+        }
+        return true;
+    }
+    
     //ALFO
     public void insertNetTables(String tenant, String jsonTable) throws MDBIException,JSONException{
 
