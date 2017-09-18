@@ -42,6 +42,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -415,8 +416,10 @@ public class FederationActionManager {
         JSONObject netTab = null;
         JSONObject bnaSegTab = null;
         Integer version = null;
+        JSONObject obj_;
         String fednetsinsite = null;
-       
+               HashMap <String, Object> updNet = new HashMap <String, Object> ();
+
         for (String idCloud : s) { //reference site
 
             HashMap<String, Object> innerMap = (HashMap<String, Object>) resultingTables.get(idCloud);
@@ -429,14 +432,21 @@ public class FederationActionManager {
                 version = (Integer) netTab.get("version");
                 
                 
-                bnaSegTab = bnaNetSegCreate(netTab, m, idCloud, tenant);
-
+                bnaSegTab = bnaNetSegCreate(netTab, m, idCloud, tenant, updNet);
+                
+                
                 //17/07/2017
                 //FROM
                 //m.insertTenantTables(tenant, idCloud, tenantTab.toString(0));
                 //TO
                 m.insertTenantTables(tenant, idCloud, version, tenantTab.toString(0));
 
+                        /*aggiorna valore tabella fednetinsite con le nuove net e versioni*/
+
+                obj_= new JSONObject(updNet);
+                m.insertfednetsinSite(tenant, idCloud, obj_, version);
+                
+                
                 fednetsinsite = m.getFednetsInSite(tenant, idCloud);
                 JSONObject obj = new JSONObject(fednetsinsite);
                 //obj = {"referenceSite": "CETIC", "version": 1, "fednets": ["private", "public"]}
@@ -452,13 +462,15 @@ public class FederationActionManager {
             }
 
         }
+        /*aggiorna valore tabella fednetinsite con le nuove net e versioni*/
+       
     }
-public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, String tenant, boolean b){
-    bnaNetSegCreate(table_, db, refSite, tenant);
+public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, String tenant, boolean b, HashMap <String, Object> updNet){
+    bnaNetSegCreate(table_, db, refSite, tenant, updNet);
 
 
 }
-    private JSONObject bnaNetSegCreate(JSONObject tables, DBMongo m, String refSite, String tenant) {
+    private JSONObject bnaNetSegCreate(JSONObject tables, DBMongo m, String refSite, String tenant, HashMap <String, Object> updNet) {
 
         JSONObject bnaSegTab = new JSONObject();
         JSONArray segRow = null;
@@ -467,7 +479,7 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
         UUID uuid = null;
         String fedNet = "";
         //boolean resultIns = false;
-
+        TreeSet <String> fednets = new TreeSet<String>();
         try {
             //fedNet = tables.getString("name");
             version = tables.getInt("version");
@@ -479,17 +491,24 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
                 uuid = UUID.randomUUID();
                 JSONArray innerArray = (JSONArray) bigArray.get(i);
                 for (int j = 0; j < innerArray.length(); j++) {
+                    
                     JSONObject objectJson = (JSONObject) innerArray.get(j);
                     fedNet=objectJson.getString("name"); //***ATTENZIONARE PERCHE NEL CASO DI OPENNEBULA LE FEDNET ALL'INTERNO DELL'INNERARRAY POTREBBERO AVERE NOMI DIVERSI DUNQUE SI PER L'INFORMAZIONE
+                    fednets.add(fedNet);
                     bnaSegTab.put("FK", uuid.toString());
                     // bnaSegTab.put("fedNet",objectJson.get("name"));
                     bnaSegTab.put("netEntry", objectJson);//QUESTO è objectJson: { "tenant_id" : "b0edb3a0ae3842b2a3f3969f07cd82f2", "site_name" : "CETIC", "vnid" : "d46a55d4-6cca-4d86-bf25-f03707680795", "name" : "provider" }
                     m.insertNetTables(tenant, bnaSegTab.toString(0));
 
                 }
-                m.insertTablesData(uuid.toString(), tenant, version, refSite, fedNet); //ATTENZIONARE VEDI COMMENTO ***
+               m.insertTablesData(uuid.toString(), tenant, version, refSite, fedNet); //ATTENZIONARE VEDI COMMENTO ***
             }
-//m.insertfednetsinSite(....  
+            updNet.put(refSite, fednets.clone());
+            Iterator iter = fednets.iterator();
+             while (iter.hasNext()) {
+            System.out.println(iter.next());
+}
+            fednets.clear();
         } catch (JSONException ex) {
             System.out.println("-___-' Error: " + ex.getMessage());
         } catch (MDBIException ex) {

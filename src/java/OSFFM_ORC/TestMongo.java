@@ -50,17 +50,30 @@ public class TestMongo {
      */
     public static void main(String[] args) {
         DBMongo db= new DBMongo();
+        JSONObject obj ;
         FederationActionManager fam = new FederationActionManager();
         //db.init("/home/apanarello/BeaconProject/newBBP/BB/web/WEB-INF/configuration_bigDataPlugin.xml");
-        
+        HashMap <String, Object> updNet = new HashMap <String, Object> ();
         db.connectLocale("10.9.240.1");
         
         JSONObject table_=null;
         try {
-            //table_ = new JSONObject("{ \"table\" : [ [{\"tenant_id\":\"aa146d1022fe4dd1a29042c2f234d84b\",\"site_name\": \"site2\", \"name\":\"private\",\"vnid\":\"7fdb464c-11db-4b7f-9f60-4382ed9a76e8\"},{\"tenant_id\": \"aa146d1022fe4dd1a29042c2f234d847\", \"site_name\":\"site1\", \"name\": \"private\", \"vnid\":\"b906abbd-ed90-4cd0-bb3a-bd7c9119dfb9\"} ] ], \"version\" : 115 }");
-            table_ =new JSONObject("{ \"siteID\" : 3, \"siteEntry\" : { \"name\" : \"CETIC\", \"cmp_endpoint\" : \"http://ctrl-t2:5000/v2.0\", \"type\" : \"openstack\" } }");
-            System.out.println(table_.get("siteEntry.name"));
-            fam.bnaNetSegCreate(table_, db, "UME", "review",true);
+            table_ = new JSONObject("{ \"table\" : [ [{\"tenant_id\":\"aa146d1022fe4dd1a29042c2f234d84b\",\"site_name\": \"site2\", \"name\":\"private\",\"vnid\":\"7fdb464c-11db-4b7f-9f60-4382ed9a76e8\"},{\"tenant_id\": \"aa146d1022fe4dd1a29042c2f234d847\", \"site_name\":\"site1\", \"name\": \"private\", \"vnid\":\"b906abbd-ed90-4cd0-bb3a-bd7c9119dfb9\"} ] ], \"version\" : 115 }");
+            JSONObject table_2 = new JSONObject("{ \"table\" : [ [{\"tenant_id\":\"aa146d1022fe4dd1a29042c2f234d84b\",\"site_name\": \"site2\", \"name\":\"Cacchiolina\",\"vnid\":\"7fdb464c-11db-4b7f-9f60-4382ed9a76e8\"},{\"tenant_id\": \"aa146d1022fe4dd1a29042c2f234d847\", \"site_name\":\"site1\", \"name\": \"cacchiolina\", \"vnid\":\"b906abbd-ed90-4cd0-bb3a-bd7c9119dfb9\"} ] ], \"version\" : 115 }");
+
+            //table_ =new JSONObject("{ \"siteID\" : 3, \"siteEntry\" : { \"name\" : \"CETIC\", \"cmp_endpoint\" : \"http://ctrl-t2:5000/v2.0\", \"type\" : \"openstack\" } }");
+            //System.out.println(table_.get("siteEntry.name"));
+            
+            fam.bnaNetSegCreate(table_, db, "UME", "review",true, updNet);
+            fam.bnaNetSegCreate(table_2, db, "CETIC", "review",true, updNet);
+
+               obj= new JSONObject(updNet);
+                
+
+  
+        System.out.println(obj.get("UME").toString());
+        System.out.println(obj.get("UME").toString());
+        System.out.println(obj.get("CETIC").toString());
 
         } catch (JSONException ex) {
             System.out.println("errore parse:   "+ex.getMessage());
