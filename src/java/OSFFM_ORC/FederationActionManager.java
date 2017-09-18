@@ -441,6 +441,12 @@ public class FederationActionManager {
                 //TO
                 m.insertTenantTables(tenant, idCloud, version, tenantTab.toString(0));
 
+                        /*aggiorna valore tabella fednetinsite con le nuove net e versioni*/
+
+                obj_= new JSONObject(updNet);
+                m.insertfednetsinSite(tenant, idCloud, obj_, version);
+                
+                
                 fednetsinsite = m.getFednetsInSite(tenant, idCloud);
                 JSONObject obj = new JSONObject(fednetsinsite);
                 //obj = {"referenceSite": "CETIC", "version": 1, "fednets": ["private", "public"]}
@@ -457,10 +463,7 @@ public class FederationActionManager {
 
         }
         /*aggiorna valore tabella fednetinsite con le nuove net e versioni*/
-        obj_= new JSONObject(updNet);
-        for (String idCloud : s) {
-        m.insertfednetsinSite(tenant, idCloud, obj_, version);
-        }
+       
     }
 public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, String tenant, boolean b, HashMap <String, Object> updNet){
     bnaNetSegCreate(table_, db, refSite, tenant, updNet);
