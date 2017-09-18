@@ -495,10 +495,10 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
                     bnaSegTab.put("FK", uuid.toString());
                     // bnaSegTab.put("fedNet",objectJson.get("name"));
                     bnaSegTab.put("netEntry", objectJson);//QUESTO è objectJson: { "tenant_id" : "b0edb3a0ae3842b2a3f3969f07cd82f2", "site_name" : "CETIC", "vnid" : "d46a55d4-6cca-4d86-bf25-f03707680795", "name" : "provider" }
-                    //m.insertNetTables(tenant, bnaSegTab.toString(0));
+                    m.insertNetTables(tenant, bnaSegTab.toString(0));
 
                 }
-               // m.insertTablesData(uuid.toString(), tenant, version, refSite, fedNet); //ATTENZIONARE VEDI COMMENTO ***
+               m.insertTablesData(uuid.toString(), tenant, version, refSite, fedNet); //ATTENZIONARE VEDI COMMENTO ***
             }
             updNet.put(refSite, fednets.clone());
             Iterator iter = fednets.iterator();
@@ -508,9 +508,9 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
             fednets.clear();
         } catch (JSONException ex) {
             System.out.println("-___-' Error: " + ex.getMessage());
-        } /*catch (MDBIException ex) {
+        } catch (MDBIException ex) {
             System.out.println("-___-' Error: " + ex.getMessage());
-        }*/
+        }
 
         return bnaSegTab;
 }
