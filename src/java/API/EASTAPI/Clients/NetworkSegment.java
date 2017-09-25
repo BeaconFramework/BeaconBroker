@@ -237,6 +237,14 @@ public class NetworkSegment extends EastBrRESTClient{
     
     
     private String constructBody(JSONObject params) throws JSONException{
-        return "{\"name\" : \""+params.getString("name")+"\", \"fa_endpoint\" : \""+params.getString("fa_endpoint")+"\", \"network_address\" : \""+params.getString("network_address")+"\", \"network_mask\" : \""+params.getString("network_mask")+"\", \"size\" : \""+params.getString("size")+"\", \"vlan_id\" : \""+params.getString("vlan_id")+"\", \"cmp_net_id\" : \""+params.getString("cmp_net_id")+"\"}";
+        String name=(String)params.get("name");
+        String fa_endpoint=(String)params.get("fa_endpoint");
+        String network_address=(String)params.get("network_address");
+        String network_mask=(String)params.get("network_mask");
+        String size=((Integer)params.get("size")).toString();
+        String vlan_id=(String)params.get("vlan_id");
+        String cmp_net_id=(String)params.get("cmp_net_id");
+        return "{\"name\" : \""+name+"\", \"fa_endpoint\" : \""+fa_endpoint+"\", \"network_address\" : \""+network_address+"\", \"network_mask\" : \""+
+                network_mask+"\", \"size\" : \""+size+"\", \"vlan_id\" : \""+vlan_id+"\", \"cmp_net_id\" : \""+cmp_net_id+"\"}";
     }
 }

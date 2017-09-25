@@ -87,7 +87,7 @@ public class Fednet extends EastBrRESTClient{
      * @return
      * @throws WSException 
      */
-    public Response createFednet(String name,String linkType,String type,String baseFEDSDNURL) throws WSException {
+    public Response createFednet(String name,String linkType,String type,String baseFEDSDNURL) throws WSException, JSONException {
         body=new JSONObject();
         try {
             
@@ -122,7 +122,7 @@ public class Fednet extends EastBrRESTClient{
      * @return
      * @throws WSException 
      */
-    public Response updateFednet(long fedtobemod_id,String name,String linkType,String type,String baseFEDSDNURL) throws WSException {
+    public Response updateFednet(long fedtobemod_id,String name,String linkType,String type,String baseFEDSDNURL) throws WSException,JSONException {
         System.out.println(this.constructBody(name, linkType, type));
         Response r = this.makeSimpleRequest(baseFEDSDNURL + "/fednet/" + fedtobemod_id, this.constructBody(name, linkType, type), "put");
         try {
@@ -164,7 +164,7 @@ public class Fednet extends EastBrRESTClient{
      * @return 
      * @throws WSException/WSException303
      */
-    public Response updateFednet(String fedtobemod,String name,String linkType,String type,String baseFEDSDNURL,String action) throws WSException {
+    public Response updateFednet(String fedtobemod,String name,String linkType,String type,String baseFEDSDNURL,String action) throws WSException, JSONException {
         if(action==null){
             long id;
             try {
@@ -211,7 +211,7 @@ public class Fednet extends EastBrRESTClient{
      * @return 
      * @throws WSException/WSException303
      */
-    public Response updateFednet(long fedtobemod,String name,String linkType,String type,String baseFEDSDNURL,String action) throws WSException {
+    public Response updateFednet(long fedtobemod,String name,String linkType,String type,String baseFEDSDNURL,String action) throws WSException,JSONException {
         if(action==null){
             Long id=new Long(fedtobemod);
             Response r=this.makeSimpleRequest(baseFEDSDNURL+"/fednet/"+id.toString(), this.constructBody(name, linkType, type), "put");
@@ -299,11 +299,22 @@ public class Fednet extends EastBrRESTClient{
 
     }
     
-    private String constructBody(String name,String linkType,String type){
-        return "{\"name\" : \""+name+"\", \"type\" : \""+type+"\", \"linktype\" : \""+linkType+"\"}";
+    private String constructBody(String name,String linkType,String type)throws JSONException{
+        JSONObject jo= new JSONObject();
+        jo.put("name", name);
+        jo.put("type", type);
+        jo.put("linktype", linkType);
+        return jo.toString(0);
     }
     
-    private String constructBody(String name,String linkType,String type,String action){
-        return "{\"name\" : \""+name+"\", \"type\" : \""+type+"\", \"linktype\" : \""+linkType+"\",\"action\":\""+action+"\"}";
+    private String constructBody(String name,String linkType,String type,String action)throws JSONException{
+        
+        JSONObject jo= new JSONObject();
+        jo.put("name", name);
+        jo.put("type", type);
+        jo.put("linktype", linkType);
+        jo.put("action", action);
+        return jo.toString(0);
+        
     }
 }

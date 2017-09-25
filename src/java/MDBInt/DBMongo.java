@@ -182,6 +182,23 @@ public class DBMongo {
         }
     }
     
+     /**
+     * 
+     * @param collection
+     * @param resQuery
+     * @param sortQuery
+     * @return 
+     * @author agalletta
+     */
+    private DBObject conditionedResearch_Obj(DBCollection collection,BasicDBObject resQuery,BasicDBObject sortQuery) {
+        try{
+            DBCursor b= collection.find(resQuery).sort(sortQuery).limit(1);
+            return b.next();
+        }catch(Exception e){
+            LOGGER.error("Conditioned Research for collection: "+collection+", resQuery "+resQuery+", sortQuery "+sortQuery);
+            return null;
+        }
+    }
     private String conditionedResearch(DBCollection collection, BasicDBObject resQuery ,BasicDBObject sortQuery, BasicDBObject field) {
         try{
             JSONObject jsonized_field = new JSONObject(JSON.serialize(field));
@@ -360,10 +377,11 @@ public class DBMongo {
             BasicDBObject obj = new BasicDBObject();
             
             //fednetlist=fednets.get(referenceSite).toString();
-            obj.append("referenceSite", referenceSite);
-            obj.append("version", version);
-            obj.append("fednets", fednets.get(referenceSite).toString());
-            obj.append("insertTimestamp", System.currentTimeMillis());
+            obj.put("referenceSite", referenceSite);
+            obj.put("version", version);
+            String a= ((JSONArray)fednets.get(referenceSite)).toString(0);
+            obj.put("fednets", a);
+            obj.put("insertTimestamp", System.currentTimeMillis());
             collezione.save(obj);
             //this.insert(tenant, "NetTablesInfo", jsonTable);
             
@@ -627,7 +645,22 @@ public class DBMongo {
         
         return this.conditionedResearch(collection,resQuery,sortQuery);
     }
-    
+    public String getFednetsInSite_array(String dbName, String site)throws JSONException{
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("fednetsinSite");
+        BasicDBObject resQuery=new BasicDBObject("referenceSite",site);
+        BasicDBObject sortQuery=new BasicDBObject("version",-1);
+        
+        String obj=this.conditionedResearch(collection,resQuery,sortQuery);
+        try{
+            JSONObject jo=new JSONObject(obj);
+            return (String)jo.get("fednets");
+        }
+        catch(JSONException je){
+            LOGGER.error("JSONException Occurred in retrieving fednetsInSite Array");
+            throw je;
+        }
+    }
     
     
     /**
@@ -775,9 +808,14 @@ public class DBMongo {
 
         DB dataBase = this.getDB(dbName);
         DBCollection collezione = this.getCollection(dataBase, "fedsdnTenant");
+        try{
         BasicDBObject obj = (BasicDBObject) JSON.parse(docJSON);
+        
         obj.append("insertTimestamp", System.currentTimeMillis());
         collezione.save(obj);
+        }catch(Exception e){
+            LOGGER.error("Exception occurred in insertTenantTables DBMongoFunction");
+        }
     }
     /**
      * Used by BNM
@@ -822,7 +860,7 @@ public class DBMongo {
             BasicDBObject qid=new BasicDBObject("tenantEntry.name",tenName);
             DBCursor b= collection.find(qid).sort(sortQuery).limit(1);
             DBObject ttt=b.next();
-            Integer i=new Integer(((Double)ttt.get("tenantID")).intValue());
+            Integer i=new Integer(((String)ttt.get("tenantID")));
             return i.toString();
         }catch(Exception e){
             LOGGER.error("Conditioned Research for collection: "+collection+", sortQuery "+sortQuery);
@@ -2012,10 +2050,10 @@ public String getMapInfo(String dbName, String uuidTemplate) {
      public int getfedsdnSiteID(String name, String tenant){
        DB database = this.getDB(tenant);
        DBCollection collection = database.getCollection("fedsdnSite");
-       BasicDBObject researchField = new BasicDBObject("name", name);
+       BasicDBObject researchField = new BasicDBObject("siteEntry.name", name);
        DBObject risultato = collection.findOne(researchField);
-       
-       return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
+       Object r=((Number) risultato.get("siteID"));
+       return ((Double)r).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
     }
      
     /*
@@ -2035,6 +2073,38 @@ public String getMapInfo(String dbName, String uuidTemplate) {
         BasicDBObject obj = (BasicDBObject) JSON.parse(json);
         obj.append("insertTimestamp", System.currentTimeMillis());
         collezione.save(obj);
+    }
+    
+    
+    
+    /**
+     * Update NetSegments on Mongo
+     * @param dbName
+     * @param fednetName
+     * @param jsonWnetseg
+     * @return 
+     * 25/09/2017DA TESTARE PRIMA DI USARE
+     */
+    public boolean updatefsdnfednet_netseg(String dbName, String fednetName,String jsonWnetseg ) {
+        boolean result = true;
+        BasicDBObject first = new BasicDBObject();
+        first.put("fednetEntry.name", fednetName);
+        BasicDBObject sortquery = new BasicDBObject();
+        sortquery.put("insertTimestamp", -1);
+       
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("fedsdnFednet");
+        DBObject obj=this.conditionedResearch_Obj(collection, first, sortquery);
+        if(obj==null)
+            result=false;
+        else
+        {
+            obj = (BasicDBObject) collection.findOne(first);
+            obj.removeField("fednetEntry.netsegmets");
+            obj.put("fednetEntry.netsegmets", jsonWnetseg);
+            collection.save(obj);
+        }
+        return result;
     }
     /*
     public String getfedsdnFednet(String federationTenantName){
@@ -2087,7 +2157,11 @@ public String getMapInfo(String dbName, String uuidTemplate) {
        DBCollection collection = database.getCollection("fedsdnFednet");
        BasicDBObject researchField = new BasicDBObject("fednetEntry.name", fednet_name);
        DBObject risultato = collection.findOne(researchField);
-       return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
+       Object ob= risultato.get("fednetID");
+       if(ob instanceof String)
+           return new Integer((String)ob).intValue();
+       else
+           return ((Number) risultato.get("fednetID")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
     }
      
     //verificare se la parte dei netsegment và qui o và memorizzata nel DB del tenant

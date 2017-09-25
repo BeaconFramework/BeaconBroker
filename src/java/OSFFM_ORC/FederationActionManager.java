@@ -557,18 +557,18 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
         try {
             fedsdnTenId = this.checkTenantandInsertFEDSDN(mapContainer, sClient, fedsdnURL, m);
         } catch (WSException ex) {
-            LOGGER.error("Exception is occurred in checkTenantFEDSDN! \n" + ex);
+            LOGGER.error("WSException is occurred in checkTenantFEDSDN! \n" + ex);
         } catch (JSONException ex) {
-            LOGGER.error("Exception is occurred in checkTenantFEDSDN! \n" + ex);
+            LOGGER.error("JSONException is occurred in checkTenantFEDSDN! \n" + ex);
         } catch (Exception ex) {
             LOGGER.error("Exception is occurred in checkTenantFEDSDN! \n" + ex.getMessage()+"\n"+ex);
         }
         try {
             fednetknown=this.checkFednetandInsertFEDSDN(resultingTables,mapContainer,fClient ,sClient, nClient, fedsdnURL,tenant, m,fednetknown,fedsdnTenId);
         } catch (WSException ex) {
-            LOGGER.error("Exception is occurred in checkNetSegmentFEDSDN! \n" + ex);
+            LOGGER.error("WSException is occurred in checkFednetandInsertFEDSDN! \n" + ex);
         } catch (JSONException ex) {
-            LOGGER.error("Exception is occurred in checkNetSegmentFEDSDN! \n" + ex);
+            LOGGER.error("JSONException is occurred in checkFednetandInsertFEDSDN! \n" + ex);
         }
         
         try {
@@ -608,16 +608,26 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
         HashSet dictFeds = new HashSet();
         JSONObject job=new JSONObject();
         for (String s : siteSet) {
-            String arrayString = m.getFednetsInSite(federationTenant, s);
+            String arrayString = m.getFednetsInSite_array(federationTenant, s);
             JSONArray ja = new JSONArray(arrayString);
             for (int i = 0; i < ja.length(); i++) {
                 name = (String) ja.get(i);
                 if(!hm.containsKey(name))
                 {
-                    try {        
-                        Response res=fClient.createFednet(name, linkType, type, fedsdnURL);
-                        JSONObject jsonresp= new JSONObject(res.readEntity(String.class));
-                        /*OUTPUT ricevuto:
+                    Response res = null;
+                    try {
+                        res = fClient.createFednet(name, linkType, type, fedsdnURL);
+
+                    } catch (WSException500 wse) {
+                        //server Error matching della string restituita dal server se uguale a "unique bla bla bla" allora la rete era già presente
+                        if (wse.getMessage().contains("Server exception: SQLite3::ConstraintException: column name is not unique")) {
+                            res=fClient.getNetinfo(fedsdnURL, name);
+                        }
+                    } catch (WSException ws) {
+                        //eccezione sconosciuta come gestire?
+                    }
+                    JSONObject jsonresp = new JSONObject(res.readEntity(String.class));
+                    /*OUTPUT ricevuto:
                             {
                               "id": 6,
                               "owner": "prova1",
@@ -627,25 +637,16 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
                               "topology": "",
                               "type": "L2"
                             }
-                            
-                        */
-                        job.put("tenantID", fedsdnTenId);
-                        String fednetId=(String)jsonresp.remove("id");
-                        job.put("fednetID", fednetId);
-                        jsonresp.remove("owner");
-                        job.put("fednetEntry", jsonresp.toString(0));
-                        //id del fednet và nel json esterno 
-                        //il resto delle info và nel json interno
-                        m.insertfedsdnFednet(job.toString(0), federationTenant);
-                        
-                        hm.put(name,fednetId);
-                     } catch (WSException500 wse) {
-                        //server Error matching della string restituita dal server se uguale a "unique bla bla bla" allora la rete era già presente
-                        if(wse.getMessage().contains("Server exception: SQLite3::ConstraintException: column name is not unique"))
-                            continue;
-                    } catch (WSException ws) {
-                        //eccezione sconosciuta come gestire?
-                    }
+                     */
+                    job.put("tenantID", fedsdnTenId);
+                    String fednetId = ((Integer) jsonresp.remove("id")).toString();
+                    job.put("fednetID", fednetId);
+                    jsonresp.remove("owner");
+                    job.put("fednetEntry", jsonresp);
+                    //id del fednet và nel json esterno 
+                    //il resto delle info và nel json interno
+                    m.insertfedsdnFednet(job.toString(0), federationTenant);
+                    hm.put(name, fednetId);
                 }
             }
         }
@@ -672,7 +673,8 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
         {
             JSONObject jo = (JSONObject) ja.get(i);
             String siteNameToCheck = (String) jo.get("name");
-            if (siteNameToCheck != null) {
+            Set sstt=mapContainer.getCloudId_To_OIC().keySet();
+            if (sstt.contains(siteNameToCheck)) {
                 fa = mapContainer.getEndpoint_To_FAInfo().get(mapContainer.getCloudId_To_OIC().get(siteNameToCheck));
                 NeutronTest neutron = new NeutronTest(
                         mapContainer.getCloudId_To_OIC().get(siteNameToCheck).getEndpoint(),
@@ -682,6 +684,7 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
                         mapContainer.getCloudId_To_OIC().get(siteNameToCheck).getRegion()
                 );
                 Networks ns = neutron.listNetworks();
+                int federationTenantID,siteid,fednetID;
                 Iterator<Network> itNet = ns.iterator();
                 while (itNet.hasNext()) {
                     Network n = itNet.next();
@@ -691,13 +694,19 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
                         if ((s != null) && (s.getIpVersion() == 4)) {//We want manage only ipv4 network
                             SubnetInfo si = new SubnetUtils(s.getCidr()).getInfo();
                             boolean ok = false;
-                            int siteid = m.getfedsdnSiteID(siteNameToCheck);
-                            int federationTenantID = m.getfedsdnFednetID(federationTenant,federationTenant);
-                            int fednetID=m.getfedsdnFednetID(s.getName(), federationTenant);
+                            try{
+                            siteid = m.getfedsdnSiteID(siteNameToCheck,federationTenant);
+                            federationTenantID = new Integer(m.getfedsdnTenantid(federationTenant,federationTenant));
+                            fednetID=m.getfedsdnFednetID(n.getName(), federationTenant);
+                            }
+                            catch(Exception ex){
+                                LOGGER.error("Retrieving information from Mongo is failed for network: "+n.getName());
+                                break;
+                            }
                             for (int k = 0; k < 3; k++) {
                                 ok = this.addNetSegOnFedSDN(//attenzione aggungiere anche il fednetID, site ID e referenceSite
                                         s.getName(),
-                                        m.getInfo_Endpoint("entity", "osffm") + "/fednet/eastBr/network",//sostituire con il FA del sito??
+                                        m.getInfo_Endpoint("entity", "osffm") + "/fednet/eastBr/network",//sostituire con il FA del sito??SI SOSTITUIRE
                                         si.getAddress(),
                                         si.getNetmask(),
                                         si.getAddressCount(),
@@ -718,6 +727,7 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
                             }
                         }
                     }
+                    //update fednet on Mongo.
                 }
             }
         }
@@ -757,11 +767,12 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
     ) throws JSONException, WSException {
         JSONObject jo = new JSONObject();
         jo.put("name", name);
-        jo.put("fa_endpoint", endpoint_OSFFM);
+        jo.put("fa_endpoint", endpoint_OSFFM);//da rivedere
         jo.put("network_address", network_address);
         jo.put("network_mask", network_mask);
         jo.put("size", size);
-
+        jo.put("vlan_id", "");
+        jo.put("cmp_net_id", "");
         try {
             Response r = nClient.createNetSeg(jo, fedsdnURL, fedTenantIDFEDSDN, siteIdFEDSDN);
             /*
@@ -781,12 +792,13 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
             }
             */
             JSONObject incojson=new JSONObject(r.readEntity(String.class));
-            String netsegid=(String)incojson.remove("id");
+            String netsegid=((Integer)incojson.remove("id")).toString();
             incojson.remove("owner");
             incojson.remove("fednet_id");
             incojson.remove("site_id");
+            
             m.insertfedsdnNetSeg(incojson.toString(0), tenant, siteIdFEDSDN,fednetID,referenceSite,netsegid);//Bisogna verificare realmente cosa viene restituito
-
+            
         } catch (WSException ex) {
             LOGGER.error("Exception is occurred in addSiteOnFedSDN for NetSegment: " + name + " on site with ID:" + siteIdFEDSDN + " for the tenant: " + fedTenantIDFEDSDN + "\n" + ex);
             return false;
@@ -852,7 +864,7 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
         JSONArray inner = new JSONArray();
         String tenant = null;
         String tenant_password = null;
-
+        String result="";
         //for (int i = 0; i < ja.length(); i++) {
             //JSONObject jo = (JSONObject) ja.get(i);
 
@@ -871,6 +883,7 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
         while(it.hasNext()){
             String siteNameToCheck =(String)it.next();
             if ((tmpSiteList.containsKey(siteNameToCheck))) {
+                try{
 
                 OpenstackInfoContainer oik = (OpenstackInfoContainer) CloudId_To_OIC.get(siteNameToCheck);
 
@@ -881,7 +894,7 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
 
                 //>>>BEACON 03/07/2017: statically insert 0, but need to be checked !!!
                 String user_id_insite = "0";
-                String siteIdToCheck=((JSONObject)tmpSiteList.get(siteNameToCheck)).getString("id");
+                String siteIdToCheck=((Integer)((JSONObject)tmpSiteList.get(siteNameToCheck)).get("id")).toString();
                 JSONObject inner_jo = new JSONObject("{\"site_id\" :\"" + siteIdToCheck + "\",\"user_id_in_site\":\"" + user_id_insite + "\" ,\"credentials\":\"" + credentials + "\"}");
                 inner.put(inner_jo);
 
@@ -889,15 +902,20 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
 
                 //03/07/2017: federation password for the tenant is set equal to the openstack site !!!
                 tenant_password = sitePasswordToCheck;
+                }catch(Exception e){
+                    LOGGER.error("Exception occurred in \"Valid Site\" field entry.\nSite skipped: "+siteNameToCheck);
+                    
+                }
             }
         }
 
         //03/07/2017: verify username management like structure "NotManagedUser@userFederation@UME" !!!
-        JSONObject tenant_jo = new JSONObject("{\"name\" :\"" + tenant + "\",\"password\":\"" + tenant_password + "\" ,\"type\":\"admin\",\"valid_sites\": \"" + inner + "\"}");
-        m.insertTenantTables(tenant, tenant_jo.toString());
+        System.out.println(inner.toString());
+        JSONObject tenant_jo = new JSONObject("{\"name\" :\"" + tenant + "\",\"password\":\"" + tenant_password + "\" ,\"type\":\"admin\",\"valid_sites\": " + inner.toString(0) + "}");
+       // m.insertTenantTables(tenant, tenant_jo.toString());
 
         //03-07-2017 : hardcoded credential for tenant
-        Tenant t = new Tenant("root", "fedsdn");
+        Tenant t = new Tenant(tenant, tenant_password);
         boolean ok = false;
         for (int k = 0; k < inner.length(); k++) {
             try {
@@ -920,12 +938,26 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
                   }
                 
                  */
-                JSONObject resp = new JSONObject(r.readEntity(String.class));
+                String respon=r.readEntity(String.class);
+                if((respon.contains("Tenant "))&& (respon.contains("updated.")))
+                {
+                    respon=respon.substring(respon.indexOf("Tenant"));
+                    respon=respon.replace("Tenant ", "");
+                    respon=respon.replace(" updated.\"\n]", "");
+                    Integer rid=new Integer(respon);
+                    r=t.getInfoTenant(fedsdnURL, rid.longValue());
+                    respon=r.readEntity(String.class);
+                }
+                else{
+                    throw new Exception("Something in the site insertion process isn't working fine.");
+                }
+                JSONObject resp = new JSONObject(respon);
                 JSONObject entry = new JSONObject();
-                String fedsdntenid= (String) resp.remove("id");
+                String fedsdntenid= ((Integer) resp.remove("id")).toString();
+                result=fedsdntenid;
                 entry.put("tenantID", fedsdntenid);
                 entry.put("tenantEntry", resp);
-                m.insertfedsdnSite(entry.toString(0), tenant);
+                m.insertTenantTables(tenant, entry.toString(0));
             } catch (WSException ex) {
                 LOGGER.error("Exception is occurred in checkTenantFEDSDN for tenant: " + tenant + "\n" + ex);
                 ok = false;
@@ -939,7 +971,7 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
             }
         }
 
-        return "ok";
+        return result;
     }
 
     /**
@@ -966,10 +998,14 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
             Response r = sClient.createSite(siteName, cmp_endpoint, type, fedsdnURL);
             JSONObject resp=new JSONObject(r.readEntity(String.class));
             JSONObject entry=new JSONObject();
-            entry.put("siteID", (String)resp.remove("id"));
+            Integer id= (Integer)resp.remove("id");
+            entry.put("siteID",id);
             entry.put("siteEntry",resp);
             m.insertfedsdnSite(entry.toString(0), tenant); 
         } catch (WSException ex) {
+            LOGGER.error("Exception is occurred in addSiteOnFedSDN for site: " + siteName + "\n" + ex);
+            return false;
+        } catch (Exception ex) {
             LOGGER.error("Exception is occurred in addSiteOnFedSDN for site: " + siteName + "\n" + ex);
             return false;
         }
