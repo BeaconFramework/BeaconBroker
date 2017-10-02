@@ -396,15 +396,23 @@ public class FederationActionManager {
         fe = this.prepareKeystoneMap(fe);
         try {
             al = this.prepareTables4link(fe, m);
-
-//02/07/2017 gt: al è una HashMap<String,HashMap<String,Object>>, la più esterna contiene l'associazione sito - Mappa , 
-//quella interna contiene negli  Object le tabelle da passare al FA per quel che riguarda Openstack
-//a questa mappa dovranno essere aggiunti gli elementi provenienti dal FEDSDN
+             //02/07/2017 gt: al è una HashMap<String,HashMap<String,Object>>, la più esterna contiene l'associazione sito - Mappa , 
+                    //quella interna contiene negli  Object le tabelle da passare al FA per quel che riguarda Openstack
+                    //a questa mappa dovranno essere aggiunti gli elementi provenienti dal FEDSDN
+            for (String idcloud : s) {
+                try {
+                        JSONObject tm_p = new JSONObject((String) ((HashMap) al.get(idcloud)).get("netTable"));
+                        m.insertNetTable(tenantname, idcloud,tm_p.toString(0));
+                } catch (JSONException e) {
+                    LOGGER.error("Exception occurred in Parsing JSON retrieved from MongoDB in FAInfo Retrieve for Datacenter " + idcloud + "!" + "\nException message:" + e.getMessage());
+                }
+            }
         } catch (Exception e) {
             LOGGER.error("Exception occurred in the function prepareTables4link");
         }
 //04/07/2017 gt: la seguente funzione salva all'interno di MongoDB le tables ottenute che verranno usate durante la fase di instaurazione del link
         this.saveTablesOnMongo(al, tenantname, m);
+
         //if(startfromTemplate)
         this.updatestateOnFEDSDN(tenantname,al, fe, m);
     }
@@ -519,7 +527,7 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
         } catch (MDBIException ex) {
             System.out.println("-___-' Error: " + ex.getMessage());
         }
-
+        
         return bnaSegTab;
 }
 
@@ -1456,6 +1464,32 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
         tmp = tmp + ("\"fa_url\": \"" + fa_url + "\"");
         tmp = tmp + "}";
         return tmp;
+    }
+    
+    
+    
+     /**
+     * 
+     * @param networks
+     * @param version
+     * @return
+     * @throws JSONException 
+     */
+    public org.json.JSONObject constructNetworkTableJSON(ArrayList<String> networks,int version) throws JSONException{
+       org.json.JSONArray array_ext = new org.json.JSONArray();
+       org.json.JSONArray ja=null;
+       Iterator it=networks.iterator();
+       while(it.hasNext()){
+           String tab_entry=(String)it.next();
+           ja=new org.json.JSONArray(tab_entry); 
+           array_ext.put(ja);
+       }
+        
+       
+       org.json.JSONObject global = new org.json.JSONObject();
+       global.put("version", version);
+       global.put("table", array_ext);
+       return global;
     }
     //</editor-fold>
 

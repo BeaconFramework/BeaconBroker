@@ -333,7 +333,7 @@ public class DBMongo {
      * @param docJSON 
      * @author gtricomi
      */
-    public void insertNetTables(String dbName,String faSite, String docJSON,double version) {
+    public void insertNetTables(String dbName,String faSite, String docJSON,int version) {
 
         DB dataBase = this.getDB(dbName);
         DBCollection collezione = this.getCollection(dataBase, "netTables");
