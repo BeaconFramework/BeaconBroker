@@ -33,7 +33,7 @@ public class test {
         t1Id="ab6a28b9f3624f4fa46e78247848544e";
         t2Id="0ce39f6ae8044445b31d5b7f9b34062b";
         //FAclient4 tenant istantiation. 
-  ///*   
+ /*   
         FA_client4Tenant fat1=new FA_client4Tenant("http://192.168.32.1:5000/v2.0",t1name,"demo","0penstack");
         FA_client4Tenant fat2=new FA_client4Tenant("http://192.168.87.1:5000/v2.0",t2name,"demo","0penstack");
         try{
@@ -52,7 +52,7 @@ public class test {
    //   */
         //FAclient4sites istantiation. 
         ////what is missed is how to retrieve siteName
-  // /*
+   /*
         FA_client4Sites fas1=new FA_client4Sites("http://10.9.240.20:5000/v2.0",t1name,"admin","password");
         FA_client4Sites fas2=new FA_client4Sites("http://10.9.240.11:5000/v2.0",t2name,"admin","password");
         //create MAP in hardcoded way for testing api
@@ -89,7 +89,8 @@ public class test {
             System.out.println("Error1");
             e.printStackTrace();
         }
-   // */ 
+    */ 
+   
         //FAclient4networks istantiation.
         FA_client4Network fan1=new FA_client4Network("http://10.9.240.20:5000/v2.0",t1name,"admin","password");
         FA_client4Network fan2=new FA_client4Network("http://10.9.240.11:5000/v2.0",t2name,"admin","password");

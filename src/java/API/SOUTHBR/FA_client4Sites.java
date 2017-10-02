@@ -74,6 +74,9 @@ public class FA_client4Sites extends FA_REST_Client{
     public String constructSiteTableJSON(JSONArray ja){
         String tmp=ja.toString();
         return tmp;
+        /*QUESTA fne produce:
+        [{"tenant_id":"d044e4b3bc384a5daa3678b87f97e3c2","name":"CETIC","fa_url":"10.9.1.159:4567","site_proxy":[{"port":4789,"ip":"192.168.87.250"}]},{"tenant_id":"b0edb3a0ae3842b2a3f3969f07cd82f2","name":"UME","fa_url":"10.9.1.169:4567","site_proxy":[{"port":4789,"ip":"192.168.32.250"}]}]
+        */
     }
     
     

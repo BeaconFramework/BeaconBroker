@@ -451,10 +451,15 @@ public class FederationActionManager {
                 JSONObject obj = new JSONObject(fednetsinsite);
                 //obj = {"referenceSite": "CETIC", "version": 1, "fednets": ["private", "public"]}
                 version = obj.getInt("version");
-                m.insertSiteTables(tenant, idCloud, "{" + siteTab.toString(0) + "}", version);
+                //{[
+                //{"tenant_id":"d044e4b3bc384a5daa3678b87f97e3c2","name":"CETIC","fa_url":"10.9.1.159:4567","site_proxy":[{"port":4789,"ip":"192.168.87.250"}]},
+                //{"tenant_id":"b0edb3a0ae3842b2a3f3969f07cd82f2","name":"UME","fa_url":"10.9.1.169:4567","site_proxy":[{"port":4789,"ip":"192.168.32.250"}]}
+                //]}
+                for(int k=0; k<siteTab.length();k++){
+                    m.insertSiteTables(tenant, idCloud, ((JSONObject)siteTab.get(k)).toString(0), version);
+                }
                 
-                
-                
+                System.out.println("");
                 
                 // m.insertNetTable(tenant, idCloud,netTab.toString(0));
             } catch (JSONException ex) {
@@ -579,13 +584,13 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
             LOGGER.error("Exception is occurred in checkNetSegmentFEDSDN! \n" + ex);
         }        
 //BEACON>>>>> 14/07/2017 gt: valutare possibili modifiche al flusso di creazione della rete federata. Queste impatteranno sicuramente su questa parte di codice
-        try {
+       /* try {
             this.makeLinkOnFednet(fClient, tenant, fedsdnURL, m,fednetknown);
         } catch (WSException ex) {
             LOGGER.error("Exception is occurred in makeLinkOnFednet! \n" + ex);
         } catch (JSONException ex) {
             LOGGER.error("Exception is occurred in makeLinkOnFednet! \n" + ex);
-        }
+        }*/
     }
 
     /**
@@ -774,7 +779,7 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
         jo.put("vlan_id", "");
         jo.put("cmp_net_id", "");
         try {
-            Response r = nClient.createNetSeg(jo, fedsdnURL, fedTenantIDFEDSDN, siteIdFEDSDN);
+            Response r = nClient.createNetSeg(jo, fedsdnURL, fednetID, siteIdFEDSDN);
             /*
             {
                 "id": 12,
@@ -1398,7 +1403,7 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
             for (int i = 0; i < ja.length(); i++) {
                 //JSONArray int_ja = ja.getJSONArray(i);
                 JSONObject tmpjo = (JSONObject) ja.get(i);
-                if (((String) tmpjo.get("name")).equals(entry.get("name"))) {
+                if (((String) tmpjo.get("name")).equals(entry.get("name"))) {//&&((String) tmpjo.get("fa_url")).equals(entry.get("fa_url"))
                     foundElem = true;
                     break;
                 }
