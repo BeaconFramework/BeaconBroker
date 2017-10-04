@@ -707,19 +707,21 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
                         if ((s != null) && (s.getIpVersion() == 4)) {//We want manage only ipv4 network
                             SubnetInfo si = new SubnetUtils(s.getCidr()).getInfo();
                             boolean ok = false;
-                            try{
-                            siteid = m.getfedsdnSiteID(siteNameToCheck,federationTenant);
-                            federationTenantID = new Integer(m.getfedsdnTenantid(federationTenant,federationTenant));
-                            fednetID=m.getfedsdnFednetID(n.getName(), federationTenant);
-                            }
-                            catch(Exception ex){
-                                LOGGER.error("Retrieving information from Mongo is failed for network: "+n.getName());
+                            JSONObject faurl=null;
+                            try {
+                                siteid = m.getfedsdnSiteID(siteNameToCheck, federationTenant);
+                                federationTenantID = new Integer(m.getfedsdnTenantid(federationTenant, federationTenant));
+                                fednetID = m.getfedsdnFednetID(n.getName(), federationTenant);
+                                faurl = new JSONObject(m.getFAInfo(federationTenant, siteNameToCheck));
+                            } catch (Exception ex) {
+                                LOGGER.error("Retrieving information from Mongo is failed for network: " + n.getName());
                                 break;
                             }
                             for (int k = 0; k < 3; k++) {
                                 ok = this.addNetSegOnFedSDN(//attenzione aggungiere anche il fednetID, site ID e referenceSite
                                         s.getName(),
-                                        m.getInfo_Endpoint("entity", "osffm") + "/fednet/eastBr/network",//sostituire con il FA del sito??SI SOSTITUIRE
+                                        //m.getInfo_Endpoint("entity", "osffm") + "/fednet/eastBr/network",//sostituire con il FA del sito??SI SOSTITUIRE      siteNameToCheck
+                                        faurl.getString("Ip")+":"+faurl.getString("Port"),
                                         si.getAddress(),
                                         si.getNetmask(),
                                         si.getAddressCount(),
@@ -891,33 +893,39 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
             //siteSet.add((String) jo.get("name"));
             tmpSiteList.put((String) jo.get("name"), jo);
         }
-        
-        Iterator it= CloudId_To_OIC.keySet().iterator();
-        while(it.hasNext()){
-            String siteNameToCheck =(String)it.next();
+       
+        Iterator it = CloudId_To_OIC.keySet().iterator();
+        while (it.hasNext()) {
+            String siteNameToCheck = (String) it.next();
             if ((tmpSiteList.containsKey(siteNameToCheck))) {
-                try{
+                try {
 
-                OpenstackInfoContainer oik = (OpenstackInfoContainer) CloudId_To_OIC.get(siteNameToCheck);
+                    OpenstackInfoContainer oik = (OpenstackInfoContainer) CloudId_To_OIC.get(siteNameToCheck);
 
-                String siteUsernameToCheck = oik.getUser();
-                String sitePasswordToCheck = oik.getPassword();
+                    String siteUsernameToCheck = oik.getUser();
+                    String sitePasswordToCheck = oik.getPassword();
 
-                String credentials = siteUsernameToCheck + ":" + sitePasswordToCheck;
+                    String credentials = siteUsernameToCheck + ":" + sitePasswordToCheck;
+                    KeystoneTest key = new KeystoneTest(oik.getTenant(), siteUsernameToCheck, oik.getPassword(), oik.getEndpoint());
+                    String user_id_insite = null;
+                    try {
+                        user_id_insite = key.getTenantId(oik.getTenant());
+                    } catch (Exception e) {
+                        user_id_insite = "0";
+                    }
+                    //>>>BEACON 03/07/2017: statically insert 0, but need to be checked !!!
 
-                //>>>BEACON 03/07/2017: statically insert 0, but need to be checked !!!
-                String user_id_insite = "0";
-                String siteIdToCheck=((Integer)((JSONObject)tmpSiteList.get(siteNameToCheck)).get("id")).toString();
-                JSONObject inner_jo = new JSONObject("{\"site_id\" :\"" + siteIdToCheck + "\",\"user_id_in_site\":\"" + user_id_insite + "\" ,\"credentials\":\"" + credentials + "\"}");
-                inner.put(inner_jo);
+                    String siteIdToCheck = ((Integer) ((JSONObject) tmpSiteList.get(siteNameToCheck)).get("id")).toString();
+                    JSONObject inner_jo = new JSONObject("{\"site_id\" :\"" + siteIdToCheck + "\",\"user_id_in_site\":\"" + user_id_insite + "\" ,\"credentials\":\"" + credentials + "\"}");
+                    inner.put(inner_jo);
 
-                tenant = oik.getTenant();
+                    tenant = oik.getTenant();
 
-                //03/07/2017: federation password for the tenant is set equal to the openstack site !!!
-                tenant_password = sitePasswordToCheck;
-                }catch(Exception e){
-                    LOGGER.error("Exception occurred in \"Valid Site\" field entry.\nSite skipped: "+siteNameToCheck);
-                    
+                    //03/07/2017: federation password for the tenant is set equal to the openstack site !!!
+                    tenant_password = sitePasswordToCheck;
+                } catch (Exception e) {
+                    LOGGER.error("Exception occurred in \"Valid Site\" field entry.\nSite skipped: " + siteNameToCheck);
+
                 }
             }
         }
@@ -928,11 +936,12 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
        // m.insertTenantTables(tenant, tenant_jo.toString());
 
         //03-07-2017 : hardcoded credential for tenant
-        Tenant t = new Tenant(tenant, tenant_password);
+        Tenant t = new Tenant(tenant, tenant_password);//"root","fedsdn");//
         boolean ok = false;
         for (int k = 0; k < inner.length(); k++) {
             try {
-                r = t.updateTen(tenant_jo,tenant, fedsdnURL);
+                System.out.println(tenant_jo.toString(0));
+                r = t.updateTen(tenant_jo,tenant, fedsdnURL);//createTen(tenant_jo, fedsdnURL);//
                 /*oggetto restituito:
                 {
                     "id": 7,

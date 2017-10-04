@@ -2053,7 +2053,10 @@ public String getMapInfo(String dbName, String uuidTemplate) {
        BasicDBObject researchField = new BasicDBObject("siteEntry.name", name);
        DBObject risultato = collection.findOne(researchField);
        Object r=((Number) risultato.get("siteID"));
-       return ((Double)r).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
+       if(r instanceof Integer)
+           return ((Integer) r).intValue();
+       else
+        return ((Double)r).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
     }
      
     /*
