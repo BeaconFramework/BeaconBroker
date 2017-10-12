@@ -902,11 +902,11 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
 
                     OpenstackInfoContainer oik = (OpenstackInfoContainer) CloudId_To_OIC.get(siteNameToCheck);
 
-                    String siteUsernameToCheck = oik.getUser();
+                    String siteUsernameToCheck = oik.getTenant()+"@@@"+oik.getUser();
                     String sitePasswordToCheck = oik.getPassword();
 
                     String credentials = siteUsernameToCheck + ":" + sitePasswordToCheck;
-                    KeystoneTest key = new KeystoneTest(oik.getTenant(), siteUsernameToCheck, oik.getPassword(), oik.getEndpoint());
+                    KeystoneTest key = new KeystoneTest(oik.getTenant(), oik.getUser(), oik.getPassword(), oik.getEndpoint());
                     String user_id_insite = null;
                     try {
                         user_id_insite = key.getTenantId(oik.getTenant());
