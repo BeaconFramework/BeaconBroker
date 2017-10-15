@@ -51,6 +51,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ws.rs.core.Response;
@@ -798,7 +799,7 @@ public class OrchestrationManager {
      * @author gtricomi
      */
     public HashMap<String, ArrayList<Port>> sendShutSignalStack4DeployAction(String stackName, OpenstackInfoContainer credential,
-            boolean first, DBMongo m) {
+            boolean first, DBMongo m,int numofDC,String requid) {
         try {
             Registry myRegistry = LocateRegistry.getRegistry(ip,port);
             RMIServerInterface impl = (RMIServerInterface) myRegistry.lookup("myMessage");
@@ -813,8 +814,8 @@ public class OrchestrationManager {
                           LOGGER.debug("nome risorsa "+id_res);
                     if (!first) {
                         nova.stopVm(id_res);
-                        m.updateStateRunTimeInfo(credential.getTenant(), id_res, first);
                     }
+                    m.updateStateRunTimeInfo(credential.getTenant(), id_res, first,numofDC,requid);
                     //BEACON>>>>01/09/2017: Parte commentata perchè dava dei problemi, non essendo mandatoria nonvà a bassa priorità la risoluzione di questo bug
                     ArrayList<Port> arPort = neutron.getPortFromDeviceId(id_res);
                     //inserire in quest'array la lista delle porte di quella VM
@@ -851,6 +852,7 @@ public class OrchestrationManager {
             DBMongo m,
             String serviceManifName
     ){
+        String requid=UUID.randomUUID().toString();
         String stackName = stack.substring(stack.lastIndexOf("_") + 1 > 0 ? stack.lastIndexOf("_") + 1 : 0, stack.lastIndexOf(".yaml") >= 0 ? stack.lastIndexOf(".yaml") : stack.length());
         ArrayList arDC = (ArrayList<ArrayList<String>>) tmpMap.get(stackName);
         ArrayList arCr = (ArrayList<ArrayList<OpenstackInfoContainer>>) tmpMapcred.get(stackName);
@@ -863,6 +865,7 @@ public class OrchestrationManager {
             ArrayList tmpArCr = (ArrayList<OpenstackInfoContainer>) arCr.get(arindex);
             ArrayList<HashMap<String, ArrayList<Port>>> arRes = new ArrayList<HashMap<String, ArrayList<Port>>>();
             //System.out.println("&&&&&&&&&&&&&&&&&&&&&"+tmpArCr.size());
+            int numofDC=arCr.size();
             for (Object tmpArCrob : tmpArCr) {
                 LOGGER.info("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\nISTANTION PHASE FOR THE CLOUD:" + ((OpenstackInfoContainer) tmpArCrob).getIdCloud() + "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
                boolean result = this.stackInstantiate(template, (OpenstackInfoContainer) tmpArCrob, m, stackName,serviceManifName);//BEACON>>> in final version of OSFFM 
@@ -871,7 +874,7 @@ public class OrchestrationManager {
                 //we will use variable result to understand if the stack is deployed inside the federated cloud
                 String region = "RegionOne";
                 ((OpenstackInfoContainer) tmpArCrob).setRegion(region);
-                HashMap<String, ArrayList<Port>> map_res_port = this.sendShutSignalStack4DeployAction(stackName, (OpenstackInfoContainer) tmpArCrob, first, m);
+                HashMap<String, ArrayList<Port>> map_res_port = this.sendShutSignalStack4DeployAction(stackName, (OpenstackInfoContainer) tmpArCrob, first, m,numofDC,requid);
                 if (first) {//result) {
                     firstDC=((OpenstackInfoContainer)tmpArCrob).getIdCloud();
                     first = false;//if first stack creation is successfully completed, the other stacks instantiated are not the First

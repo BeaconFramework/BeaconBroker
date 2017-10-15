@@ -39,6 +39,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jclouds.openstack.neutron.v2.domain.Port;
@@ -107,6 +108,8 @@ public class DemoHAIFA {
         do
         {
             String uuid=dh.consoleRequest("Insert Manifest UUID that will be elaborated to deploy resources","");
+            String requid=UUID.randomUUID().toString();
+        
             if(!uuid.equals("")){
                 String tmpStr="";
                 try {
@@ -159,7 +162,7 @@ public class DemoHAIFA {
                         
                         region=dh.consoleRequest("Insert region name:[Deafult: RegionOne]","RegionOne");//this element it will be analized in second 
                         ((OpenstackInfoContainer)tmpArCrob).setRegion(region);
-                          HashMap<String,ArrayList<Port>> map_res_port=om.sendShutSignalStack4DeployAction(stackName,(OpenstackInfoContainer)tmpArCrob,first,m);
+                          HashMap<String,ArrayList<Port>> map_res_port=om.sendShutSignalStack4DeployAction(stackName,(OpenstackInfoContainer)tmpArCrob,first,m,arCr.size(),requid);
                         if(resultIS)
                             first=false;//if first stack creation is successfully completed, the other stacks instantiated are not the First
                         //and need different treatment.

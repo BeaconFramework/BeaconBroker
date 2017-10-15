@@ -1498,7 +1498,24 @@ public class DBMongo {
         collection.save(obj);
         return result;
     }
+    
+    public boolean updateStateRunTimeInfo(String dbName, String phisicalResourceId, boolean newState,int num_twins,String requid) {
+        boolean result = true;
+        BasicDBObject first = new BasicDBObject();
+        first.put("phisicalResourceId", phisicalResourceId);
 
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("runTimeInfo");
+        BasicDBObject obj = null;
+
+        obj = (BasicDBObject) collection.findOne(first);
+        obj.append("state", newState);
+        obj.append("numOFtwins", num_twins);
+        obj.append("requestUID",requid);
+        collection.save(obj);
+        return result;
+    }
+    
     private String toMd5(String original) {
         /*MessageDigest md;
         byte[] digest;

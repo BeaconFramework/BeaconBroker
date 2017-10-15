@@ -198,6 +198,7 @@ public class migrationVM {
      * @param jsonInput
      * @return 
      * @author gtricomi
+     * 
      */
     @POST
     @Path("/activatetwin/")
@@ -212,9 +213,9 @@ public class migrationVM {
         String region="RegionOne";
         JSONObject input=new JSONObject();
         org.json.simple.JSONObject reply=new org.json.simple.JSONObject();
-        JSONParser jp=new JSONParser();
+        //JSONParser jp=new JSONParser();
         try{
-            input=(JSONObject)jp.parse(jsonInput);
+            input= new JSONObject(jsonInput);
             userFederation=(String)input.get("userFederation");
             pswFederation=(String)input.get("pswFederation");
             tenant=(String)input.get("tenant");
@@ -257,6 +258,7 @@ public class migrationVM {
         //accensione vm idenitificata
         NovaTest nova=new NovaTest(credential2.getEndpoint(),credential2.getTenant(), credential2.getUser(),credential2.getPassword(),credential2.getRegion());
         nova.startVm(twinUUID);
+        m.updateStateRunTimeInfo(credential2.getTenant(), twinUUID, true);
         return this.createValidAnswer();
     }
     

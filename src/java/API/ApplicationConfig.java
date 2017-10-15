@@ -51,7 +51,6 @@ public class ApplicationConfig extends Application {
         resources.add(API.EASTAPI.NetworksegmentResource.class);
         resources.add(API.EASTAPI.UserResource.class);
         resources.add(API.EASTAPI.UsersResource.class);
-        resources.add(API.NTHAPI.Manifestcreate.class);
         resources.add(API.NTHAPI.ManifestcreatesResource.class);
         resources.add(API.NTHAPI.NetworkResource.class);
         resources.add(API.NTHAPI.NetworksResource.class);
