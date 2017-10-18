@@ -75,11 +75,11 @@ public class testInstantiation {
         //String home=System.getProperty("java.home");      //Removed, unused
         //String fs=System.getProperty("file.separator");   //Removed, unused
         //String prepath=home+fs+"subrepoTemplate";
-        String tenant="review";
+        String tenant="Cetic";
         String templateRef="null";
         String userFederation="",passwordFederation="";
         String prepath="./subrepoTemplate/"+tenant;
-         userFederation="userFederation";
+         userFederation="Cetic";
          passwordFederation="passwordFederation";
         // prepath="./subrepoTemplate/yamltest2";
         String templateUUID="";
@@ -101,7 +101,7 @@ public class testInstantiation {
                 tenant=dh.consoleRequest("Insert tenant name","");//beacon
             }*/
           //"./templateTOupload/ONEFLtemplateYAML2.yaml","yamlTest2"
-            Object result = spli.loadFromFile("./templateTOupload/SummitYAML.yaml", "review");//path, tenant);//da rivedere gestione assocazione
+            Object result = spli.loadFromFile("./templateTOupload/LSYapp.yaml", "Cetic");//path, tenant);//da rivedere gestione assocazione
             if (result == null) {
                 System.err.println("Somethings are went wrong with ");
                 break;

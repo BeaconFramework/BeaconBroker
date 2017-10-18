@@ -55,9 +55,9 @@ public class SitesResource {
      * Creates a new instance of SitesResource
      */
     public SitesResource() {
-        String file=System.getenv("HOME");
-        this.init(file+"/webapps/OSFFM/WEB-INF/Configuration_NTHBR_WS.xml");
-        
+        //String file=System.getenv("HOME");
+        //this.init(file+"/webapps/OSFFM/WEB-INF/Configuration_NTHBR_WS.xml");
+        this.init("/home/beacon/beaconConf/Configuration_NTHBR_WS.xml");
         
     }
     /**

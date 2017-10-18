@@ -24,6 +24,7 @@ import JClouds_Adapter.OpenstackInfoContainer;
 import MDBInt.DBMongo;
 import MDBInt.MDBIException;
 import MDBInt.Splitter;
+import OSFFM_ORC.FederationActionManager;
 
 
 
@@ -259,6 +260,39 @@ public class migrationVM {
         NovaTest nova=new NovaTest(credential2.getEndpoint(),credential2.getTenant(), credential2.getUser(),credential2.getPassword(),credential2.getRegion());
         nova.startVm(twinUUID);
         m.updateStateRunTimeInfo(credential2.getTenant(), twinUUID, true);
+        return this.createValidAnswer();
+    }
+    
+    /**
+     * This function Istantiate all Stack described inside global Manifest.
+     * @param tenant
+     * @param jsonInput
+     * @return 
+     * @author gtricomi
+     * 
+     */
+    @POST
+    @Path("/connectOne/")
+    @Consumes("application/json")
+    public Response connectOne(String jsonInput)
+    {
+        //String vm,String tenant,String userFederation,String vmTwin,String pswFederation,String region
+        String tenant="";
+        
+        String site="";
+        
+        JSONObject input=new JSONObject();
+        org.json.simple.JSONObject reply=new org.json.simple.JSONObject();
+        try{
+            input= new JSONObject(jsonInput);
+            tenant=(String)input.get("tenant");
+            site=(String)input.get("site");
+        }catch(Exception e){
+            LOGGER.error("JSON  input received for web service activateTwin is not parsable.\n"+e.getMessage());
+            return this.createErrorAnswer("INPUT_JSON_UNPARSABLE: OPERATION ABORTED "+e.getMessage());
+        }
+        FederationActionManager fam=new FederationActionManager();
+        fam.prepareNetTablesONESharing(tenant, site, m);
         return this.createValidAnswer();
     }
     

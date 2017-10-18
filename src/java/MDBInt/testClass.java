@@ -11,6 +11,7 @@ import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import java.util.Iterator;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -19,10 +20,11 @@ import org.json.JSONObject;
  */
 
 public class testClass {
-     public static void main(String[] args) {
+     public static void main(String[] args) throws JSONException {
          DBMongo m=new DBMongo();
          m.connectLocale("10.9.240.1");
-         m.getfedsdnFednetIDs("demo");
+         m.getfedsdnFednetIDs("demo");//getSiteTables(String dbName, String faSite, Integer version)
+         System.out.println(m.getSiteTables("review","CETIC",24));
          DB database = m.getDB_(m.getIdentityDB());
        DBCollection collection = database.getCollection("Federation_Credential");
        BasicDBObject researchField = new BasicDBObject("federationTenant", "review").append("ff","eeee").append("eeee",21);

@@ -62,8 +62,8 @@ public class NetworksResource {
      * Creates a new instance of NetworksResource
      */
     public NetworksResource() {
-        String file = System.getenv("HOME");
-        this.init(file + "/webapps/OSFFM/WEB-INF/Configuration_NTHBR_WS.xml");
+        //String file = System.getenv("HOME");
+        this.init("/home/beacon/beaconConf/Configuration_NTHBR_WS.xml");
     }
 
     public void init(String file) {

@@ -78,7 +78,7 @@ public class OrchestrationManager {
     //<editor-fold defaultstate="collapsed" desc="Variable Definition Section">
     private String ip="10.9.1.108";//default value for internal testing(VM with service RMIServer, PINGServer
     private int port=1099;//default value for internal testing
-    private String fileConf="/webapps/OSFFM/WEB-INF/configuration_Orchestrator.xml";//this path starts from the tomcat home
+    private String fileConf="/home/beacon/beaconConf/configuration_Orchestrator.xml";//"/webapps/OSFFM/WEB-INF/configuration_Orchestrator.xml";//this path starts from the tomcat home
     static final HashMap<String,ManifestManager> mapManifestThr=new HashMap<String,ManifestManager>();//mappa che mantiene riferimenti manifest- manifest manager
     HashMap<String,ArrayList> globalTOfragmentsManif;//BEACON>>> this variable need to be used in splitting alghoritm
     static final org.apache.log4j.Logger LOGGER = org.apache.log4j.Logger.getLogger(OrchestrationManager.class);
@@ -93,10 +93,10 @@ public class OrchestrationManager {
         Element params;
         try {
             String file=System.getenv("HOME");
-            ParserXML parser = new ParserXML(new File(file+fileConf));
+            /*ParserXML parser = new ParserXML(new File(file+fileConf));
             params = parser.getRootElement().getChild("pluginParams");
             ip = params.getChildText("ip");
-            port = Integer.parseInt(params.getChildText("port"));
+            port = Integer.parseInt(params.getChildText("port"));*/
         } 
         catch (Exception ex) {
             LOGGER.error("Error occurred in configuration ");

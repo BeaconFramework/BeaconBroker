@@ -45,7 +45,7 @@ import utils.ParserXML;
 public class SunLightPolicy implements Policy,Runnable{
     
     final Logger LOGGER = Logger.getLogger(SunLightPolicy.class);
-    private String fileConf="/webapps/OSFFM/WEB-INF/configuration_SunLightPolicy.xml";//this path starts from the tomcat home
+    private String fileConf="/home/beacon/beaconConf/configuration_SunLightPolicy.xml";//"/webapps/OSFFM/WEB-INF/configuration_SunLightPolicy.xml";//this path starts from the tomcat home
     private long granularityCheck=20000;//3600000;//default value is 1 hour
     private int actualDCGap;
     private int threshold=17;//default value is 17 (5pm)

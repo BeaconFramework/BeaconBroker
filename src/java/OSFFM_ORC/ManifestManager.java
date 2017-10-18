@@ -577,7 +577,7 @@ public class ManifestManager implements Runnable{
                         chk1=res.get(0).equals("parameter");
                         chk2=(this.parameters.has(res.get(1)));
                         if(chk1&&chk2)
-                        sgObj.insertParContainer(this.parameters.getJSONObject(res.get(1)),res.get(1));
+                            sgObj.insertParContainer(this.parameters.getJSONObject(res.get(1)),res.get(1));
                        // System.out.println("qui");
                     }
                 }

@@ -34,7 +34,7 @@ public class SimpleIDM {
     
     DBMongo mdb=null;
     DBMongo ident_db=null;
-    private static String configFile="../webapps/OSFFM/WEB-INF/configuration_bigDataPlugin.xml";
+    private static String configFile="/home/beacon/beaconConf/configuration_bigDataPlugin.xml";///"../webapps/OSFFM/WEB-INF/configuration_bigDataPlugin.xml";
     private String IDMdbName="simpleIDM";
     private ParserXML parser;
     private String mdbIp;

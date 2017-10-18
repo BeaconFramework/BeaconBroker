@@ -416,7 +416,76 @@ public class FederationActionManager {
         //if(startfromTemplate)
         this.updatestateOnFEDSDN(tenantname,al, fe, m);
     }
+    
+    /**
+     *
+     * @param tenantname
+     * @param mapContainer
+     * @param tmpMapcred ,mappa stack arraylist(di arrayList di OpenStack
+     * Container)
+     * @param m
+     * @author gtricomi
+     */
+    public void prepareNetTablesONESharing(
+            String tenantname,
+            String Site,
+            DBMongo m) {
+        //creare l'hashMap AL per ONE
+        HashMap<String, HashMap<String, Object>> al = new HashMap<String, HashMap<String, Object>>();
+        HashMap<String, Object> il = new HashMap<String, Object>();
+         FednetsLink mapContainer = new FednetsLink();
+        try {
+            JSONObject jo = new JSONObject(m.getTenantTables("review", Site));
+            Integer vers = jo.getInt("version");
+            String sitetab = m.createSiteONETables(tenantname, Site);
+            String nettab = m.createNetONETables(tenantname, Site, vers);
+            il.put("tenantTable", jo.get("entryTenantTab").toString());
+            il.put("siteTable", sitetab);
+            il.put("netTable", nettab);
+            al.put(Site, il);
+            il = new HashMap<String, Object>();
+            il.put("tenantTable", m.getTenantONETables(tenantname, "ONE"));
+            il.put("siteTable", sitetab);
+            il.put("netTable", nettab);
+            al.put("ONE", il);
+            LinkedHashMap<String, OpenstackInfoContainer> cloudId_To_OIC = new LinkedHashMap<String, OpenstackInfoContainer>();
+            for (String idcloud : al.keySet()) {
+                try {
+                    JSONObject tm_p = new JSONObject((String) ((HashMap) al.get(idcloud)).get("netTable"));
+                    m.insertNetTable(tenantname, idcloud, tm_p.toString(0));
+                    
+                } catch (JSONException e) {
+                    LOGGER.error("Exception occurred in Parsing JSON retrieved from MongoDB in FAInfo Retrieve for Datacenter " + idcloud + "!" + "\nException message:" + e.getMessage());
+                }
+                if(idcloud.equals(Site)){
+                    OpenstackInfoContainer oik=new OpenstackInfoContainer(idcloud,(new JSONObject(m.getDatacenter(tenantname,idcloud))).getString("idmEndpoint"),tenantname,"admin","0penstack","RegionOne");
+                    cloudId_To_OIC.put(idcloud, oik);
+                }
+                else{
+                    cloudId_To_OIC.put(idcloud, null);
+                }
+                mapContainer.setCloudId_To_OIC(cloudId_To_OIC);
+            }
+        } catch (JSONException je) {
+            LOGGER.error("Exception occurred in tables creation for preparing OpenNebula link data with " + Site + " !" + "\nException message:" + je.getMessage());
+        }
+        catch (Exception e) {
+            LOGGER.error("Exception occurred in the function prepareNetTablesONESharing");
+        }
+       /* 
+        FednetsLink mapContainer=new FednetsLink();
+        LinkedHashMap<String, OpenstackInfoContainer> cloudId_To_OIC=new LinkedHashMap<String, OpenstackInfoContainer> ();
+        cloudId_To_OIC.put(Site, value)
+        mapContainer.setCloudId_To_OIC(cloudId_To_OIC);
+        */
+//04/07/2017 gt: la seguente funzione salva all'interno di MongoDB le tables ottenute che verranno usate durante la fase di instaurazione del link
+        this.saveTablesOnMongo(al, tenantname, m);
 
+        //if(startfromTemplate)
+        this.updatestateOnFEDSDN(tenantname,al, mapContainer, m);
+    }
+    
+    
     private void saveTablesOnMongo(HashMap<String, HashMap<String, Object>> resultingTables, String tenant, DBMongo m) {
         Set<String> s = resultingTables.keySet();
         JSONObject tenantTab = null;
@@ -678,71 +747,110 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
      * @throws JSONException
      * @author gtricomi
      */
-    private void checkNetSegmentandInsertFEDSDN(FednetsLink  mapContainer,Site sClient,NetworkSegment nClient,String fedsdnURL,String federationTenant, DBMongo m)throws WSException, JSONException{
-        Response r=sClient.getAllSite(fedsdnURL);
-        JSONArray ja=new JSONArray(r.readEntity(String.class));
-        FederationAgentInfo fa=null;
-        for(int i = 0; i < ja.length(); i++) 
-        {
+    private void checkNetSegmentandInsertFEDSDN(FednetsLink mapContainer, Site sClient, NetworkSegment nClient, String fedsdnURL, String federationTenant, DBMongo m) throws WSException, JSONException {
+        Response r = sClient.getAllSite(fedsdnURL);
+        JSONArray ja = new JSONArray(r.readEntity(String.class));
+        FederationAgentInfo fa = null;
+        for (int i = 0; i < ja.length(); i++) {
             JSONObject jo = (JSONObject) ja.get(i);
             String siteNameToCheck = (String) jo.get("name");
-            Set sstt=mapContainer.getCloudId_To_OIC().keySet();
+            Set sstt = mapContainer.getCloudId_To_OIC().keySet();
             if (sstt.contains(siteNameToCheck)) {
-                fa = mapContainer.getEndpoint_To_FAInfo().get(mapContainer.getCloudId_To_OIC().get(siteNameToCheck));
-                NeutronTest neutron = new NeutronTest(
-                        mapContainer.getCloudId_To_OIC().get(siteNameToCheck).getEndpoint(),
-                        mapContainer.getCloudId_To_OIC().get(siteNameToCheck).getTenant(),
-                        mapContainer.getCloudId_To_OIC().get(siteNameToCheck).getUser(),
-                        mapContainer.getCloudId_To_OIC().get(siteNameToCheck).getPassword(),
-                        mapContainer.getCloudId_To_OIC().get(siteNameToCheck).getRegion()
-                );
-                Networks ns = neutron.listNetworks();
-                int federationTenantID,siteid,fednetID;
-                Iterator<Network> itNet = ns.iterator();
-                while (itNet.hasNext()) {
-                    Network n = itNet.next();
-                    UnmodifiableIterator<String> ti = n.getSubnets().iterator();
-                    while (ti.hasNext()) {
-                        Subnet s = neutron.getSubnet((String) ti.next());
-                        if ((s != null) && (s.getIpVersion() == 4)) {//We want manage only ipv4 network
-                            SubnetInfo si = new SubnetUtils(s.getCidr()).getInfo();
-                            boolean ok = false;
-                            JSONObject faurl=null;
-                            try {
-                                siteid = m.getfedsdnSiteID(siteNameToCheck, federationTenant);
-                                federationTenantID = new Integer(m.getfedsdnTenantid(federationTenant, federationTenant));
-                                fednetID = m.getfedsdnFednetID(n.getName(), federationTenant);
-                                faurl = new JSONObject(m.getFAInfo(federationTenant, siteNameToCheck));
-                            } catch (Exception ex) {
-                                LOGGER.error("Retrieving information from Mongo is failed for network: " + n.getName());
-                                break;
-                            }
-                            for (int k = 0; k < 3; k++) {
-                                ok = this.addNetSegOnFedSDN(//attenzione aggungiere anche il fednetID, site ID e referenceSite
-                                        s.getName(),
-                                        //m.getInfo_Endpoint("entity", "osffm") + "/fednet/eastBr/network",//sostituire con il FA del sito??SI SOSTITUIRE      siteNameToCheck
-                                        faurl.getString("Ip")+":"+faurl.getString("Port"),
-                                        si.getAddress(),
-                                        si.getNetmask(),
-                                        si.getAddressCount(),
-                                        nClient,
-                                        fedsdnURL,
-                                        federationTenantID,
-                                        siteid,
-                                        m,
-                                        federationTenant,
-                                        siteNameToCheck,
-                                        fednetID
-                                );
-                                if (ok) {
+
+                if (mapContainer.getCloudId_To_OIC().get(siteNameToCheck) != null) {
+                    fa = mapContainer.getEndpoint_To_FAInfo().get(mapContainer.getCloudId_To_OIC().get(siteNameToCheck));
+                    NeutronTest neutron = new NeutronTest(
+                            mapContainer.getCloudId_To_OIC().get(siteNameToCheck).getEndpoint(),
+                            mapContainer.getCloudId_To_OIC().get(siteNameToCheck).getTenant(),
+                            mapContainer.getCloudId_To_OIC().get(siteNameToCheck).getUser(),
+                            mapContainer.getCloudId_To_OIC().get(siteNameToCheck).getPassword(),
+                            mapContainer.getCloudId_To_OIC().get(siteNameToCheck).getRegion()
+                    );
+                    Networks ns = neutron.listNetworks();
+                    int federationTenantID, siteid, fednetID;
+                    Iterator<Network> itNet = ns.iterator();
+                    while (itNet.hasNext()) {
+                        Network n = itNet.next();
+                        UnmodifiableIterator<String> ti = n.getSubnets().iterator();
+                        while (ti.hasNext()) {
+                            Subnet s = neutron.getSubnet((String) ti.next());
+                            if ((s != null) && (s.getIpVersion() == 4)) {//We want manage only ipv4 network
+                                SubnetInfo si = new SubnetUtils(s.getCidr()).getInfo();
+                                boolean ok = false;
+                                JSONObject faurl = null;
+                                try {
+                                    siteid = m.getfedsdnSiteID(siteNameToCheck, federationTenant);
+                                    federationTenantID = new Integer(m.getfedsdnTenantid(federationTenant, federationTenant));
+                                    fednetID = m.getfedsdnFednetID(n.getName(), federationTenant);
+                                    faurl = new JSONObject(m.getFAInfo(federationTenant, siteNameToCheck));
+                                } catch (Exception ex) {
+                                    LOGGER.error("Retrieving information from Mongo is failed for network: " + n.getName());
                                     break;
-                                } else if (k == 3) {
-                                    LOGGER.error("Something going wrong! It's Impossible add Networksegment on FEDSDN");
+                                }
+                                for (int k = 0; k < 3; k++) {
+                                    ok = this.addNetSegOnFedSDN(//attenzione aggungiere anche il fednetID, site ID e referenceSite
+                                            s.getName(),
+                                            //m.getInfo_Endpoint("entity", "osffm") + "/fednet/eastBr/network",//sostituire con il FA del sito??SI SOSTITUIRE      siteNameToCheck
+                                            faurl.getString("Ip") + ":" + faurl.getString("Port"),
+                                            si.getAddress(),
+                                            si.getNetmask(),
+                                            si.getAddressCount(),
+                                            nClient,
+                                            fedsdnURL,
+                                            federationTenantID,
+                                            siteid,
+                                            m,
+                                            federationTenant,
+                                            siteNameToCheck,
+                                            fednetID
+                                    );
+                                    if (ok) {
+                                        break;
+                                    } else if (k == 3) {
+                                        LOGGER.error("Something going wrong! It's Impossible add Networksegment on FEDSDN");
+                                    }
                                 }
                             }
                         }
+                        //update fednet on Mongo.
                     }
-                    //update fednet on Mongo.
+                } else {
+                    int federationTenantID, siteid, fednetID;
+                    JSONObject faurl = null;
+                    boolean ok = false;
+                    try {
+                        siteid = m.getfedsdnSiteID(siteNameToCheck, federationTenant);
+                        federationTenantID = new Integer(m.getfedsdnTenantid(federationTenant, federationTenant));
+                        fednetID = m.getfedsdnFednetID("reviewPrivate", federationTenant);
+                        faurl = new JSONObject(m.getFAInfo(federationTenant, siteNameToCheck));
+                        for (int k = 0; k < 3; k++) {
+                                    ok = this.addNetSegOnFedSDN(//attenzione aggungiere anche il fednetID, site ID e referenceSite
+                                            "privatereviewsub",
+                                            //m.getInfo_Endpoint("entity", "osffm") + "/fednet/eastBr/network",//sostituire con il FA del sito??SI SOSTITUIRE      siteNameToCheck
+                                            faurl.getString("Ip") + ":" + faurl.getString("Port"),
+                                            "80.0.0.0",
+                                            "255.255.255.0",
+                                            255,
+                                            nClient,
+                                            fedsdnURL,
+                                            federationTenantID,
+                                            siteid,
+                                            m,
+                                            federationTenant,
+                                            siteNameToCheck,
+                                            fednetID
+                                    );
+                                    if (ok) {
+                                        break;
+                                    } else if (k == 3) {
+                                        LOGGER.error("Something going wrong! It's Impossible add Networksegment on FEDSDN");
+                                    }
+                                }
+                    } catch (Exception ex) {
+                        LOGGER.error("Retrieving information from Mongo is failed for network: reviewPrivate");
+                        break;
+                    }
+                    
                 }
             }
         }
@@ -847,7 +955,10 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
             if(!(siteSet.contains(siteNameToCheck))){
                 boolean ok=false;
                 for(int k=0;k<3;k++){
-                    ok=this.addSiteOnFedSDN(siteNameToCheck,sClient,CloudId_To_OIC.get(siteNameToCheck).getEndpoint(),m, CloudId_To_OIC.get(siteNameToCheck).getTenant());
+                    if(CloudId_To_OIC.get(siteNameToCheck)!=null)
+                        ok=this.addSiteOnFedSDN(siteNameToCheck,sClient,CloudId_To_OIC.get(siteNameToCheck).getEndpoint(),m, CloudId_To_OIC.get(siteNameToCheck).getTenant());
+                    else
+                        ok=true;//ONE site is already present on BNM
                     if (ok){
                         break;
                     }
@@ -901,7 +1012,16 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
                 try {
 
                     OpenstackInfoContainer oik = (OpenstackInfoContainer) CloudId_To_OIC.get(siteNameToCheck);
-
+                    if(oik==null){
+                        String siteUsernameToCheck = "oneadmin";
+                        String sitePasswordToCheck = "opennebulaone";
+                        String credentials = siteUsernameToCheck + ":" + sitePasswordToCheck;
+                        String user_id_insite ="1";
+                        JSONObject inner_jo = new JSONObject("{\"site_id\" :\"ONE\",\"user_id_in_site\":\"" + user_id_insite + "\" ,\"credentials\":\"" + credentials + "\"}");
+                        tenant = "review";
+                        tenant_password = sitePasswordToCheck;
+                    }
+                    else{
                     String siteUsernameToCheck = oik.getTenant()+"@@@"+oik.getUser();
                     String sitePasswordToCheck = oik.getPassword();
 
@@ -923,6 +1043,7 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
 
                     //03/07/2017: federation password for the tenant is set equal to the openstack site !!!
                     tenant_password = sitePasswordToCheck;
+                    }
                 } catch (Exception e) {
                     LOGGER.error("Exception occurred in \"Valid Site\" field entry.\nSite skipped: " + siteNameToCheck);
 
@@ -1107,13 +1228,15 @@ public void bnaNetSegCreate(JSONObject table_, DBMongo db, String refSite, Strin
             OpenstackInfoContainer oictmp = fednetContainer.getCloudId_To_OIC().get(idcloud);
             KeystoneTest kt = new KeystoneTest(oictmp.getTenant(), oictmp.getUser(), oictmp.getPassword(), oictmp.getEndpoint());
             tmp.put(idcloud, kt);
-            //endpoint_to_tenantid.put(oictmp.getEndpoint(),kt.getTenantId(oictmp.getTenant()));//15/09/2017 BEACON>>> VEDERE SE SI RIESCE A SISTEMARE O AGIRE ATTRAVERSO MONGODB
+            endpoint_to_tenantid.put(oictmp.getEndpoint(),kt.getTenantId(oictmp.getTenant()));//15/09/2017 BEACON>>> VEDERE SE SI RIESCE A SISTEMARE O AGIRE ATTRAVERSO MONGODB
             //PEZZO INTRODOTTO DA ELIMINARE
+            /*
             if (idcloud.equals("UME")) {
                 endpoint_to_tenantid.put(fednetContainer.getCloudId_To_OIC().get("UME").getEndpoint(), "aa477ca20d2f41a18f8c380db65990d5");
             } else if (idcloud.equals("CETIC")) {
                 endpoint_to_tenantid.put(fednetContainer.getCloudId_To_OIC().get("CETIC").getEndpoint(), "d044e4b3bc384a5daa3678b87f97e3c2");
             }
+            */
             //FINE PEZZO     
         }
         fednetContainer.setkMcloudId_To_Keystone(tmp);

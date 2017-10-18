@@ -66,7 +66,7 @@ public class DBMongo {
     private MessageDigest messageDigest;
     static final Logger LOGGER = Logger.getLogger(DBMongo.class);
     private String identityDB="ManagementDB"; //DefaultVaue
-    private static String configFile="../webapps/OSFFM/WEB-INF/configuration_bigDataPlugin.xml";
+    private static String configFile="/home/beacon/beaconConf/configuration_bigDataPlugin.xml";//"../webapps/OSFFM/WEB-INF/configuration_bigDataPlugin.xml";
     private String mdbIp;
 
     public String getMdbIp() {
@@ -129,7 +129,7 @@ public class DBMongo {
         //String file=configFile;
         String file=System.getenv("HOME");
         if(file==null){
-            file="/opt/tomcat/webapps/OSFFM/WEB-INF/configuration_bigDataPlugin.xml";
+            file="/home/beacon/beaconConf/configuration_bigDataPlugin.xml";
             
             /*String restkey="[";
             String rest="["; 
@@ -146,7 +146,7 @@ public class DBMongo {
         else
         {
             
-            file=file+"/webapps/OSFFM/WEB-INF/configuration_bigDataPlugin.xml";
+            file="/home/beacon/beaconConf/configuration_bigDataPlugin.xml";
         }
         Element params;
         try {
@@ -504,8 +504,8 @@ public class DBMongo {
         } else {
             o = uuid.next();
             BasicDBObject bdo = (BasicDBObject) o;
-            System.out.println(bdo.get("entrySiteTab"));
-            return bdo.get("entrySiteTab").toString();
+            //System.out.println(bdo.get("siteEntry"));
+            return bdo.get("siteEntry").toString();
         }
     }
     
@@ -703,6 +703,91 @@ public class DBMongo {
     }
     
     /**
+     * Used by BB
+     * @param dbName
+     * @param faSite, this is the cloud Id
+     * @return 
+     * @author gtricomi
+     */
+    public String getTenantONETables(String dbName, String faSite) throws JSONException {
+
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("ONEtenantTab");
+        DBObject res=collection.findOne();
+        JSONObject jo=new JSONObject(res.toString());
+        return ((JSONObject)jo.get("entryTenantTab")).toString();
+    }
+    
+    public String createSiteONETables(String dbName, String faSite) throws JSONException {
+
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("ONEsiteTab");
+        DBObject res=collection.findOne();
+        JSONObject jo=new JSONObject(res.toString());
+        JSONObject e1=((JSONObject)jo.get("siteEntry"));
+        collection = database.getCollection("siteTables");
+        BasicDBObject query=new BasicDBObject();
+        query.append("referenceSite", faSite);
+        query.append("siteEntry.name", faSite);
+        DBCursor cu=collection.find(query).sort(new BasicDBObject("version",-1));
+        if(cu.hasNext())
+            jo=new JSONObject(cu.next().toString());
+        JSONObject e2=((JSONObject)jo.get("siteEntry"));
+        JSONArray ja=new JSONArray();
+        ja.put(e1);
+        ja.put(e2);
+        return ja.toString();
+    }
+    
+    
+    public String getNetONETables(String dbName, String faSite) throws JSONException {
+
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("ONEnetTab");
+        DBObject res=collection.findOne();
+        JSONObject jo=new JSONObject(res.toString());
+        return ((JSONObject)jo.get("entryNetTab")).toString();
+    }
+    
+    
+    public String createNetONETables(String dbName, String faSite,int version) throws JSONException {
+        JSONObject ftable=new JSONObject();
+        ftable.put("version", version);
+        JSONArray outja=new JSONArray();
+        JSONArray inja=new JSONArray();
+        try {
+            DB database = this.getDB(dbName);
+            DBCollection collection = database.getCollection("ONEnetTab");
+            DBObject res = collection.findOne();
+            JSONObject jo = new JSONObject(res.toString());
+            inja.put((JSONObject) jo.get("entryNetTab"));
+            collection = database.getCollection("BNATableData");
+            BasicDBObject query = new BasicDBObject();
+            query.append("referenceSite", faSite);
+            query.append("fedNet", "reviewPrivate");
+            DBCursor cu = collection.find(query).sort(new BasicDBObject("version", -1));
+            if (cu.hasNext()) {
+                jo = new JSONObject(cu.next().toString());
+            }
+            String fk = jo.getString("Fk");
+            collection = database.getCollection("BNANetSeg");
+            query = new BasicDBObject();
+            query.append("FK", fk);
+            query.append("netEntry.site_name", faSite);
+            cu = collection.find(query).sort(new BasicDBObject("version", -1));
+            if (cu.hasNext()) {
+                jo = new JSONObject(cu.next().toString());
+            }
+            inja.put((JSONObject) jo.get("netEntry"));
+        } catch (JSONException e) {
+            throw e;
+        }
+        outja.put(inja);
+        ftable.put("table", outja);
+        return ftable.toString();
+    }
+    
+    /**
      * 
      * @param dbName
      * @param faSite, this is the cloud Id
@@ -728,6 +813,8 @@ public class DBMongo {
             return bdo.get("entryTenantTab").toString();
         }
     }
+    
+   
     
     /**
      * 
