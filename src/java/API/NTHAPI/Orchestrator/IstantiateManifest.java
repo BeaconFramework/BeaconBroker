@@ -99,8 +99,8 @@ public class IstantiateManifest {
             @PathParam("tenant") String tenant,
             String jsonInput
     ) {
-        NeutronTest neutron = new NeutronTest("http://ctrl-t1:5000/v2.0","review","admin","0penstack","RegionOne");
-        Networks N = neutron.listNetworks();
+        //NeutronTest neutron = new NeutronTest("http://ctrl-t1:5000/v2.0","review","admin","0penstack","RegionOne");
+        //Networks N = neutron.listNetworks();
         //BEACON>>> INSIDE THIS FUNCTION WE NEED TO ADD SOME AUTHENTICATION STUFF, FOR THE MOMENT IS A 
         //SIMPLE UNAUTHENTICATING OPERATION
         String templatename="";//templatename="cc228189-0f2f-4aa4-8336-88db88e477d2";
@@ -109,7 +109,7 @@ public class IstantiateManifest {
         //String prepath=home+fs+"subrepoTemplate";
         String templateRef="null";
         String userFederation="",passwordFederation="";
-        String prepath="./subrepoTemplate/"+tenant;
+        String prepath="/tmp/subrepoTemplate/"+tenant;
         JSONObject input=new JSONObject(),reply=new JSONObject();
         JSONParser jp=new JSONParser();
         try{

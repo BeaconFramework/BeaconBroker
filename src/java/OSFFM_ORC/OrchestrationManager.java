@@ -288,7 +288,7 @@ public class OrchestrationManager {
             String home=System.getProperty("java.home");
             String fs=System.getProperty("file.separator");
             //this.writeManifestonFile(home+fs+"subrepoTemplate"+fs+tenant+fs+tenant+rootName+"_"+(String)obj[index], val);
-            this.writeManifestonFile("."+fs+"subrepoTemplate"+fs+tenant+fs+tenant+rootName+"_"+(String)obj[index], val);
+            this.writeManifestonFile(fs+"tmp"+fs+"subrepoTemplate"+fs+tenant+fs+tenant+rootName+"_"+(String)obj[index], val);
 
 
 //ArrayList<String> tmp=this.globalTOfragmentsManif.get(rootName);
