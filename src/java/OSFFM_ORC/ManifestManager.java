@@ -146,7 +146,7 @@ public class ManifestManager implements Runnable{
     }
     
     
-    //<editor-fold defaultstate="collapsed" desc="Resource Management functions">    
+//<editor-fold defaultstate="collapsed" desc="Resource Management functions">    
     /**
      * Extract resource from manifest and split Beacon element in right LinkedHashMap.
      * @param res 

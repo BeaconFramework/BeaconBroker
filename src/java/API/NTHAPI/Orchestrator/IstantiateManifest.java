@@ -205,7 +205,7 @@ public class IstantiateManifest {
                      //   content.put("firstC",tmpsupp.getFirstCloudId());
                         content.put("manifestName",manifestName);
                     BB_elaClient bbela=new BB_elaClient("user","");
-                   // bbela.activateElaManager("http://localhost:8084/BBElasticityManager",content);
+                    bbela.activateElaManager("http://10.9.1.114:8080/BBElasticityManager",content);
                     
                     
                 }

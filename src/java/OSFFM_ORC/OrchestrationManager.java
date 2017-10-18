@@ -1029,7 +1029,7 @@ public class OrchestrationManager {
     //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Management function for SFC/VNF TOSCATemplate">
     /**
-     * This function returns the set of ONETemplate name described inside manifest
+     * This function returns the set of TOSCATemplate name described inside manifest
      * and stored inside ManifestManager.
      * @param manifestName
      * @return Set, set of mplateTe name described inside manifest. 
