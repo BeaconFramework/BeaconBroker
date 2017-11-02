@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <writeOnCfgFolder>yes</writeOnCfgFolder> 
+  <moduleName>BigDataAgent</moduleName>
+  <pluginParams>
+    <dbName>admin</dbName>
+    <user>SYSTEM</user>
+    <password>manager</password>
+    <serverip>10.9.240.1</serverip>
+    <serversList>
+	<server>
+           <serverUrl>ing-clever-07</serverUrl>
+           <port>27017</port>
+	</server>
+	<server>
+           <serverUrl>ing-clever-06</serverUrl>
+           <port>27017</port>
+	</server>	
+	<server>
+           <serverUrl>ing-clever-13</serverUrl>
+           <port>27017</port>
+	</server>
+	<server>
+           <serverUrl>ing-clever-04</serverUrl>
+           <port>27017</port>
+	</server>
+    </serversList>
+  </pluginParams>
+  <SimpleIDMParams>
+      <serverip>10.9.240.1</serverip>   
+      <dbname>review</dbname>
+      <IdentityDBname>ManagementDB</IdentityDBname>  
+  </SimpleIDMParams>
+</root>
