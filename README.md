@@ -9,7 +9,7 @@ in particular the reader need to have a look in deliverable:
  
 The activity done by the Beacon Broker **[BB]** is strictly related with the data contained inside the MongoDB databases.
 
-Data, is grouped in several databases, one for each federation tenant (called borrower), and on common for all borrower called "ManagementDB". 
+Data, is grouped in several databases, one for each federation tenant (called borrower), and a common database called "ManagementDB". 
 Each borrower's database has a series of required collection of document needed for the BB works; these collections contains the  information related to clouds involved in federation. Below are listed the collection that need to be constructedby federation administrator when a new borrower is included in the federation:
 
 **a) Inside borrower database:**
