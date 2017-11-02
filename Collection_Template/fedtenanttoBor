@@ -1,0 +1,2 @@
+{ "_id" : ObjectId("59aec45e0ed498563112741a"), "tenantName" : "review", "fedUuid" : "aa477ca20d2f41a18f8c380db65990d5", "borrowerName" : "review", "cloudID" : "UME", "cmp_endpoint" : "http://ctrl-t1:5000/v2.0" }
+{ "_id" : ObjectId("59aec4f50ed498563112741c"), "tenantName" : "review", "fedUuid" : "d044e4b3bc384a5daa3678b87f97e3c2", "borrowerName" : "review", "cloudID" : "CETIC", "cmp_endpoint" : "http://ctrl-t2:5000/v2.0" }
