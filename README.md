@@ -37,13 +37,22 @@ Like the BNMD and the BB_ELA also the BB is a Web Application, to instantiate it
 * configuration_bigDataPlugin.xml
 
 The BB exposes several functionality via REST WS that are listed below:
+
 * 
+
 * 
+
 * 
+
 * 
+
 * 
+
 *
+
 * 
+
 * 
+
 ....
 TBC
