@@ -12,22 +12,21 @@ The activity done by the BB is strictly related with the data contained inside t
 Data, is grouped in several databases, one for each federation tenant (called borrower), and on common for all borrower called "ManagementDB". 
 Each borrower's database has a series of required collection of document needed for the BB works; these collections contains the  information related to clouds involved in federation. Below are listed the collection that need to be constructedby federation administrator when a new borrower is included in the federation:
 
-a) Inside borrower database:
+**a) Inside borrower database:**
 
-i) Countries: each document represents a multipoligon able to identify a nation. More in general in this collection are stored the multipolygon usefull for the borrower deployment;
+* Countries: each document represents a multipoligon able to identify a nation. More in general in this collection are stored the multipolygon usefull for the borrower deployment;
 
-ii) credentials: it contains a series document in which are represented the user (we are talking about user of the federation) credential in a target federated cloud;
+* credentials: it contains a series document in which are represented the user (we are talking about user of the federation) credential in a target federated cloud;
 
-iii) datacenters: it contains information about cloud in which borrower has an agreement/contract and that are used in the federated deployment;
+* datacenters: it contains information about cloud in which borrower has an agreement/contract and that are used in the federated deployment;
 
-iv) faInfo: It contains the information related to BNA component for each federated cloud;M
+* faInfo: It contains the information related to BNA component for each federated cloud;
 
+**b) Inside ManagementDB some document have to be added in the listed below collection**
 
-b) Inside ManagementDB some document have to be added in the listed below collection
+* Federation_Credential: it contains information about borrower's name, token and password
 
-i) Federation_Credential: it contains information about borrower's name, token and password
-
-ii) fedtenanttoBor: it contains information about borrower's name, uuid of its tenant in afederated cloud and the endpoint of that cloud.
+* fedtenanttoBor: it contains information about borrower's name, uuid of its tenant in afederated cloud and the endpoint of that cloud.
 
 
 ....
