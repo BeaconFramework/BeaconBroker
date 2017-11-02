@@ -1,1 +1,1 @@
-aaaa
+{ "_id" : "UME", "idmEndpoint" : "http://ctrl-t1:5000/v2.0", "cloudId" : "UME", "name" : "University of Messina", "description" : "Datacenter Papardo", "geometry" : { "coordinates" : [ 15.434675, 38.193164 ], "type" : "Point" }, "insertTimestamp" : NumberLong("1456747123142"), "gap" : "+2" }
