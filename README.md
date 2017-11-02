@@ -7,7 +7,7 @@ in particular the reader need to have a look in deliverable:
  
  ii)       D3.2, D3.3, D4.2 and D4.3 for compenent details and interaction details
  
-The activity done by the BB is strictly related with the data contained inside the MongoDB databases.
+The activity done by the Beacon Broker **[BB]** is strictly related with the data contained inside the MongoDB databases.
 
 Data, is grouped in several databases, one for each federation tenant (called borrower), and on common for all borrower called "ManagementDB". 
 Each borrower's database has a series of required collection of document needed for the BB works; these collections contains the  information related to clouds involved in federation. Below are listed the collection that need to be constructedby federation administrator when a new borrower is included in the federation:
@@ -27,6 +27,12 @@ Each borrower's database has a series of required collection of document needed 
 * Federation_Credential: it contains information about borrower's name, token and password
 
 * fedtenanttoBor: it contains information about borrower's name, uuid of its tenant in afederated cloud and the endpoint of that cloud.
+
+Examples of document present in the collection managed by administrator are available here: https://github.com/BeaconFramework/BeaconBroker/tree/master/Collection_Template
+
+Like the BNMD and the BB_ELA also the BB is a Web Application, to instantiate it, the administrator have to create a directory in the path: "/home/beacon/beaconConf/" with the configuration file listed below according with the template provided in the template folder:
+
+* configuration_bigDataPlugin.xml
 
 
 ....
