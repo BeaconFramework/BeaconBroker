@@ -28,12 +28,22 @@ Each borrower's database has a series of required collection of document needed 
 
 * fedtenanttoBor: it contains information about borrower's name, uuid of its tenant in afederated cloud and the endpoint of that cloud.
 
+An important collection present inside "ManagementDB" database is "SystemInfos",  this collection contains the pointer for the module involved in the federation like BNM.
+
 Examples of document present in the collection managed by administrator are available here: https://github.com/BeaconFramework/BeaconBroker/tree/master/Collection_Template
 
 Like the BNMD and the BB_ELA also the BB is a Web Application, to instantiate it, the administrator have to create a directory in the path: "/home/beacon/beaconConf/" with the configuration file listed below according with the template provided in the template folder:
 
 * configuration_bigDataPlugin.xml
 
-
+The BB exposes several functionality via REST WS that are listed below:
+* 
+* 
+* 
+* 
+* 
+*
+* 
+* 
 ....
 TBC
