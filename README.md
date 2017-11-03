@@ -66,7 +66,7 @@ Input parameters are:
 
 > * CloudName: name of the federated cloud used by BB, it corresponds with "cloudId" field of the "datacenters" collection o mongoDB
 
-> * : it is a String representation of an HashMap that contains te following eleemnts:
+> * hashMapParam: it is a String representation of an HashMap that contains te following eleemnts:
 
 >> * dhcpEnable: set enabled the dhcp for new network segments
 
