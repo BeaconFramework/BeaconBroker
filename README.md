@@ -66,7 +66,7 @@ Input parameters are:
 
 > * CloudName: name of the federated cloud used by BB, it corresponds with "cloudId" field of the "datacenters" collection o mongoDB
 
-> * hashMapParam: it is a String representation of an HashMap that contains te following eleemnts:
+> * hashMapParam: it is a String representation of an HashMap that contains te following elements:
 
 >> * dhcpEnable: set enabled the dhcp for new network segments
 
@@ -76,9 +76,13 @@ Input parameters are:
 
 >> * external: true if the network segment is external network, normally this parameter is false
 
-* http://[BB_BASE_PATH]/
+* http://[BB_BASE_PATH]/os2os/{borrower}/templates/ : it is a GET WS, produces a JSON object that contains all the beacon service manifest stored inside borrower's databases. The object returned has the following structure:
 
-* http://[BB_BASE_PATH]/
+> {"templates": [{"id": "uuid","templateName":"name","version": "number","user": "name","templateRef": "uuidStartingTemplate","date": "timestamp"}, {"id": "uuid","templateName":"name","version": "number","user": "name","templateRef": "uuidStartingTemplate", "date": "timestamp"} ],“returncode”: 0,“errormesg”:”None”}
+
+* http://[BB_BASE_PATH]/os2os/{borrower}/templates/{uuidTemplate} : it is a GET WS, produces a JSON object that contains the beacon service manifest identified by {uuidTemplate} stored inside borrower's databases. The object returned has the following structure:
+
+> {"templates": "yamlTemplateString" , “returncode”: 0, “errormesg”:”None”, "templateName":"name", "version": "number", "user": "name", "templateRef": "uuidStartingTemplate", "date": "timestamp" }
 
 * http://[BB_BASE_PATH]/
 
