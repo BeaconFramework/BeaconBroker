@@ -56,11 +56,25 @@ Input parameters are:
 
 > * dbName: name of the borrower that has requested the operation
 
-> * fedUser: it is a nested JSONObject usefull for 
+> * fedUser: it is a nested JSONObject that contains BB info:
 
-> * templateRef: it is the UUID of the previous version of the manifest, if the manifest is totally new this field is null
+>> * token: token used by BB to recognize borrower/user
 
-> * templates: this is the string representation of the YAML beacon service manifest.
+>> * endpoint: endpoint of the target federated cloud
+
+> * netSeg: BB name of the network segment
+
+> * CloudName: name of the federated cloud used by BB, it corresponds with "cloudId" field of the "datacenters" collection o mongoDB
+
+> * : it is a String representation of an HashMap that contains te following eleemnts:
+
+>> * dhcpEnable: set enabled the dhcp for new network segments
+
+>> * shared: true if the network segment is shared with other tenant, normally this parameter is false
+
+>> * adminStateUp: true if this network segment will be used only by project admin
+
+>> * external: true if the network segment is external network, normally this parameter is false
 
 * http://[BB_BASE_PATH]/
 
