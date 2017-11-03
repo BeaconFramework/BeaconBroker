@@ -38,21 +38,41 @@ Like the BNMD and the BB_ELA also the BB is a Web Application, to instantiate it
 
 The BB exposes several functionality via REST WS that are listed below:
 
-* 
+* http://[BB_BASE_PATH]/os2os/northBr/manifest/{borrower}/templates/ : it is a POST WS, consumes and produces a JSON object and it is used to store on borrower's databese in MongoDB the beacon service manifest provided as input.
 
-* 
+Input parameters are:
 
-* 
+> * username: name of the user/borrower that has requested the operation
 
-* 
+> * templateName: it is an UUID used to store the manifest
 
-* 
+> * templateRef: it is the UUID of the previous version of the manifest, if the manifest is totally new this field is null
 
-*
+> * templates: this is the string representation of the YAML beacon service manifest
 
-* 
+* http://[BB_BASE_PATH]/fednet/northBr/network/netsegment: it is a POST WS, consumes and produces a JSON object and it is used to create a network segment on a federated cloud in the borrower's project in target cloud.
 
-* 
+Input parameters are:
+
+> * username: name of the user/borrower that has requested the operation
+
+> * templateName: it is an UUID used to store the manifest
+
+> * templateRef: it is the UUID of the previous version of the manifest, if the manifest is totally new this field is null
+
+> * templates: this is the string representation of the YAML beacon service manifest.
+
+* http://[BB_BASE_PATH]/
+
+* http://[BB_BASE_PATH]/
+
+* http://[BB_BASE_PATH]/
+
+* http://[BB_BASE_PATH]/
+
+* http://[BB_BASE_PATH]/
+
+* http://[BB_BASE_PATH]/
 
 ....
 TBC
