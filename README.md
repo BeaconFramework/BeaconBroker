@@ -84,13 +84,47 @@ Input parameters are:
 
 > {"templates": "yamlTemplateString" , “returncode”: 0, “errormesg”:”None”, "templateName":"name", "version": "number", "user": "name", "templateRef": "uuidStartingTemplate", "date": "timestamp" }
 
-* http://[BB_BASE_PATH]/
+* http://[BB_BASE_PATH]/os2os/{tenant}/templates/{uuidTemplate}/runTime :  it is a GET WS, produces a JSON object that contains information about the deployed application in the target clouds, this is the information stored inside the borrower's database. The object returned has the following structure:
 
-* http://[BB_BASE_PATH]/
+> { “Shapes” : [{ “id” : “idDatacenter2”, “EndPoint” : ”IP/port”, “State” : “up/down”, “GeoShape”: {GEOJSON Multipolygon}, “resources” : [{“id”:“idRes1”, “nameRes”: “name”},{“id”:“idRes2”, “nameRes”: “name”}]},{ “id” : “idDatacenter1”,“EndPoint” : ”IP/port”,“State” : “up/down”,“GeoShape”: {GEOJSON Multipolygon},“resources” : [{“id”:“idRes1”, “nameRes”: “name”},{“id”:“idRes2”, “nameRes”: “name”}]}]  Links: [ { “src” : “idDatacenter1”, “dst” : “idDatacenter2” }, { “src” : “idDatacenter1”, “dst” : “idDatacenter2”}], “returncode”: 0, “errormesg”:”None”}
 
-* http://[BB_BASE_PATH]/
+* http://[BB_BASE_PATH]/os2os/orchestrator/{borrower}/startTemplates/ : it is a POST WS, consumes and produces a JSON object and it is used to start the deployment of beacon service manifest stored on borrower's databese in MongoDB.
 
-* http://[BB_BASE_PATH]/
+Input parameters are:
 
-....
-TBC
+> * federationTenant: name of the borrower that has requested the operation
+
+> * passwordFederation: password of the borrower in federation context
+
+> * templateId: uuid of the template that will be deployed
+
+* http://[BB_BASE_PATH]/os2os/orchestrator/activatetwin :it is a POST WS, consumes and produces a JSON object and it is used to activate a twinVM without shutoff the original one. 
+
+Input parameters are:
+
+> * tenant: name of the borrower that has requested the operation
+
+> * userFederation: username that invokes this operation
+
+> * pswFederation: password of the user/borrower in federation context 
+
+> * vmTwin: uuid that identify the VM that will be activated
+
+* http://[BB_BASE_PATH]/TOSCAmanifest/{borrower}/{manifestName}/{templateRef}/{resName} : it is a GET WS, produces a JSON object that contains both VNFD and VNFFG related to the TOSCA Manifest stored inside *borrower*'s database as element contained in the beacon service manifest named *manifestName* and identify by the resource name *resName*. Path parameter *templateRef* represents the "father manifest" of this beacon service manifest and could be *null*. 
+information about the deployed application in the target clouds, this is the information stored inside the borrower's database.
+
+* http://[BB_BASE_PATH]/os2os/orchestrator/migrateVMs : it is a POST WS, consumes a JSON object and it is used to activate a twinVM after having shutted-off the original one. Normally it is used by BB_ELA when an elasticity action have to be completed.
+
+Input parameters are:
+
+> * tenant: name of the borrower that has requested the operation
+
+> * userFederation: username that invokes this operation
+
+> * pswFederation: password of the user/borrower in federation context 
+
+> * vmTwin: uuid that identify the VM that will be activated
+
+> * vm: uuid that identify the VM that will be shutted-off
+
+Refers to https://github.com/BeaconFramework/BeaconBroker/blob/master/BeaconServiceManifest-Fundamentals to understand how create a beacon service manifest.
