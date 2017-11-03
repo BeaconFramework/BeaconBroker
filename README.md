@@ -54,9 +54,9 @@ Input parameters are:
 
 Input parameters are:
 
-> * username: name of the user/borrower that has requested the operation
+> * dbName: name of the borrower that has requested the operation
 
-> * templateName: it is an UUID used to store the manifest
+> * fedUser: it is a nested JSONObject usefull for 
 
 > * templateRef: it is the UUID of the previous version of the manifest, if the manifest is totally new this field is null
 
